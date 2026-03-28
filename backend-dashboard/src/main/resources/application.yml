@@ -1,0 +1,20 @@
+spring:
+  datasource:
+    driver-class-name: org.mariadb.jdbc.Driver
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: none # Aggregator doesn't manage schema
+    show-sql: true
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    com.itsm.dashboard: DEBUG
+
+services:
+  system-url: ${SYSTEM_SERVICE_URL:http://system-service:8080}
+  request-url: ${REQUEST_SERVICE_URL:http://request-service:8080}
+
+server:
+  port: 8080

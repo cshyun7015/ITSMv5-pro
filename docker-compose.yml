@@ -1,0 +1,128 @@
+version: '3.8'
+
+services:
+  # Database: Unified MariaDB with logical schema separation
+  itsm-db:
+    image: mariadb:10.11
+    container_name: itsm-db
+    environment:
+      - MARIADB_ROOT_PASSWORD=itsmpass
+      - MARIADB_DATABASE=itsm_common
+      - TZ=Asia/Seoul
+    ports:
+      - "3306:3306"
+    volumes:
+      - itsm-db-data:/var/lib/mysql
+      - ./infra/mariadb/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb-admin ping -h localhost -uroot -p$$MARIADB_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - itsm-network
+
+
+  # API Gateway: Nginx for routing and basic security
+  api-gateway:
+    image: nginx:alpine
+    container_name: api-gateway
+    ports:
+      - "8000:80"
+    volumes:
+      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    environment:
+      - TZ=Asia/Seoul
+    depends_on:
+      itsm-db:
+        condition: service_healthy
+
+    networks:
+      - itsm-network
+
+  # Frontend: Portal UI (Vite/React)
+  portal-ui:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: portal-ui
+    ports:
+      - "3000:80"
+    environment:
+      - VITE_API_URL=http://localhost:8000
+      - TZ=Asia/Seoul
+    depends_on:
+      api-gateway:
+        condition: service_started
+      itsm-db:
+        condition: service_healthy
+    networks:
+      - itsm-network
+
+
+
+  # Backend: Request Management Service
+  request-service:
+    build:
+      context: ./backend-request
+      dockerfile: Dockerfile
+    container_name: request-service
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://itsm-db:3306/request_mgmt
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=itsmpass
+      - TZ=Asia/Seoul
+    depends_on:
+      itsm-db:
+        condition: service_healthy
+
+    networks:
+      - itsm-network
+
+  # Backend: System Administration Service
+  system-service:
+    build:
+      context: ./backend-system
+      dockerfile: Dockerfile
+    container_name: system-service
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://itsm-db:3306/system_mgmt
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=itsmpass
+      - TZ=Asia/Seoul
+    depends_on:
+      itsm-db:
+        condition: service_healthy
+
+    networks:
+      - itsm-network
+
+  # Backend: Dashboard Service (Aggregator)
+  dashboard-service:
+    build:
+      context: ./backend-dashboard
+      dockerfile: Dockerfile
+    container_name: dashboard-service
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://itsm-db:3306/system_mgmt
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=itsmpass
+      - SYSTEM_SERVICE_URL=http://system-service:8080
+      - REQUEST_SERVICE_URL=http://request-service:8080
+      - TZ=Asia/Seoul
+    depends_on:
+      itsm-db:
+        condition: service_healthy
+      system-service:
+        condition: service_started
+      request-service:
+        condition: service_started
+    networks:
+      - itsm-network
+
+networks:
+  itsm-network:
+    driver: bridge
+
+volumes:
+  itsm-db-data:

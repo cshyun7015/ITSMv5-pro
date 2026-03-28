@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  playwright-test:
+    image: mcr.microsoft.com/playwright:v1.45.0-noble
+    container_name: playwright-test
+    volumes:
+      - ./frontend:/app
+    working_dir: /app
+    environment:
+      - BASE_URL=http://portal-ui:80
+      - TZ=Asia/Seoul
+    networks:
+      - itsm-network
+    depends_on:
+      portal-ui:
+        condition: service_started
+    # Wait for the frontend to be ready before running tests
+    command: >
+      sh -c "npm install && npx playwright test"

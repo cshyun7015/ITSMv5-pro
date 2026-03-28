@@ -1,0 +1,137 @@
+.app-container {
+  display: flex;
+  width: var(--base-width);
+  min-height: var(--base-height);
+  padding: 20px;
+  gap: 20px;
+  transition: transform 0.3s ease;
+}
+
+/* Sidebar Styling */
+.sidebar {
+  width: 280px;
+  padding: 30px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.logo-section {
+  margin-bottom: 40px;
+}
+
+.logo-section h2 {
+  font-size: 28px;
+  margin-bottom: 4px;
+}
+
+.subtitle {
+  font-size: 12px;
+  color: hsl(var(--text-secondary));
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.nav-menu {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.nav-item {
+  padding: 12px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: hsl(var(--text-secondary));
+  font-weight: 500;
+}
+
+.nav-item:hover {
+  background: hsla(0, 0%, 100%, 0.05);
+  color: hsl(var(--text-primary));
+}
+
+.nav-item.active {
+  background: hsla(184, 100%, 50%, 0.1);
+  color: hsl(var(--brand-primary));
+  box-shadow: 0 0 15px hsla(184, 100%, 50%, 0.1);
+  border-left: 3px solid hsl(var(--brand-primary));
+}
+
+.nav-item.disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  margin-top: auto;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, hsl(var(--brand-primary)), hsl(var(--brand-secondary)));
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: #fff;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+}
+
+.name {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.role {
+  font-size: 12px;
+  color: hsl(var(--text-secondary));
+}
+
+/* Main Content Styling */
+.main-content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.page-header {
+  padding: 10px 0;
+}
+
+.page-header h1 {
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+
+.breadcrumbs {
+  font-size: 13px;
+  color: hsl(var(--text-secondary));
+}
+
+.content-body {
+  flex-grow: 1;
+}
+
+.dashboard-placeholder {
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  text-align: center;
+}
