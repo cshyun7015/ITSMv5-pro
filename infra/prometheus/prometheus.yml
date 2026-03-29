@@ -1,0 +1,32 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'itsm-request'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['request-service:8080']
+
+  - job_name: 'itsm-system'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['system-service:8080']
+
+  - job_name: 'itsm-event'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['event-service:8080']
+
+  - job_name: 'itsm-dashboard'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['dashboard-service:8080']
+
+  - job_name: 'itsm-gateway'
+    static_configs:
+      - targets: ['nginx-gateway-exporter:9113']
+
+  - job_name: 'itsm-frontend'
+    static_configs:
+      - targets: ['nginx-frontend-exporter:9113']

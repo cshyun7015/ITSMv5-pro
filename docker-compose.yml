@@ -154,6 +154,54 @@ services:
     #  sh -c "npm install && npx playwright test"
     entrypoint: ["npx", "playwright", "test"]
 
+  # Observability: Prometheus for metrics collection
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - itsm-network
+
+  # Observability: Grafana for metrics visualization
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    volumes:
+      - ./infra/grafana/provisioning:/etc/grafana/provisioning
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - TZ=Asia/Seoul
+    ports:
+      - "3001:3000"
+    networks:
+      - itsm-network
+
+  # Exporter for API Gateway Traffic Monitoring
+  nginx-gateway-exporter:
+    image: nginx/nginx-prometheus-exporter:latest
+    container_name: nginx-gateway-exporter
+    command: -nginx.scrape-uri=http://api-gateway:80/nginx_status
+    depends_on:
+      - api-gateway
+    networks:
+      - itsm-network
+
+  # Exporter for Portal UI Traffic Monitoring
+  nginx-frontend-exporter:
+    image: nginx/nginx-prometheus-exporter:latest
+    container_name: nginx-frontend-exporter
+    command: -nginx.scrape-uri=http://portal-ui:80/nginx_status
+    depends_on:
+      - portal-ui
+    networks:
+      - itsm-network
+
+
+
 networks:
   itsm-network:
     driver: bridge
