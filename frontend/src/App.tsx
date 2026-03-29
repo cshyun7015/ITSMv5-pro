@@ -95,22 +95,22 @@ function AppContent() {
       </aside>
 
       <main className="main-content">
-        <header className="page-header">
-          <h1 className="text-gradient">
-            {currentView === 'companies' ? '고객사 관리' : 
-             currentView === 'users' ? '사용자 관리' : 
-             currentView === 'codes' ? '공통 코드 관리' : 
-             currentView === 'requests' ? '요청 관리' : '시스템 대시보드'}
-          </h1>
-          <div className="breadcrumbs">
-            시스템 관리 &gt; {
-              currentView === 'companies' ? '고객사 관리' : 
-              currentView === 'users' ? '사용자 관리' : 
-              currentView === 'codes' ? '공통 코드 관리' : 
-              currentView === 'requests' ? '요청 관리' : '대시보드'
-            }
-          </div>
-        </header>
+        {currentView !== 'requests' && (
+          <header className="page-header">
+            <h1 className="text-gradient">
+              {currentView === 'companies' ? '고객사 관리' : 
+               currentView === 'users' ? '사용자 관리' : 
+               currentView === 'codes' ? '공통 코드 관리' : '시스템 대시보드'}
+            </h1>
+            <div className="breadcrumbs">
+              시스템 관리 &gt; {
+                currentView === 'companies' ? '고객사 관리' : 
+                currentView === 'users' ? '사용자 관리' : 
+                currentView === 'codes' ? '공통 코드 관리' : '대시보드'
+              }
+            </div>
+          </header>
+        )}
         
         <div className="content-body">
           {currentView === 'companies' ? <CompanyList /> : 

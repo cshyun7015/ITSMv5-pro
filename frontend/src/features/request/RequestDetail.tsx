@@ -24,10 +24,34 @@ const RequestDetail: React.FC<Props> = ({ requestId, onClose, onUpdated }) => {
     const [newComment, setNewComment] = useState('');
     const [isInternal, setIsInternal] = useState(false);
     const [codes, setCodes] = useState<{ [key: string]: CommonCode[] }>({});
+    const [now, setNow] = useState(new Date());
     
     useEffect(() => {
         loadDetail();
+        const timer = setInterval(() => setNow(new Date()), 1000);
+        return () => clearInterval(timer);
     }, [requestId]);
+
+    const getSLARemaining = (targetAt?: string) => {
+        if (!targetAt) return null;
+        const target = new Date(targetAt);
+        const diff = target.getTime() - now.getTime();
+        
+        if (diff <= 0) return { text: 'EXPIRED', colorClass: 'sla-red' };
+        
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+        let colorClass = 'sla-emerald';
+        if (hours < 1) colorClass = 'sla-orange';
+        if (hours < 0.5) colorClass = 'sla-red';
+
+        return { 
+            text: `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`,
+            colorClass 
+        };
+    };
 
     const loadDetail = async () => {
         try {
@@ -145,7 +169,18 @@ const RequestDetail: React.FC<Props> = ({ requestId, onClose, onUpdated }) => {
                                 <span style={{ fontSize: '24px', fontWeight: 'bold', color: 'white' }}>{request.title}</span>
                             )}
                         </div>
-                        <p className="panel-subtitle" style={{ marginTop: '8px', fontSize: '13px' }}>요청자: {request.requesterId} | 생성일시: {new Date(request.createdAt!).toLocaleString()}</p>
+                        <p className="panel-subtitle" style={{ marginTop: '8px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                            <span>요청자: {request.requesterId} | 생성일시: {new Date(request.createdAt!).toLocaleString()}</span>
+                            {(() => {
+                                const sla = getSLARemaining(request.slaTargetAt);
+                                return sla && (
+                                    <div className={`sla-badge ${sla.colorClass}`} style={{ marginLeft: '16px', background: 'rgba(255,255,255,0.05)' }}>
+                                        <div className="sla-dot animate-pulse"></div>
+                                        <span style={{ fontWeight: 'bold' }}>SLA 남은 시간: {sla.text}</span>
+                                    </div>
+                                );
+                            })()}
+                        </p>
                     </div>
                     <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                         {isEditing ? (

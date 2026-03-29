@@ -170,3 +170,46 @@
 .priority-high { background: rgba(239, 68, 68, 0.1); color: #f87171; border-color: rgba(239, 68, 68, 0.2); }
 .priority-medium { background: rgba(245, 158, 11, 0.1); color: #fbbf24; border-color: rgba(245, 158, 11, 0.2); }
 .priority-low { background: rgba(59, 130, 246, 0.1); color: #60a5fa; border-color: rgba(59, 130, 246, 0.2); }
+
+/* Custom Date Picker UI (Dashboard Sync) */
+.custom-date-container {
+  display: flex;
+  align-items: center;
+  position: relative;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--glass-border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  min-width: 140px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.custom-date-container:hover {
+  border-color: hsl(var(--brand-primary));
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.custom-date-container .display-value {
+  color: white;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+.custom-date-container input[type="date"] {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  pointer-events: none;
+}
+
+.custom-date-container::after {
+  content: "📅";
+  margin-left: 10px;
+  font-size: 13px;
+  filter: grayscale(1) brightness(2);
+  opacity: 0.6;
+}

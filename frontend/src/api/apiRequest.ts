@@ -35,7 +35,8 @@ export interface RequestComment {
 
 export const apiRequest = {
     // Request APIs
-    getRequests: () => apiClient.get<RequestItem[]>(API_BASE_URL),
+    getRequests: (params?: { fromDate?: string; toDate?: string; title?: string; requesterId?: string }) => 
+        apiClient.get<RequestItem[]>(API_BASE_URL, { params }),
     getRequest: (id: number) => apiClient.get<RequestItem>(`${API_BASE_URL}/${id}`),
     createRequest: (data: RequestItem) => apiClient.post<RequestItem>(API_BASE_URL, data),
     updateRequest: (id: number, data: RequestItem) => apiClient.put<RequestItem>(`${API_BASE_URL}/${id}`, data),

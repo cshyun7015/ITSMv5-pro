@@ -42,6 +42,11 @@ public class UserController {
     public ResponseEntity<List<UserResponseDTO>> getUsersByCompany(
             @RequestHeader("X-Company-ID") String headerCompanyId,
             @RequestParam(required = false) String companyId) {
+        
+        if ("all".equalsIgnoreCase(companyId)) {
+            return ResponseEntity.ok(userService.getAllUsers());
+        }
+        
         String targetCompanyId = (companyId != null && !companyId.isEmpty()) ? companyId : headerCompanyId;
         return ResponseEntity.ok(userService.getUsersByCompany(targetCompanyId));
     }
