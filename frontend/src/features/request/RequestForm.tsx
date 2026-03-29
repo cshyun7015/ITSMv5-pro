@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { apiRequest } from '../../api/apiRequest';
 import { apiCommonCode, type CommonCode } from '../../api/apiCommonCode';
 import type { RequestItem } from '../../api/apiRequest';
@@ -91,132 +92,127 @@ const RequestForm: React.FC<Props> = ({ onClose, onSuccess }) => {
 
     return (
         <div className="modal-overlay animate-fade-in">
-            <div className="modal-content glass-card animate-scale-in" style={{ width: '800px', padding: '0' }}>
-                <header className="panel-header" style={{ padding: '24px 40px', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <motion.div 
+                initial={{ opacity: 0, scale: 0.9, y: 30 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                className="modal-content premium-card" 
+                style={{ width: '900px', padding: '0', background: 'rgba(10, 10, 12, 0.98)', backdropFilter: 'blur(30px)' }}
+            >
+                <header className="premium-header" style={{ padding: '32px 48px', borderBottom: '1px solid hsla(0,0%,100%,0.05)' }}>
                     <div>
-                        <span style={{ fontSize: '11px', color: 'var(--brand-primary)', fontWeight: 800, marginBottom: '4px', display: 'block' }}>NEW REQUEST</span>
-                        <h2 style={{ fontSize: '24px', fontWeight: 800 }}>신규 서비스 요청 등록</h2>
+                        <div className="hud-label" style={{ position: 'static', marginBottom: '8px' }}>NEW SERVICE EVALUATION</div>
+                        <h2 style={{ fontSize: '28px', fontWeight: 950, letterSpacing: '-1px' }}>신규 요청 매니페스트 작성</h2>
                     </div>
-                    <div style={{ display: 'flex', gap: '12px' }}>
+                    <div style={{ display: 'flex', gap: '16px' }}>
+                        <button type="button" className="btn-secondary" onClick={onClose} style={{ padding: '12px 24px' }}>목록으로</button>
                         <button 
-                            type="button"
-                            className="btn-secondary" 
-                            onClick={onClose}
-                            style={{ minWidth: '120px', height: '44px', padding: '0 32px', borderRadius: '12px', fontSize: '14px', fontWeight: 700 }}
-                        >
-                            목록
-                        </button>
-                        <button 
-                            type="button"
-                            className="btn-primary" 
+                            type="button" 
+                            className="auth-submit" 
                             onClick={(e) => handleSubmit(e as any)}
                             disabled={isSubmitting}
-                            style={{ minWidth: '120px', height: '44px', padding: '0 32px', borderRadius: '12px', fontSize: '14px', fontWeight: 700 }}
+                            style={{ width: 'auto', padding: '12px 40px' }}
                         >
-                            {isSubmitting ? '등록 중...' : '등록'}
+                            {isSubmitting ? 'ENGINEERING...' : '요청 배포'}
                         </button>
                     </div>
                 </header>
 
-                <form onSubmit={handleSubmit} style={{ padding: '40px' }}>
-                    <div className="form-group" style={{ marginBottom: '32px' }}>
-                        <label>요청 제목</label>
-                        <input 
-                            type="text"
-                            value={formData.title}
-                            onChange={e => setFormData({...formData, title: e.target.value})}
-                            placeholder="요청 내용의 핵심 요약을 입력하세요."
-                            required
-                            style={{ width: '100%', padding: '12px 16px', fontSize: '16px' }}
-                        />
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', marginBottom: '32px' }}>
-                        <div className="form-group">
-                            <label>요청 유형</label>
-                            <select 
-                                value={formData.srTypeCode}
-                                onChange={e => setFormData({...formData, srTypeCode: e.target.value})}
-                            >
-                                {codes.SR_TYPE.map(c => (
-                                    <option key={c.codeId} value={c.codeId}>{c.codeName}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className="form-group">
-                            <label>서비스 카테고리</label>
-                            <select 
-                                value={formData.srCategoryCode}
-                                onChange={e => setFormData({...formData, srCategoryCode: e.target.value})}
-                            >
-                                {codes.SR_CATEGORY.map(c => (
-                                    <option key={c.codeId} value={c.codeId}>{c.codeName}</option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '32px', marginBottom: '32px' }}>
-                        <div className="form-group">
-                            <label>영향도 (Impact)</label>
-                            <select 
-                                value={formData.srImpactCode}
-                                onChange={e => setFormData({...formData, srImpactCode: e.target.value})}
-                            >
-                                {codes.SR_IMPACT.map(c => (
-                                    <option key={c.codeId} value={c.codeId}>{c.codeName}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className="form-group">
-                            <label>긴급도 (Urgency)</label>
-                            <select 
-                                value={formData.srUrgencyCode}
-                                onChange={e => setFormData({...formData, srUrgencyCode: e.target.value})}
-                            >
-                                {codes.SR_URGENCY.map(c => (
-                                    <option key={c.codeId} value={c.codeId}>{c.codeName}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className="form-group">
-                            <label>계산된 우선순위</label>
-                            <div style={{ display: 'flex', alignItems: 'center', height: '48px' }}>
-                                <span className={`priority-badge ${formData.priority?.toLowerCase()}`} style={{ fontSize: '14px', width: '100%', textAlign: 'center', padding: '10px' }}>
-                                    {formData.priority}
-                                </span>
+                <div className="premium-scroll-area" style={{ padding: '48px', maxHeight: '70vh', overflowY: 'auto' }}>
+                    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '48px' }}>
+                        
+                        {/* Section 1: Core Identifiers */}
+                        <section>
+                            <div className="set-header">IDENTIFICATION</div>
+                            <div className="form-group full">
+                                <label>요청 제목 (MANIFEST TITLE)</label>
+                                <input 
+                                    type="text"
+                                    value={formData.title}
+                                    onChange={e => setFormData({...formData, title: e.target.value})}
+                                    placeholder="핵심 요약을 입력하세요."
+                                    required
+                                    className="premium-input-large"
+                                    style={{ width: '100%', fontSize: '18px', padding: '16px 24px' }}
+                                />
                             </div>
-                        </div>
-                    </div>
+                            <div className="content-grid-system" style={{ gridTemplateColumns: '1fr 1fr', marginTop: '24px', gap: '24px' }}>
+                                <div className="form-group">
+                                    <label>요청 유형</label>
+                                    <select value={formData.srTypeCode} onChange={e => setFormData({...formData, srTypeCode: e.target.value})}>
+                                        {codes.SR_TYPE.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    <label>서비스 카테고리</label>
+                                    <select value={formData.srCategoryCode} onChange={e => setFormData({...formData, srCategoryCode: e.target.value})}>
+                                        {codes.SR_CATEGORY.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
+                                    </select>
+                                </div>
+                            </div>
+                        </section>
 
-                    <div className="form-group">
-                        <label>상세 내용</label>
-                        <textarea 
-                            value={formData.description}
-                            onChange={e => setFormData({...formData, description: e.target.value})}
-                            placeholder="처리 전문가가 참고할 상세 내용을 입력하세요."
-                            required
-                            style={{ minHeight: '150px' }}
-                        />
-                    </div>
-                </form>
-            </div>
+                        {/* Section 2: Impact Analysis HUD */}
+                        <section className="logic-hud-panel" style={{ margin: '0', padding: '40px' }}>
+                            <div className="hud-label">SLA PRIORITY CALCULATION MATRIX</div>
+                            <div className="hud-content">
+                                <div className="hud-item editable">
+                                    <label>IMPACT</label>
+                                    <select 
+                                        value={formData.srImpactCode} 
+                                        onChange={e => setFormData({...formData, srImpactCode: e.target.value})}
+                                        style={{ background: 'transparent', border: 'none', textAlign: 'center', fontSize: '16px', fontWeight: 800, color: 'hsl(var(--brand-primary))' }}
+                                    >
+                                        {codes.SR_IMPACT.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
+                                    </select>
+                                </div>
+                                <div className="hud-operator">×</div>
+                                <div className="hud-item editable">
+                                    <label>URGENCY</label>
+                                    <select 
+                                        value={formData.srUrgencyCode} 
+                                        onChange={e => setFormData({...formData, srUrgencyCode: e.target.value})}
+                                        style={{ background: 'transparent', border: 'none', textAlign: 'center', fontSize: '16px', fontWeight: 800, color: 'hsl(var(--brand-primary))' }}
+                                    >
+                                        {codes.SR_URGENCY.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
+                                    </select>
+                                </div>
+                                <div className="hud-operator">=</div>
+                                <div className="hud-item">
+                                    <label>PRIORITY</label>
+                                    <motion.div 
+                                        key={formData.priority}
+                                        initial={{ scale: 0.8, opacity: 0 }}
+                                        animate={{ scale: 1.2, opacity: 1 }}
+                                        className={`hud-priority-badge ${formData.priority?.toLowerCase()}`}
+                                        style={{ fontSize: '18px' }}
+                                    >
+                                        {formData.priority}
+                                    </motion.div>
+                                </div>
+                            </div>
+                        </section>
 
-            <style>{`
-                .form-group label { font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 8px; display: block; }
-                .form-group select, .form-group input, .form-group textarea {
-                    width: 100%; padding: 12px 16px; background: rgba(255,255,255,0.05);
-                    border: 1px solid var(--glass-border); border-radius: 8px; color: white;
-                    font-size: 14px; transition: all 0.2s;
-                }
-                .form-group select:focus, .form-group input:focus, .form-group textarea:focus { border-color: hsl(var(--brand-primary)); background: rgba(255,255,255,0.08); outline: none; }
+                        {/* Section 3: Technical Details */}
+                        <section>
+                            <div className="set-header">TECHNICAL DETAILS</div>
+                            <div className="form-group full">
+                                <label>상세 분석 요구사항 (SPECIFICATIONS)</label>
+                                <textarea 
+                                    value={formData.description}
+                                    onChange={e => setFormData({...formData, description: e.target.value})}
+                                    placeholder="전문가가 인지해야 할 상세 내용을 입력하세요."
+                                    required
+                                    style={{ minHeight: '180px', width: '100%' }}
+                                />
+                            </div>
+                        </section>
+                    </form>
+                </div>
                 
-                .priority-badge { font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 4px; display: inline-block; }
-                .priority-badge.p1, .priority-badge.high { background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); }
-                .priority-badge.p2, .priority-badge.medium { background: rgba(245, 158, 11, 0.1); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.2); }
-                .priority-badge.p3, .priority-badge.low { background: rgba(59, 130, 246, 0.1); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2); }
-                .priority-badge.p4 { background: rgba(255, 255, 255, 0.05); color: #9ca3af; border: 1px solid rgba(255, 255, 255, 0.1); }
-            `}</style>
+                <footer style={{ padding: '24px 48px', borderTop: '1px solid hsla(0,0%,100%,0.05)', textAlign: 'right', opacity: 0.5, fontSize: '10px', fontWeight: 800, letterSpacing: '1px' }}>
+                    ITIL v5 COMPLIANT REQUEST MANAGEMENT ENGINE
+                </footer>
+            </motion.div>
         </div>
     );
 };

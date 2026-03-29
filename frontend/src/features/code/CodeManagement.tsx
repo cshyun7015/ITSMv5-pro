@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { apiCommonCode } from '../../api/apiCommonCode';
 import type { CodeGroup, CommonCode } from '../../api/apiCommonCode';
 import CodeGroupModal from './CodeGroupModal';
 import CodeModal from './CodeModal';
+import './CodeManagement.css';
 
 const CodeManagement: React.FC = () => {
     const [groups, setGroups] = useState<CodeGroup[]>([]);
@@ -81,48 +83,54 @@ const CodeManagement: React.FC = () => {
     const pagedGroups = groups.slice(groupPage * pageSize, (groupPage + 1) * pageSize);
 
     return (
-        <div className="code-feature" style={{ padding: '0 24px', display: 'flex', flexDirection: 'column', gap: '32px', minHeight: '100%', paddingBottom: '40px' }}>
+        <div className="code-mgmt-vertical-container animate-fade-in">
             
-            {/* Top Section: Code Groups */}
-            <div className="pillar glass-card" style={{ width: '100%', padding: '32px', display: 'flex', flexDirection: 'column' }}>
-                <header className="pillar-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                    <div>
-                        <h2 style={{ fontSize: '20px', fontWeight: 800 }}>코드 그룹</h2>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>성격 기반의 그룹 명명 체계</p>
+            {/* Top Section: Code Groups Architecture */}
+            <section className="management-section">
+                <header className="management-header">
+                    <div className="management-title-area">
+                        <p>SYSTEM ARCHITECTURE</p>
+                        <h2>공통 코드 그룹 관리</h2>
                     </div>
                     <button 
-                        className="btn-primary" 
+                        className="auth-submit" 
                         onClick={() => { setEditingGroup(undefined); setIsGroupModalOpen(true); }}
-                        style={{ minWidth: '120px', height: '44px', padding: '0 24px', borderRadius: '12px', fontSize: '13px', fontWeight: 700 }}
+                        style={{ width: 'auto', padding: '12px 32px' }}
                     >
-                        등록
+                        신규 그룹 마스터 등록
                     </button>
                 </header>
                 
-                <div className="pillar-body">
-                    <table className="mini-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <div className="premium-table-container">
+                    <table className="premium-mgmt-table">
                         <thead>
-                            <tr style={{ borderBottom: '1px solid var(--glass-border)' }}>
-                                <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: '11px', color: 'var(--text-secondary)' }}>그룹 ID</th>
-                                <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: '11px', color: 'var(--text-secondary)' }}>그룹명</th>
-                                <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: '11px', color: 'var(--text-secondary)' }}>설명</th>
-                                <th style={{ width: '120px', textAlign: 'center', padding: '12px 16px', fontSize: '11px', color: 'var(--text-secondary)' }}>Action</th>
+                            <tr>
+                                <th>IDENTITY</th>
+                                <th>GROUP NAME</th>
+                                <th>SPECIFICATION</th>
+                                <th style={{ width: '150px', textAlign: 'center' }}>CONTROL</th>
                             </tr>
                         </thead>
                         <tbody>
                             {pagedGroups.map(g => (
                                 <tr 
                                     key={g.groupId} 
-                                    className={`pillar-row ${selectedGroup?.groupId === g.groupId ? 'active' : ''}`}
+                                    className={`clickable ${selectedGroup?.groupId === g.groupId ? 'active' : ''}`}
                                     onClick={() => setSelectedGroup(g)}
-                                    style={{ cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.03)' }}
                                 >
-                                    <td style={{ padding: '14px 16px', fontSize: '14px', color: g.isSystem ? 'var(--brand-primary)' : 'white', fontWeight: 600 }}>{g.groupId}</td>
-                                    <td style={{ padding: '14px 16px', fontSize: '14px' }}>{g.name}</td>
-                                    <td style={{ padding: '14px 16px', fontSize: '13px', color: 'var(--text-secondary)' }}>{g.description || '-'}</td>
-                                    <td style={{ padding: '14px 16px', textAlign: 'center' }}>
-                                        <button className="btn-icon" onClick={(e) => { e.stopPropagation(); setEditingGroup(g); setIsGroupModalOpen(true); }} style={{marginRight: '12px'}}>✏️</button>
-                                        {!g.isSystem && <button className="btn-icon delete" onClick={(e) => { e.stopPropagation(); handleGroupDelete(g.groupId); }}>🗑️</button>}
+                                    <td>
+                                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                                            <span className="id-chip">{g.groupId}</span>
+                                            {g.isSystem && <span className="system-tag">SYSTEM</span>}
+                                        </div>
+                                    </td>
+                                    <td style={{ fontWeight: 800, fontSize: '15px' }}>{g.name}</td>
+                                    <td style={{ color: 'hsla(0, 0%, 100%, 0.4)', fontSize: '13px' }}>{g.description || 'No description available'}</td>
+                                    <td style={{ textAlign: 'center' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'center', gap: '8px' }}>
+                                            <button className="btn-stepper" onClick={(e) => { e.stopPropagation(); setEditingGroup(g); setIsGroupModalOpen(true); }}>✏️</button>
+                                            {!g.isSystem && <button className="btn-stepper" style={{ color: 'hsl(var(--status-high))' }} onClick={(e) => { e.stopPropagation(); handleGroupDelete(g.groupId); }}>🗑️</button>}
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
@@ -130,125 +138,111 @@ const CodeManagement: React.FC = () => {
                     </table>
                 </div>
 
-                {/* Footer (Pagination for Groups) */}
-                <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>전체 {groups.length}개 그룹</span>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                        <button disabled={groupPage === 0} onClick={() => setGroupPage(p => p - 1)} className="btn-mini">◀</button>
-                        <span style={{fontSize: '13px', fontWeight: 600}}>페이지 {groupPage + 1}</span>
-                        <button disabled={(groupPage + 1) * pageSize >= groups.length} onClick={() => setGroupPage(p => p + 1)} className="btn-mini">▶</button>
+                <div className="mgmt-footer">
+                    <div style={{ fontSize: '12px', fontWeight: 700, opacity: 0.5 }}>
+                        TOTAL {groups.length} CODE GROUPS INITIALIZED
+                    </div>
+                    <div className="pagination-nexus">
+                        <span style={{ fontSize: '13px', fontWeight: 800 }}>REGION {groupPage + 1} / {Math.ceil(groups.length / pageSize)}</span>
+                        <div className="page-stepper">
+                            <button disabled={groupPage === 0} onClick={() => setGroupPage(p => p - 1)} className="btn-stepper">◀</button>
+                            <button disabled={(groupPage + 1) * pageSize >= groups.length} onClick={() => setGroupPage(p => p + 1)} className="btn-stepper">▶</button>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </section>
 
-            {/* Bottom Section: Code Items (Linear List, No Paging) */}
-            <div className="pillar glass-card" style={{ width: '100%', padding: '32px', display: 'flex', flexDirection: 'column' }}>
-                <header className="pillar-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                    <div>
-                        <h2 style={{ fontSize: '20px', fontWeight: 800 }}>
-                            {selectedGroup ? `하위 코드 목록 [${selectedGroup.groupId}]` : '코드 그룹을 선택해 주세요'}
+            <div className="separator-line" />
+
+            {/* Bottom Section: Specific Code Items */}
+            <section className="management-section">
+                <header className="management-header">
+                    <div className="management-title-area">
+                        <p>DATA DICTIONARY</p>
+                        <h2>
+                            {selectedGroup ? `하위 코드 구성 [${selectedGroup.groupId}]` : '구성 요소를 선택하십시오'}
                         </h2>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>선택된 그룹에 속한 개별 코드 속성 관리 (전체 목록)</p>
                     </div>
                     {selectedGroup && (
                         <button 
-                            className="btn-primary" 
+                            className="auth-submit" 
                             onClick={() => { setEditingCode(undefined); setIsCodeModalOpen(true); }}
-                            style={{ minWidth: '120px', height: '44px', padding: '0 24px', borderRadius: '12px', fontSize: '13px', fontWeight: 700 }}
+                            style={{ width: 'auto', padding: '12px 32px' }}
                         >
-                            등록
+                            코드 라이브러리 추가
                         </button>
                     )}
                 </header>
                 
-                <div className="pillar-body">
+                <div className="premium-table-container">
                     {selectedGroup ? (
                         loading ? (
-                            <div className="loading-state">Syncing data...</div>
+                            <div className="loading-state">SYNCHRONIZING REPOSITORY...</div>
                         ) : (
-                            <table className="main-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+                            <table className="premium-mgmt-table">
                                 <thead>
-                                    <tr style={{ borderBottom: '1px solid var(--glass-border)' }}>
-                                        <th style={{ textAlign: 'left', padding: '12px 24px', fontSize: '11px', color: 'var(--text-secondary)' }}>순서</th>
-                                        <th style={{ textAlign: 'left', padding: '12px 24px', fontSize: '11px', color: 'var(--text-secondary)' }}>코드 ID</th>
-                                        <th style={{ textAlign: 'left', padding: '12px 24px', fontSize: '11px', color: 'var(--text-secondary)' }}>코드명 (표시 이름)</th>
-                                        <th style={{ textAlign: 'left', padding: '12px 24px', fontSize: '11px', color: 'var(--text-secondary)' }}>설명</th>
-                                        <th style={{ textAlign: 'left', padding: '12px 24px', fontSize: '11px', color: 'var(--text-secondary)' }}>상태</th>
-                                        <th style={{ width: '120px', textAlign: 'center', padding: '12px 24px', fontSize: '11px', color: 'var(--text-secondary)' }}>Action</th>
+                                    <tr>
+                                        <th style={{ width: '80px' }}>ORDER</th>
+                                        <th>CODE IDENTIFIER</th>
+                                        <th>DISPLAY NAME</th>
+                                        <th>ATTRIBUTES</th>
+                                        <th>STATUS</th>
+                                        <th style={{ width: '150px', textAlign: 'center' }}>CONTROL</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {codes.map(c => (
-                                        <tr key={c.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-                                            <td style={{ padding: '14px 24px', fontSize: '14px', color: 'var(--text-secondary)', fontWeight: 600 }}>{c.sortOrder}</td>
-                                            <td style={{ padding: '14px 24px', fontSize: '14px', color: 'hsl(var(--brand-primary))' }}>{c.codeId}</td>
-                                            <td style={{ padding: '14px 24px', fontSize: '14px', fontWeight: 600 }}>{c.codeName}</td>
-                                            <td style={{ padding: '14px 24px', fontSize: '13px', color: 'var(--text-secondary)' }}>{c.description || '-'}</td>
-                                            <td style={{ padding: '14px 24px' }}>
+                                        <tr key={c.id}>
+                                            <td style={{ fontFamily: 'JetBrains Mono', opacity: 0.5 }}>{c.sortOrder.toString().padStart(2, '0')}</td>
+                                            <td><span className="id-chip" style={{ background: 'hsla(var(--brand-secondary), 0.1)', color: 'hsl(var(--brand-secondary))' }}>{c.codeId}</span></td>
+                                            <td style={{ fontWeight: 800 }}>{c.codeName}</td>
+                                            <td style={{ fontSize: '13px', opacity: 0.6 }}>{c.description || '-'}</td>
+                                            <td>
                                                 <span className={`status-badge ${c.isActive ? 'active' : 'inactive'}`}>
-                                                    {c.isActive ? 'ACTIVE' : 'INACTIVE'}
+                                                    {c.isActive ? 'OPERATIONAL' : 'DECOMMISSIONED'}
                                                 </span>
                                             </td>
-                                            <td style={{ padding: '14px 24px', textAlign: 'center' }}>
-                                                <button className="btn-icon" onClick={() => { setEditingCode(c); setIsCodeModalOpen(true); }} style={{ marginRight: '16px' }}>✏️</button>
-                                                <button className="btn-icon delete" onClick={() => handleCodeDelete(c.id!)}>🗑️</button>
+                                            <td style={{ textAlign: 'center' }}>
+                                                <div style={{ display: 'flex', justifyContent: 'center', gap: '8px' }}>
+                                                    <button className="btn-stepper" onClick={() => { setEditingCode(c); setIsCodeModalOpen(true); }}>✏️</button>
+                                                    <button className="btn-stepper" style={{ color: 'hsl(var(--status-high))' }} onClick={() => handleCodeDelete(c.id!)}>🗑️</button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
                                     {codes.length === 0 && (
-                                        <tr><td colSpan={6} style={{ textAlign: 'center', padding: '80px', color: 'var(--text-secondary)', fontStyle: 'italic' }}>정의된 하위 코드가 없습니다.</td></tr>
+                                        <tr><td colSpan={6} style={{ textAlign: 'center', padding: '100px', opacity: 0.3, fontStyle: 'italic' }}>데이터가 존재하지 않습니다.</td></tr>
                                     )}
                                 </tbody>
                             </table>
                         )
                     ) : (
-                        <div className="empty-state" style={{ height: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', background: 'rgba(0,0,0,0.1)', borderRadius: '12px' }}>
-                            상단 그룹 목록에서 조회하거나 편집할 그룹을 선택해 주세요.
+                        <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.2, fontWeight: 900, fontSize: '20px', letterSpacing: '4px' }}>
+                            AWAITING SOURCE SELECTION
                         </div>
                     )}
                 </div>
+            </section>
 
-                {/* Footer (No Paging, just Total Count) */}
-                {selectedGroup && (
-                    <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
-                        <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>전체 {codes.length}개 항목 조회됨 (페이징 미적용)</span>
-                    </div>
+            <AnimatePresence>
+                {isGroupModalOpen && (
+                    <CodeGroupModal 
+                        isOpen={isGroupModalOpen} 
+                        onClose={() => setIsGroupModalOpen(false)} 
+                        onSaved={loadGroups} 
+                        initialData={editingGroup}
+                    />
                 )}
-            </div>
-
-            {isGroupModalOpen && (
-                <CodeGroupModal 
-                    isOpen={isGroupModalOpen} 
-                    onClose={() => setIsGroupModalOpen(false)} 
-                    onSaved={loadGroups} 
-                    initialData={editingGroup}
-                />
-            )}
-            {isCodeModalOpen && selectedGroup && (
-                <CodeModal 
-                    isOpen={isCodeModalOpen} 
-                    onClose={() => setIsCodeModalOpen(false)} 
-                    onSaved={() => loadCodes(selectedGroup.groupId)} 
-                    groupId={selectedGroup.groupId}
-                    initialData={editingCode}
-                />
-            )}
-
-            <style>{`
-                .btn-icon { background: none; border: none; cursor: pointer; font-size: 16px; filter: grayscale(1); opacity: 0.6; transition: all 0.2s; }
-                .btn-icon:hover { opacity: 1; filter: none; transform: scale(1.2); }
-                .pillar-row:hover { background: hsla(0, 0%, 100%, 0.05); }
-                .pillar-row.active { background: hsla(var(--brand-primary), 0.1); border-left: 4px solid hsl(var(--brand-primary)); }
-                .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 800; border: 1px solid transparent; }
-                .status-badge.active { background: rgba(0, 255, 136, 0.1); color: #00ff88; border-color: rgba(0, 255, 136, 0.2); }
-                .status-badge.inactive { background: rgba(255, 85, 85, 0.1); color: #ff5555; border-color: rgba(255, 85, 85, 0.2); }
-                .btn-mini { background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: white; padding: 4px 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
-                .btn-mini:hover:not(:disabled) { background: rgba(255,255,255,0.1); border-color: white; }
-                .btn-mini:disabled { opacity: 0.3; cursor: not-allowed; }
-                .btn-primary { background: linear-gradient(135deg, hsl(var(--brand-primary)), hsl(var(--brand-secondary))); border: none; color: white; cursor: pointer; transition: all 0.2s; }
-                .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
-                .loading-state { height: 200px; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); letter-spacing: 2px; }
-            `}</style>
+                {isCodeModalOpen && selectedGroup && (
+                    <CodeModal 
+                        isOpen={isCodeModalOpen} 
+                        onClose={() => setIsCodeModalOpen(false)} 
+                        onSaved={() => loadCodes(selectedGroup.groupId)} 
+                        groupId={selectedGroup.groupId}
+                        initialData={editingCode}
+                    />
+                )}
+            </AnimatePresence>
         </div>
     );
 };
