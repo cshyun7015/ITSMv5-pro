@@ -6,6 +6,14 @@ import react from '@vitejs/plugin-react'
 // @ts-expect-error - Vite and Vitest types mismatch due to multiple versions in the tree
 export default defineConfig({
   plugins: [react()],
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true
+      }
+    }
+  },
   test: {
     globals: true,
     environment: 'jsdom',

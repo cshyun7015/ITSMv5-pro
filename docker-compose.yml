@@ -118,6 +118,23 @@ services:
     networks:
       - itsm-network
 
+  # Backend: Event Management Service
+  event-service:
+    build:
+      context: ./backend-event
+      dockerfile: Dockerfile
+    container_name: event-service
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://itsm-db:3306/event_mgmt
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=itsmpass
+      - TZ=Asia/Seoul
+    depends_on:
+      itsm-db:
+        condition: service_healthy
+    networks:
+      - itsm-network
+
   # E2E Test: Dedicated Playwright container
   itsm-test-e2e:
     image: mcr.microsoft.com/playwright:v1.45.0-noble

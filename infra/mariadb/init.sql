@@ -7,7 +7,9 @@ GRANT ALL PRIVILEGES ON itsm_common.* TO 'root'@'%';
 
 -- Request Management Service Schema
 CREATE DATABASE IF NOT EXISTS request_mgmt;
+GRANT ALL PRIVILEGES ON request_mgmt.* TO 'root'@'%';
 USE request_mgmt;
+
 
 CREATE TABLE IF NOT EXISTS requests (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -45,9 +47,37 @@ CREATE TABLE IF NOT EXISTS request_comments (
 
 -- System Administration Service Schema
 CREATE DATABASE IF NOT EXISTS system_mgmt;
+GRANT ALL PRIVILEGES ON system_mgmt.* TO 'root'@'%';
+USE system_mgmt;
+
+
+FLUSH PRIVILEGES;
+
+-- Event Management Service Schema
+CREATE DATABASE IF NOT EXISTS event_mgmt;
+GRANT ALL PRIVILEGES ON event_mgmt.* TO 'root'@'%';
+USE event_mgmt;
+
+CREATE TABLE IF NOT EXISTS events (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    event_number VARCHAR(50) NOT NULL UNIQUE,
+    company_id VARCHAR(50) NOT NULL,
+    source_code VARCHAR(50) NOT NULL,
+    node VARCHAR(200),
+    severity_code VARCHAR(50) NOT NULL,
+    message TEXT NOT NULL,
+    status_code VARCHAR(50) DEFAULT 'NEW',
+    related_request_id VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_evt_company (company_id),
+    INDEX idx_evt_status (status_code)
+);
+
 USE system_mgmt;
 
 FLUSH PRIVILEGES;
+
 
 -- Code Groups (Header)
 CREATE TABLE IF NOT EXISTS code_groups (
@@ -127,7 +157,10 @@ INSERT INTO code_groups (group_id, name, description, is_system) VALUES
 ('SR_IMPACT', '영향도', '비즈니스 영향 범위', 1),
 ('SR_URGENCY', '긴급도', '처리 시급성', 1),
 ('SR_RESOLUTION', '해결 구분', '해결 처리 코드', 1),
-('SR_SOURCE', '접수 경로', '요청 유입 경로', 1);
+('SR_SOURCE', '접수 경로', '요청 유입 경로', 1),
+('EV_STATUS', '이벤트 상태', '이벤트 처리 상태', 1),
+('EV_SOURCE', '이벤트 발생처', '이벤트 발생 시스템', 1),
+('EV_SEVERITY', '이벤트 심각도', '이벤트 심각도', 1);
 
 -- Seed Data: Common Codes
 INSERT INTO common_codes (group_id, code_id, code_name, sort_order, is_active) VALUES 
@@ -179,4 +212,24 @@ INSERT INTO common_codes (group_id, code_id, code_name, sort_order, is_active) V
 ('SR_SOURCE', 'PORTAL', 'Self-Service Portal', 10, 1),
 ('SR_SOURCE', 'EMAIL', 'Email', 20, 1),
 ('SR_SOURCE', 'PHONE', 'Phone', 30, 1),
-('SR_SOURCE', 'DIRECT', 'Direct Walk-in', 40, 1);
+('SR_SOURCE', 'DIRECT', 'Direct Walk-in', 40, 1),
+
+-- Event Status
+('EV_STATUS', 'NEW', '신규', 10, 1),
+('EV_STATUS', 'ACKNOWLEDGED', '인지됨', 20, 1),
+('EV_STATUS', 'SUPPRESSED', '억제됨', 30, 1),
+('EV_STATUS', 'PROMOTED', '장애 승격', 40, 1),
+('EV_STATUS', 'RESOLVED', '해결됨', 50, 1),
+
+-- Event Source
+('EV_SOURCE', 'DATADOG', 'Datadog', 10, 1),
+('EV_SOURCE', 'ZABBIX', 'Zabbix', 20, 1),
+('EV_SOURCE', 'PRM_GRF', 'Prometheus/Grafana', 30, 1),
+('EV_SOURCE', 'AWS_CW', 'AWS CloudWatch', 40, 1),
+
+-- Event Severity
+('EV_SEVERITY', 'INFO', '정보', 10, 1),
+('EV_SEVERITY', 'WARNING', '경고', 20, 1),
+('EV_SEVERITY', 'CRITICAL', '심각', 30, 1),
+('EV_SEVERITY', 'ERROR', '에러', 40, 1);
+

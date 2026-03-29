@@ -1,0 +1,33 @@
+# --- OS 전용 파일 ---
+.DS_Store           # macOS
+Thumbs.db           # Windows
+desktop.ini         # Windows
+
+# --- 빌드 및 배포 결과물 ---
+node_modules/       # Node.js 패키지
+dist/               # 빌드 결과물
+build/              # 빌드 결과물
+out/                # 컴파일 출력물
+*.exe
+*.dll
+*.so
+.gradle/
+
+# --- 로그 및 임시 파일 ---
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+tmp/
+temp/
+
+# --- 환경 설정 및 비밀번호 (중요!) ---
+.env                # 환경 변수 파일
+.env.local
+*.pem               # 인증키
+*.key
+
+# --- IDE(에디터) 설정 ---
+.vscode/            # VS Code 설정
+.idea/              # IntelliJ, WebStorm 등
+*.swp               # Vim 임시 파일

@@ -3,6 +3,7 @@ import CompanyList from './features/company/CompanyList';
 import UserList from './features/user/UserList';
 import CodeManagement from './features/code/CodeManagement';
 import RequestList from './features/request/RequestList';
+import EventManagement from './features/event/EventManagement';
 import Dashboard from './features/dashboard/Dashboard';
 import { AuthProvider, useAuth } from './features/auth/AuthProvider';
 import ProtectedRoute from './components/common/ProtectedRoute';
@@ -47,6 +48,12 @@ function AppContent() {
             onClick={() => setCurrentView('dashboard')}
           >
             대시보드
+          </div>
+          <div 
+            className={`nav-item ${currentView === 'events' ? 'active' : ''}`}
+            onClick={() => setCurrentView('events')}
+          >
+            이벤트 관리
           </div>
           <div 
             className={`nav-item ${currentView === 'requests' ? 'active' : ''}`}
@@ -95,7 +102,7 @@ function AppContent() {
       </aside>
 
       <main className="main-content">
-        {currentView !== 'requests' && currentView !== 'dashboard' && currentView !== 'companies' && currentView !== 'users' && currentView !== 'codes' && (
+        {currentView !== 'requests' && currentView !== 'events' && currentView !== 'dashboard' && currentView !== 'companies' && currentView !== 'users' && currentView !== 'codes' && (
           <header className="page-header">
             <h1 className="text-gradient">
               {currentView === 'companies' ? '고객사 관리' : 
@@ -116,7 +123,8 @@ function AppContent() {
           {currentView === 'companies' ? <CompanyList /> : 
            currentView === 'users' ? <UserList /> : 
             currentView === 'codes' ? <CodeManagement /> : 
-            currentView === 'requests' ? <RequestList /> : (
+            currentView === 'requests' ? <RequestList /> : 
+            currentView === 'events' ? <EventManagement /> : (
               <Dashboard />
             )}
         </div>
