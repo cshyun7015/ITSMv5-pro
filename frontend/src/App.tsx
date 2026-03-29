@@ -86,7 +86,10 @@ function AppContent() {
           <div className="avatar">{user?.name.substring(0,2).toUpperCase()}</div>
           <div className="info">
             <span className="name">{user?.name}</span>
-            <span className="role">{user?.role} ({user?.companyId})</span>
+            <span className="role">
+               {user?.role !== 'ROLE_USER' && <span style={{ marginRight: '4px' }}>{user?.role}</span>}
+               ({user?.companyId === 'TEST-COMP-1' ? '고객사1' : (user?.companyId === 'TEST-COMP-2' ? '고객사2' : (user?.companyId === 'MSP' ? '운영사' : user?.companyId))})
+            </span>
           </div>
         </div>
       </aside>

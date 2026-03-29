@@ -17,6 +17,12 @@ public class RequestDTO {
     private String description;
     private String status;
     private String priority;
+    private String srTypeCode;
+    private String srCategoryCode;
+    private String srImpactCode;
+    private String srUrgencyCode;
+    private String srResolutionCode;
+    private String resolutionText;
     private String requesterId;
     private String assigneeId;
     private String serviceId;

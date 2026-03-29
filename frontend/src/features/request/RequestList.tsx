@@ -72,14 +72,14 @@ const RequestList: React.FC = () => {
             <div className="request-list-panel glass-card">
                 <header className="panel-header">
                     <div>
-                        <h2>Service Requests</h2>
-                        <p>Track and manage support tickets and service requests.</p>
+                        <h2>요청 관리</h2>
+                        <p>지원 티켓 및 서비스 요청을 추적하고 관리합니다.</p>
                     </div>
                     <button 
                         onClick={() => setIsFormOpen(true)}
                         className="btn-primary"
                     >
-                        + New Request
+                        요청 등록
                     </button>
                 </header>
 
@@ -87,12 +87,12 @@ const RequestList: React.FC = () => {
                     <table className="data-table">
                         <thead>
                             <tr>
-                                <th>Number</th>
-                                <th>Title</th>
-                                <th>Priority</th>
-                                <th>Status</th>
-                                <th>SLA Target</th>
-                                <th style={{ textAlign: 'right' }}>Created</th>
+                                <th>번호</th>
+                                <th>제목</th>
+                                <th>우선순위</th>
+                                <th>상태</th>
+                                <th>SLA 목표</th>
+                                <th style={{ textAlign: 'right' }}>생성일</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -136,7 +136,7 @@ const RequestList: React.FC = () => {
                             {requests.length === 0 && (
                                 <tr>
                                     <td colSpan={6} style={{ padding: '60px', textAlign: 'center', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
-                                        No service requests found.
+                                        등록된 요청이 없습니다.
                                     </td>
                                 </tr>
                             )}

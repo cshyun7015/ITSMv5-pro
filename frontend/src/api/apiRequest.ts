@@ -10,6 +10,12 @@ export interface RequestItem {
     description: string;
     status: string;
     priority: string;
+    srTypeCode: string;
+    srCategoryCode: string;
+    srImpactCode: string;
+    srUrgencyCode: string;
+    srResolutionCode?: string;
+    resolutionText?: string;
     requesterId: string;
     assigneeId?: string;
     serviceId?: string;

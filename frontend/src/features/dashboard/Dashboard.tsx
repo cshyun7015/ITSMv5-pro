@@ -49,9 +49,8 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     fetchStats();
-    if (isAdmin) {
-      apiCompany.list().then(setCompanies).catch(console.error);
-    }
+    // Fetch companies for all roles to ensure name mapping (even for non-admins)
+    apiCompany.list().then(setCompanies).catch(console.error);
   }, []);
 
   const handleSearch = () => {
@@ -61,11 +60,19 @@ const Dashboard: React.FC = () => {
   if (loading) return <div className="loading-state">Syncing Dashboard Analytics...</div>;
   if (!summary) return <div className="error-state">Failed to load dashboard data.</div>;
 
-  const pieData = Object.entries(summary.statusDistribution)
-    .filter(([_, value]) => (value as number) > 0)
-    .map(([key, value]) => ({ name: key, value }));
+  // Helper to get specialized pie data in specific order and localized
+  const statusOrder = ['OPEN', 'RESOLVED'];
+  const statusTranslations: Record<string, string> = {
+    'OPEN': '진행중',
+    'RESOLVED': '해결됨'
+  };
 
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
+  const pieData = statusOrder.map(key => ({
+    name: statusTranslations[key] || key,
+    value: (summary.statusDistribution as any)[key] || 0
+  })).filter(d => d.value >= 0); // Keep zeros to maintain order in legend if desired, or skip
+
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
   return (
     <div className="dashboard-root">
@@ -112,7 +119,7 @@ const Dashboard: React.FC = () => {
             </select>
           ) : (
             <div className="company-badge">
-              {user?.companyId} (고정)
+              {companies.find(c => c.companyId === user?.companyId)?.name || user?.companyId}
             </div>
           )}
         </div>
@@ -131,7 +138,7 @@ const Dashboard: React.FC = () => {
         {isAdmin && (
           <>
             <div className="metric-card glass-card">
-              <span className="label">Total Managed Companies</span>
+              <span className="label">Managed Companies</span>
               <span className="value">{summary.companyCount}</span>
             </div>
             <div className="metric-card glass-card">
@@ -141,15 +148,15 @@ const Dashboard: React.FC = () => {
           </>
         )}
         <div className="metric-card glass-card highlight">
-          <span className="label">Service Requests (Total)</span>
+          <span className="label">전체 요청 건수</span>
           <span className="value">{summary.totalRequests}</span>
         </div>
         <div className="metric-card glass-card">
-          <span className="label">Created Today</span>
+          <span className="label">금일 생성 건수</span>
           <span className="value accent">{summary.createdToday}</span>
         </div>
         <div className="metric-card glass-card">
-          <span className="label">Resolved Today</span>
+          <span className="label">금일 해결 건수</span>
           <span className="value success">{summary.closedToday}</span>
         </div>
       </div>
@@ -157,11 +164,11 @@ const Dashboard: React.FC = () => {
       <div className="chart-grid">
         {/* Status Distribution */}
         <div className="chart-container glass-card">
-          <h3>Request Status Distribution</h3>
+          <h3>요청 상태별 분포</h3>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
-                data={pieData}
+                data={pieData.filter(d => d.value > 0)}
                 cx="50%"
                 cy="50%"
                 innerRadius={60}
@@ -169,25 +176,45 @@ const Dashboard: React.FC = () => {
                 paddingAngle={5}
                 dataKey="value"
               >
-                {pieData.map((_entry, index) => (
+                {pieData.filter(d => d.value > 0).map((_entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: 'rgba(21, 21, 24, 0.95)', 
+                  border: '1px solid var(--glass-border)', 
+                  borderRadius: '12px',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+                  color: 'white'
+                }} 
+                itemStyle={{ color: 'white' }} 
+              />
               <Legend verticalAlign="bottom" height={36}/>
             </PieChart>
           </ResponsiveContainer>
         </div>
 
-        {/* Priority Stats placeholder */}
+        {/* Request Trends */}
         <div className="chart-container glass-card">
-          <h3>Request Trends</h3>
+          <h3>요청 추이</h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={pieData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#444" />
               <XAxis dataKey="name" stroke="#888" />
               <YAxis stroke="#888" />
-              <Tooltip />
+              <Tooltip 
+                cursor={false}
+                contentStyle={{ 
+                  backgroundColor: 'rgba(21, 21, 24, 0.95)', 
+                  border: '1px solid var(--glass-border)', 
+                  borderRadius: '12px',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+                  color: 'white'
+                }} 
+                itemStyle={{ color: 'white' }} 
+                formatter={(value: any) => [`${value} 건`, '요청 건수']}
+              />
               <Bar dataKey="value" fill="#8884d8" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>

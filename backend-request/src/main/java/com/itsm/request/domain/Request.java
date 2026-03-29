@@ -39,6 +39,24 @@ public class Request {
     @Column(name = "priority", length = 50)
     private String priority;
 
+    @Column(name = "sr_type_code", length = 50)
+    private String srTypeCode;
+
+    @Column(name = "sr_category_code", length = 50)
+    private String srCategoryCode;
+
+    @Column(name = "sr_impact_code", length = 50)
+    private String srImpactCode;
+
+    @Column(name = "sr_urgency_code", length = 50)
+    private String srUrgencyCode;
+
+    @Column(name = "sr_resolution_code", length = 50)
+    private String srResolutionCode;
+
+    @Column(name = "resolution_text", columnDefinition = "TEXT")
+    private String resolutionText;
+
     @Column(name = "requester_id", nullable = false, length = 50)
     private String requesterId;
 

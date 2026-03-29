@@ -16,7 +16,13 @@ CREATE TABLE IF NOT EXISTS requests (
     title VARCHAR(200) NOT NULL,
     description TEXT,
     status VARCHAR(50) DEFAULT 'OPEN',
-    priority VARCHAR(50) DEFAULT 'MEDIUM',
+    priority VARCHAR(50) DEFAULT 'P3',
+    sr_type_code VARCHAR(50),
+    sr_category_code VARCHAR(50),
+    sr_impact_code VARCHAR(50),
+    sr_urgency_code VARCHAR(50),
+    sr_resolution_code VARCHAR(50),
+    resolution_text TEXT,
     requester_id VARCHAR(50) NOT NULL,
     assignee_id VARCHAR(50),
     service_id VARCHAR(50),
@@ -101,8 +107,8 @@ CREATE TABLE IF NOT EXISTS users (
 -- Seed Data: MSP Company & Default Users
 INSERT INTO companies (company_id, name, status) 
 VALUES ('MSP', 'MSP(삭제불가)', 'ACTIVE'),
-('TEST-COMP-1', 'TEST-COMP-1', 'ACTIVE'),
-('TEST-COMP-2', 'TEST-COMP-2', 'ACTIVE');
+('TEST-COMP-1', '고객사1', 'ACTIVE'),
+('TEST-COMP-2', '고객사2', 'ACTIVE');
 
 INSERT INTO users (user_id, password, name, email, role, company_id)
 VALUES 
@@ -114,33 +120,60 @@ VALUES
 
 -- Seed Data: Common Code Groups
 INSERT INTO code_groups (group_id, name, description, is_system) VALUES 
-('SR_STATUS', 'Service Request Status', 'Status lifecycle for service requests', 1),
-('SR_PRIORITY', 'Service Request Priority', 'Priority levels for classification', 1),
-('SR_TYPE', 'Service Request Type', 'Nature of the request', 1),
-('SR_SOURCE', 'Request Source', 'Channel through which request was received', 1);
+('SR_STATUS', '요청 상태', '서비스 요청 처리 상태', 1),
+('SR_PRIORITY', '우선순위', '우선순위 등급 (P1~P4)', 1),
+('SR_TYPE', '요청 유형', '요청의 성격 (장애, 서비스요청 등)', 1),
+('SR_CATEGORY', '서비스 카테고리', '기술 분류 (H/W, S/W 등)', 1),
+('SR_IMPACT', '영향도', '비즈니스 영향 범위', 1),
+('SR_URGENCY', '긴급도', '처리 시급성', 1),
+('SR_RESOLUTION', '해결 구분', '해결 처리 코드', 1),
+('SR_SOURCE', '접수 경로', '요청 유입 경로', 1);
 
 -- Seed Data: Common Codes
 INSERT INTO common_codes (group_id, code_id, code_name, sort_order, is_active) VALUES 
 -- Status
-('SR_STATUS', 'OPEN', 'Open', 10, 1),
-('SR_STATUS', 'ASSIGNED', 'Assigned', 20, 1),
-('SR_STATUS', 'IN_PROGRESS', 'In Progress', 30, 1),
-('SR_STATUS', 'PENDING', 'Pending', 40, 1),
-('SR_STATUS', 'RESOLVED', 'Resolved', 50, 1),
-('SR_STATUS', 'CLOSED', 'Closed', 60, 1),
-('SR_STATUS', 'CANCELLED', 'Cancelled', 70, 1),
+('SR_STATUS', 'OPEN', '접수됨', 10, 1),
+('SR_STATUS', 'ASSIGNED', '배정됨', 20, 1),
+('SR_STATUS', 'IN_PROGRESS', '처리중', 30, 1),
+('SR_STATUS', 'PENDING', '보류됨', 40, 1),
+('SR_STATUS', 'RESOLVED', '해결됨', 50, 1),
+('SR_STATUS', 'CLOSED', '완료됨', 60, 1),
+('SR_STATUS', 'CANCELLED', '취소됨', 70, 1),
 
 -- Priority
-('SR_PRIORITY', 'P1', 'Critical', 10, 1),
-('SR_PRIORITY', 'P2', 'High', 20, 1),
-('SR_PRIORITY', 'P3', 'Medium', 30, 1),
-('SR_PRIORITY', 'P4', 'Low', 40, 1),
+('SR_PRIORITY', 'P1', 'Critical (P1)', 10, 1),
+('SR_PRIORITY', 'P2', 'High (P2)', 20, 1),
+('SR_PRIORITY', 'P3', 'Medium (P3)', 30, 1),
+('SR_PRIORITY', 'P4', 'Low (P4)', 40, 1),
 
 -- Type
-('SR_TYPE', 'ACCESS', 'Access Request', 10, 1),
-('SR_TYPE', 'HARDWARE', 'Hardware Request', 20, 1),
-('SR_TYPE', 'SOFTWARE', 'Software Request', 30, 1),
-('SR_TYPE', 'GENERAL', 'General Inquiry', 40, 1),
+('SR_TYPE', 'INCIDENT', '장애', 10, 1),
+('SR_TYPE', 'SERVICE_REQUEST', '서비스 요청', 20, 1),
+('SR_TYPE', 'CHANGE', '변경 요청', 30, 1),
+('SR_TYPE', 'INQUIRY', '단순 문의', 40, 1),
+
+-- Category
+('SR_CATEGORY', 'HARDWARE', '하드웨어', 10, 1),
+('SR_CATEGORY', 'SOFTWARE', '소프트웨어', 20, 1),
+('SR_CATEGORY', 'NETWORK', '네트워크/통신', 30, 1),
+('SR_CATEGORY', 'ACCOUNT', '계정/권한', 40, 1),
+('SR_CATEGORY', 'ADMIN', '일반 행정 지원', 50, 1),
+
+-- Impact (3x3 Matrix basis)
+('SR_IMPACT', 'HIGH', '높음', 10, 1),
+('SR_IMPACT', 'MEDIUM', '중간', 20, 1),
+('SR_IMPACT', 'LOW', '낮음', 30, 1),
+
+-- Urgency (3x3 Matrix basis)
+('SR_URGENCY', 'HIGH', '높음', 10, 1),
+('SR_URGENCY', 'MEDIUM', '중간', 20, 1),
+('SR_URGENCY', 'LOW', '낮음', 30, 1),
+
+-- Resolution
+('SR_RESOLUTION', 'FIXED', '조치 완료', 10, 1),
+('SR_RESOLUTION', 'WORKAROUND', '임시 조치', 20, 1),
+('SR_RESOLUTION', 'VOID', '거부/오접수', 30, 1),
+('SR_RESOLUTION', 'USER_CLOSED', '사용자 취소', 40, 1),
 
 -- Source
 ('SR_SOURCE', 'PORTAL', 'Self-Service Portal', 10, 1),

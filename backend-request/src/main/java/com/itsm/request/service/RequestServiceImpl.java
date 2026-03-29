@@ -15,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Random;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,6 +28,7 @@ public class RequestServiceImpl implements RequestService {
     @Transactional
     public RequestDTO createRequest(RequestDTO dto) {
         String reqNumber = generateRequestNumber();
+        String priority = calculatePriority(dto.getSrImpactCode(), dto.getSrUrgencyCode());
         
         Request request = Request.builder()
                 .reqNumber(reqNumber)
@@ -36,7 +36,11 @@ public class RequestServiceImpl implements RequestService {
                 .title(dto.getTitle())
                 .description(dto.getDescription())
                 .status("OPEN")
-                .priority(dto.getPriority() != null ? dto.getPriority() : "MEDIUM")
+                .priority(priority)
+                .srTypeCode(dto.getSrTypeCode())
+                .srCategoryCode(dto.getSrCategoryCode())
+                .srImpactCode(dto.getSrImpactCode())
+                .srUrgencyCode(dto.getSrUrgencyCode())
                 .requesterId(dto.getRequesterId())
                 .slaTargetAt(dto.getSlaTargetAt() != null ? dto.getSlaTargetAt() : LocalDateTime.now().plusHours(4))
                 .build();
@@ -47,6 +51,11 @@ public class RequestServiceImpl implements RequestService {
     @Override
     @Transactional(readOnly = true)
     public List<RequestDTO> getRequestsByCompany(String companyId) {
+        if ("MSP".equals(companyId)) {
+            return requestRepository.findAllByOrderByCreatedAtDesc().stream()
+                    .map(this::convertToDTO)
+                    .collect(Collectors.toList());
+        }
         return requestRepository.findByCompanyIdOrderByCreatedAtDesc(companyId).stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -69,7 +78,16 @@ public class RequestServiceImpl implements RequestService {
         request.setTitle(dto.getTitle());
         request.setDescription(dto.getDescription());
         request.setStatus(dto.getStatus());
-        request.setPriority(dto.getPriority());
+        
+        // Priority can be re-calculated if impact/urgency changed
+        request.setSrImpactCode(dto.getSrImpactCode());
+        request.setSrUrgencyCode(dto.getSrUrgencyCode());
+        request.setPriority(calculatePriority(dto.getSrImpactCode(), dto.getSrUrgencyCode()));
+        
+        request.setSrTypeCode(dto.getSrTypeCode());
+        request.setSrCategoryCode(dto.getSrCategoryCode());
+        request.setSrResolutionCode(dto.getSrResolutionCode());
+        request.setResolutionText(dto.getResolutionText());
         request.setAssigneeId(dto.getAssigneeId());
         
         return convertToDTO(requestRepository.save(request));
@@ -106,9 +124,38 @@ public class RequestServiceImpl implements RequestService {
     }
 
     private String generateRequestNumber() {
-        String datePart = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-        int randomPart = new Random().nextInt(9000) + 1000;
-        return "REQ-" + datePart + "-" + randomPart;
+        String prefix = "SR-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMM")) + "-";
+        Request lastRequest = requestRepository.findTopByReqNumberStartingWithOrderByReqNumberDesc(prefix);
+        
+        int nextSeq = 1;
+        if (lastRequest != null) {
+            String lastNumStr = lastRequest.getReqNumber().substring(prefix.length());
+            try {
+                nextSeq = Integer.parseInt(lastNumStr) + 1;
+            } catch (NumberFormatException e) {
+                nextSeq = 1;
+            }
+        }
+        
+        return prefix + String.format("%05d", nextSeq);
+    }
+
+    private String calculatePriority(String impact, String urgency) {
+        if (impact == null || urgency == null) return "P3";
+        
+        // ITIL 3x3 Matrix
+        if ("HIGH".equals(impact)) {
+            if ("HIGH".equals(urgency)) return "P1";
+            if ("MEDIUM".equals(urgency)) return "P2";
+            return "P3";
+        } else if ("MEDIUM".equals(impact)) {
+            if ("HIGH".equals(urgency)) return "P2";
+            if ("MEDIUM".equals(urgency)) return "P3";
+            return "P4";
+        } else { // LOW Impact
+            if ("HIGH".equals(urgency)) return "P3";
+            return "P4";
+        }
     }
 
     private RequestDTO convertToDTO(Request req) {
@@ -120,6 +167,12 @@ public class RequestServiceImpl implements RequestService {
                 .description(req.getDescription())
                 .status(req.getStatus())
                 .priority(req.getPriority())
+                .srTypeCode(req.getSrTypeCode())
+                .srCategoryCode(req.getSrCategoryCode())
+                .srImpactCode(req.getSrImpactCode())
+                .srUrgencyCode(req.getSrUrgencyCode())
+                .srResolutionCode(req.getSrResolutionCode())
+                .resolutionText(req.getResolutionText())
                 .requesterId(req.getRequesterId())
                 .assigneeId(req.getAssigneeId())
                 .serviceId(req.getServiceId())

@@ -10,6 +10,9 @@ import java.util.List;
 public interface RequestRepository extends JpaRepository<Request, Long> {
     List<Request> findByCompanyId(String companyId);
     List<Request> findByCompanyIdOrderByCreatedAtDesc(String companyId);
+    List<Request> findAllByOrderByCreatedAtDesc();
+    
+    Request findTopByReqNumberStartingWithOrderByReqNumberDesc(String prefix);
     
     long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
     long countByCompanyIdAndCreatedAtBetween(String companyId, LocalDateTime start, LocalDateTime end);
