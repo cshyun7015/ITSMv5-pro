@@ -1,13 +1,14 @@
 package com.itsm.request.domain;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
-public interface RequestRepository extends JpaRepository<Request, Long> {
+public interface RequestRepository extends JpaRepository<Request, Long>, JpaSpecificationExecutor<Request> {
     List<Request> findByCompanyId(String companyId);
     List<Request> findByCompanyIdOrderByCreatedAtDesc(String companyId);
     List<Request> findAllByOrderByCreatedAtDesc();

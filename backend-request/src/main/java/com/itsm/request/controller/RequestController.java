@@ -8,6 +8,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import java.util.List;
 
 @RestController
@@ -23,8 +27,14 @@ public class RequestController {
     }
 
     @GetMapping
-    public List<RequestDTO> getRequests(@RequestHeader("X-Company-ID") String companyId) {
-        return requestService.getRequestsByCompany(companyId);
+    public Page<RequestDTO> getRequests(
+            @RequestHeader("X-Company-ID") String companyId,
+            @RequestParam(required = false) String fromDate,
+            @RequestParam(required = false) String toDate,
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) String requesterId,
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return requestService.getRequests(companyId, fromDate, toDate, title, requesterId, pageable);
     }
 
     @GetMapping("/{id}")

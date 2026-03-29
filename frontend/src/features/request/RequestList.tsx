@@ -11,6 +11,14 @@ const RequestList: React.FC = () => {
     const [selectedRequestId, setSelectedRequestId] = useState<number | null>(null);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [userMap, setUserMap] = useState<{[key: string]: string}>({});
+    
+    // Pagination & Sorting States
+    const [page, setPage] = useState(0);
+    const [size] = useState(10);
+    const [totalElements, setTotalElements] = useState(0);
+    const [sortBy, setSortBy] = useState('createdAt');
+    const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+
     const [filters, setFilters] = useState({
         fromDate: '',
         toDate: '',
@@ -21,13 +29,13 @@ const RequestList: React.FC = () => {
     useEffect(() => {
         loadRequests();
         loadUsers();
-    }, []);
+    }, [page, sortBy, sortDir]); // Reload on page or sort change
 
     const loadUsers = async () => {
         try {
             const users = await apiUser.list('all');
             const map: {[key: string]: string} = {};
-            users.forEach(u => { map[u.userId] = u.name; });
+            users.forEach((u: any) => { map[u.userId] = u.name; });
             setUserMap(map);
         } catch (err) {
             console.error('Failed to load users for mapping', err);
@@ -40,12 +48,31 @@ const RequestList: React.FC = () => {
                 fromDate: filters.fromDate || undefined,
                 toDate: filters.toDate || undefined,
                 title: filters.title || undefined,
-                requesterId: filters.requesterId || undefined
+                requesterId: filters.requesterId || undefined,
+                page,
+                size,
+                sort: `${sortBy},${sortDir}`
             });
-            setRequests(res.data);
+            setRequests(res.data.content);
+            setTotalElements(res.data.totalElements);
         } catch (err) {
             console.error('Failed to load requests', err);
         }
+    };
+
+    const handleSort = (field: string) => {
+        if (sortBy === field) {
+            setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortBy(field);
+            setSortDir('asc');
+        }
+        setPage(0); // Reset to first page on sort
+    };
+
+    const handleSearch = () => {
+        setPage(0);
+        loadRequests();
     };
 
     const formatDate = (dateStr?: string) => {
@@ -139,48 +166,56 @@ const RequestList: React.FC = () => {
                         <label style={{ fontSize: '11px' }}>요청자</label>
                         <input type="text" placeholder="요청자..." value={filters.requesterId} onChange={e => setFilters({...filters, requesterId: e.target.value})} style={{ width: '120px', padding: '6px' }} />
                     </div>
-                    <button onClick={loadRequests} className="btn-ghost" style={{ height: '35px', padding: '0 20px', fontSize: '13px' }}>조회</button>
+                    <button onClick={handleSearch} className="btn-secondary" style={{ height: '35px', padding: '0 24px', fontSize: '13px', borderRadius: '8px' }}>조회</button>
                 </div>
 
                 <div className="panel-body" style={{ padding: '0 16px' }}>
                     <table className="data-table">
                         <thead>
                             <tr>
-                                <th style={{ width: '120px' }}>요청일자</th>
-                                <th>제목</th>
-                                <th style={{ width: '120px' }}>요청자</th>
-                                <th style={{ width: '100px' }}>우선순위</th>
-                                <th style={{ width: '100px' }}>상태</th>
+                                <th onClick={() => handleSort('createdAt')} style={{ cursor: 'pointer', width: '150px' }}>
+                                    요청일자 {sortBy === 'createdAt' && (sortDir === 'asc' ? '▴' : '▾')}
+                                </th>
+                                <th onClick={() => handleSort('title')} style={{ cursor: 'pointer' }}>
+                                    제목 {sortBy === 'title' && (sortDir === 'asc' ? '▴' : '▾')}
+                                </th>
+                                <th onClick={() => handleSort('requesterId')} style={{ cursor: 'pointer', width: '120px' }}>
+                                    요청자 {sortBy === 'requesterId' && (sortDir === 'asc' ? '▴' : '▾')}
+                                </th>
+                                <th onClick={() => handleSort('priority')} style={{ cursor: 'pointer', width: '100px' }}>
+                                    우선순위 {sortBy === 'priority' && (sortDir === 'asc' ? '▴' : '▾')}
+                                </th>
+                                <th onClick={() => handleSort('status')} style={{ cursor: 'pointer', width: '120px' }}>
+                                    상태 {sortBy === 'status' && (sortDir === 'asc' ? '▴' : '▾')}
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
-                            {requests.map(req => {
-                                return (
-                                    <tr 
-                                        key={req.id} 
-                                        onClick={() => setSelectedRequestId(req.id || null)}
-                                        style={{ cursor: 'pointer' }}
-                                    >
-                                        <td style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                                            {formatDate(req.createdAt)}
-                                        </td>
-                                        <td>
-                                            <div style={{ fontWeight: 600, color: 'white' }}>{req.title}</div>
-                                        </td>
-                                        <td style={{ fontSize: '13px' }}>{userMap[req.requesterId] || req.requesterId}</td>
-                                        <td>
-                                            <span className={`priority-badge ${getPriorityClass(req.priority)}`}>
-                                                {req.priority}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span className={`status-badge ${getStatusClass(req.status)}`}>
-                                                {req.status}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
+                            {requests.map(req => (
+                                <tr 
+                                    key={req.id} 
+                                    onClick={() => setSelectedRequestId(req.id || null)}
+                                    style={{ cursor: 'pointer' }}
+                                >
+                                    <td style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                                        {formatDate(req.createdAt)}
+                                    </td>
+                                    <td>
+                                        <div style={{ fontWeight: 600, color: 'white' }}>{req.title}</div>
+                                    </td>
+                                    <td style={{ fontSize: '13px' }}>{userMap[req.requesterId] || req.requesterId}</td>
+                                    <td>
+                                        <span className={`priority-badge ${getPriorityClass(req.priority)}`}>
+                                            {req.priority}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span className={`status-badge ${getStatusClass(req.status)}`}>
+                                            {req.status}
+                                        </span>
+                                    </td>
+                                </tr>
+                            ))}
                             {requests.length === 0 && (
                                 <tr>
                                     <td colSpan={5} style={{ padding: '80px', textAlign: 'center', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
@@ -190,6 +225,43 @@ const RequestList: React.FC = () => {
                             )}
                         </tbody>
                     </table>
+
+                    {/* Pagination Footer */}
+                    <div className="pagination-footer" style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'center', 
+                        padding: '20px 16px',
+                        marginTop: '16px',
+                        borderTop: '1px solid var(--glass-border)',
+                        background: 'rgba(255,255,255,0.02)',
+                        borderRadius: '0 0 12px 12px'
+                    }}>
+                        <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+                            전체 <span style={{ color: 'white', fontWeight: 600 }}>{totalElements}</span> 건
+                        </div>
+                        <div className="pagination-controls" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <button 
+                                className="btn-icon" 
+                                disabled={page === 0} 
+                                onClick={() => setPage(page - 1)}
+                                style={{ padding: '4px 12px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', borderRadius: '6px', color: 'white' }}
+                            >
+                                ◀
+                            </button>
+                            <div style={{ fontSize: '13px', padding: '0 12px' }}>
+                                페이지 <strong>{page + 1}</strong>
+                            </div>
+                            <button 
+                                className="btn-icon" 
+                                disabled={(page + 1) * size >= totalElements} 
+                                onClick={() => setPage(page + 1)}
+                                style={{ padding: '4px 12px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', borderRadius: '6px', color: 'white' }}
+                            >
+                                ▶
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
 

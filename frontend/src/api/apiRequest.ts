@@ -33,10 +33,26 @@ export interface RequestComment {
     createdAt?: string;
 }
 
+export interface Page<T> {
+    content: T[];
+    totalElements: number;
+    totalPages: number;
+    size: number;
+    number: number;
+}
+
 export const apiRequest = {
     // Request APIs
-    getRequests: (params?: { fromDate?: string; toDate?: string; title?: string; requesterId?: string }) => 
-        apiClient.get<RequestItem[]>(API_BASE_URL, { params }),
+    getRequests: (params?: { 
+        fromDate?: string; 
+        toDate?: string; 
+        title?: string; 
+        requesterId?: string;
+        page?: number;
+        size?: number;
+        sort?: string;
+    }) => 
+        apiClient.get<Page<RequestItem>>(API_BASE_URL, { params }),
     getRequest: (id: number) => apiClient.get<RequestItem>(`${API_BASE_URL}/${id}`),
     createRequest: (data: RequestItem) => apiClient.post<RequestItem>(API_BASE_URL, data),
     updateRequest: (id: number, data: RequestItem) => apiClient.put<RequestItem>(`${API_BASE_URL}/${id}`, data),

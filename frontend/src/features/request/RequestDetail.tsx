@@ -25,12 +25,39 @@ const RequestDetail: React.FC<Props> = ({ requestId, onClose, onUpdated }) => {
     const [isInternal, setIsInternal] = useState(false);
     const [codes, setCodes] = useState<{ [key: string]: CommonCode[] }>({});
     const [now, setNow] = useState(new Date());
+    const [userMap, setUserMap] = useState<{[key: string]: string}>({});
     
     useEffect(() => {
         loadDetail();
         const timer = setInterval(() => setNow(new Date()), 1000);
         return () => clearInterval(timer);
     }, [requestId]);
+
+    // Priority Calculation Logic (Sync with Backend)
+    const calculatePriority = (impact?: string, urgency?: string) => {
+        if (!impact || !urgency) return 'P3';
+        if (impact === 'HIGH') {
+            if (urgency === 'HIGH') return 'P1';
+            if (urgency === 'MEDIUM') return 'P2';
+            return 'P3';
+        } else if (impact === 'MEDIUM') {
+            if (urgency === 'HIGH') return 'P2';
+            if (urgency === 'MEDIUM') return 'P3';
+            return 'P4';
+        } else { // LOW Impact
+            if (urgency === 'HIGH') return 'P3';
+            return 'P4';
+        }
+    };
+
+    useEffect(() => {
+        if (isEditing) {
+            const newPriority = calculatePriority(editData.srImpactCode, editData.srUrgencyCode);
+            if (editData.priority !== newPriority) {
+                setEditData(prev => ({ ...prev, priority: newPriority }));
+            }
+        }
+    }, [editData.srImpactCode, editData.srUrgencyCode, isEditing]);
 
     const getSLARemaining = (targetAt?: string) => {
         if (!targetAt) return null;
@@ -55,41 +82,39 @@ const RequestDetail: React.FC<Props> = ({ requestId, onClose, onUpdated }) => {
 
     const loadDetail = async () => {
         try {
-            const [reqRes, comRes] = await Promise.all([
+            const [reqRes, comRes, userRes] = await Promise.all([
                 apiRequest.getRequest(requestId),
-                apiRequest.getComments(requestId)
+                apiRequest.getComments(requestId),
+                apiUser.list('all')
             ]);
             setRequest(reqRes.data);
             setEditData(reqRes.data);
             setComments(comRes.data);
 
+            const map: {[key: string]: string} = {};
+            userRes.forEach((u: any) => { map[u.userId] = u.name; });
+            setUserMap(map);
+
             // Fetch SR_STATUS with await for better error logging
             try {
                 const statusRes = await apiCommonCode.getCodesByGroup('SR_STATUS');
                 setCodes(prev => ({ ...prev, SR_STATUS: statusRes.data }));
-                console.log('SR_STATUS group codes loaded. Length:', statusRes.data.length);
             } catch (err) {
                 console.error('SR_STATUS fetch failed:', err);
             }
 
-            // Fetch other codes and agents individually
-            const fetchCode = (group: string) => {
+            // Fetch other codes
+            const codesToFetch = ['SR_TYPE', 'SR_CATEGORY', 'SR_IMPACT', 'SR_URGENCY', 'SR_RESOLUTION'];
+            codesToFetch.forEach(group => {
                 apiCommonCode.getCodesByGroup(group)
                     .then(res => setCodes(prev => ({ ...prev, [group]: res.data })))
                     .catch(err => console.error(`Failed to load ${group}`, err));
-            };
-            fetchCode('SR_TYPE');
-            fetchCode('SR_CATEGORY');
-            fetchCode('SR_IMPACT');
-            fetchCode('SR_URGENCY');
-            fetchCode('SR_RESOLUTION');
+            });
 
-            apiUser.list('MSP').then(agentRes => {
-                const filteredAgents = agentRes.filter((u: any) => 
-                    u.role === 'ROLE_ADMIN' || u.role === 'ROLE_OPERATOR'
-                );
-                setAgents(filteredAgents);
-            }).catch(err => console.error('Failed to load agents', err));
+            const filteredAgents = userRes.filter((u: any) => 
+                u.companyId === 'MSP' && (u.role === 'ROLE_ADMIN' || u.role === 'ROLE_OPERATOR')
+            );
+            setAgents(filteredAgents);
 
         } catch (err) {
             console.error('Critical failure loading request detail', err);
@@ -129,7 +154,7 @@ const RequestDetail: React.FC<Props> = ({ requestId, onClose, onUpdated }) => {
         try {
             await apiRequest.addComment(requestId, {
                 requestId,
-                authorId: 'AGENT01', 
+                authorId: authUser?.userId || 'UNKNOWN', 
                 content: newComment,
                 isInternal
             });
@@ -145,106 +170,159 @@ const RequestDetail: React.FC<Props> = ({ requestId, onClose, onUpdated }) => {
     return (
         <div className="request-detail-fixed">
             <div className="request-detail-content glass-card shadow-2xl">
-                <header className="panel-header" style={{ padding: '24px 32px', borderBottom: '1px solid var(--glass-border)' }}>
-                    <div style={{ flex: 1 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                            <span className="code-id-cell" style={{ fontSize: '14px', background: 'rgba(0, 255, 200, 0.1)', padding: '4px 12px', borderRadius: '4px' }}>{request.reqNumber}</span>
-                            {isEditing ? (
-                                <input 
-                                    type="text" 
-                                    value={editData.title} 
-                                    onChange={e => setEditData({...editData, title: e.target.value})}
-                                    style={{ 
-                                        background: 'rgba(255,255,255,0.1)', 
-                                        fontSize: '24px', 
-                                        fontWeight: 'bold', 
-                                        border: '1px solid var(--brand-primary)', 
-                                        flex: 1,
-                                        color: 'white',
-                                        padding: '4px 12px',
-                                        borderRadius: '8px'
-                                    }}
-                                />
-                            ) : (
-                                <span style={{ fontSize: '24px', fontWeight: 'bold', color: 'white' }}>{request.title}</span>
-                            )}
-                        </div>
-                        <p className="panel-subtitle" style={{ marginTop: '8px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-                            <span>요청자: {request.requesterId} | 생성일시: {new Date(request.createdAt!).toLocaleString()}</span>
-                            {(() => {
-                                const sla = getSLARemaining(request.slaTargetAt);
-                                return sla && (
-                                    <div className={`sla-badge ${sla.colorClass}`} style={{ marginLeft: '16px', background: 'rgba(255,255,255,0.05)' }}>
-                                        <div className="sla-dot animate-pulse"></div>
-                                        <span style={{ fontWeight: 'bold' }}>SLA 남은 시간: {sla.text}</span>
-                                    </div>
-                                );
-                            })()}
-                        </p>
-                    </div>
-                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                        {isEditing ? (
-                            <>
-                                <button onClick={handleSave} className="btn-primary" style={{ padding: '10px 24px', borderRadius: '8px' }}>저장</button>
-                                <button onClick={() => setIsEditing(false)} className="btn-ghost" style={{ padding: '10px 24px', borderRadius: '8px' }}>취소</button>
-                            </>
-                        ) : (
-                            isAdmin && (
-                                <>
-                                    <button onClick={() => setIsEditing(true)} className="btn-ghost" data-testid="edit-button">수정</button>
-                                    <button 
-                                        onClick={async () => {
-                                            if (window.confirm('이 요청을 정말 삭제하시겠습니까?')) {
-                                                try {
-                                                    await apiRequest.deleteRequest(requestId);
-                                                    onUpdated();
-                                                    onClose();
-                                                } catch (err) {
-                                                    alert('삭제에 실패했습니다.');
-                                                }
-                                            }
+                <header className="panel-header" style={{ padding: '24px 32px', borderBottom: '1px solid var(--glass-border)', display: 'block' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        {/* Request Number - Compact 16px */}
+                        <span style={{ 
+                            fontSize: '16px', 
+                            color: 'var(--brand-primary)', 
+                            fontWeight: 700,
+                            letterSpacing: '0.5px'
+                        }}>
+                            {request.reqNumber}
+                        </span>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '24px' }}>
+                            {/* Title - Compact 22px */}
+                            <div style={{ flex: 1 }}>
+                                {isEditing ? (
+                                    <input 
+                                        type="text" 
+                                        value={editData.title} 
+                                        onChange={e => setEditData({...editData, title: e.target.value})}
+                                        style={{ 
+                                            background: 'rgba(255,255,255,0.1)', 
+                                            fontSize: '22px', 
+                                            fontWeight: 700, 
+                                            border: '1px solid var(--brand-primary)', 
+                                            width: '100%',
+                                            color: 'white',
+                                            padding: '6px 12px',
+                                            borderRadius: '8px'
                                         }}
-                                        className="btn-ghost"
-                                        style={{ color: '#ff4d4d', borderColor: 'rgba(255, 77, 77, 0.3)' }}
-                                    >
-                                        삭제
-                                    </button>
-                                </>
-                            )
-                        )}
-                        <button onClick={onClose} className="btn-ghost" style={{ padding: '10px 24px', borderRadius: '8px' }}>목록</button>
+                                    />
+                                ) : (
+                                    <h1 style={{ fontSize: '22px', fontWeight: 700, color: 'white', margin: 0, lineHeight: 1.2 }}>
+                                        {request.title}
+                                    </h1>
+                                )}
+                            </div>
+
+                            {/* Actions - Now Aligned with Title */}
+                            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                {isEditing ? (
+                                    <button onClick={handleSave} className="btn-primary" style={{ minWidth: '120px', height: '44px', padding: '0 32px', borderRadius: '12px', fontSize: '14px', fontWeight: 700 }}>저장</button>
+                                ) : (
+                                    isAdmin && (
+                                        <>
+                                            <button onClick={() => setIsEditing(true)} className="btn-ghost" style={{ padding: '8px 20px', borderRadius: '8px' }} data-testid="edit-button">수정</button>
+                                            <button 
+                                                onClick={async () => {
+                                                    if (window.confirm('이 요청을 정말 삭제하시겠습니까?')) {
+                                                        try {
+                                                            await apiRequest.deleteRequest(requestId);
+                                                            onUpdated();
+                                                            onClose();
+                                                        } catch (err) {
+                                                            alert('삭제에 실패했습니다.');
+                                                        }
+                                                    }
+                                                }}
+                                                className="btn-ghost"
+                                                style={{ padding: '8px 20px', borderRadius: '8px', color: '#ff4d4d', borderColor: 'rgba(255, 77, 77, 0.3)' }}
+                                            >
+                                                삭제
+                                            </button>
+                                        </>
+                                    )
+                                )}
+                                <button onClick={onClose} className="btn-ghost" style={{ minWidth: '120px', height: '44px', padding: '0 32px', borderRadius: '12px', fontSize: '14px', fontWeight: 700 }}>목록</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Metadata Row */}
+                    <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
+                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>요청자: <strong>{userMap[request.requesterId] || request.requesterId}</strong></span>
+                            <span style={{ width: '1px', height: '10px', background: 'rgba(255,255,255,0.1)' }} />
+                            <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>생성일시: {new Date(request.createdAt!).toLocaleString()}</span>
+                         </div>
+
+                        {(() => {
+                            const sla = getSLARemaining(request.slaTargetAt);
+                            return sla && (
+                                <div className={`sla-badge ${sla.colorClass}`} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--glass-border)', padding: '3px 10px' }}>
+                                    <div className="sla-dot animate-pulse"></div>
+                                    <span style={{ fontWeight: 600, fontSize: '11px' }}>SLA 남은 시간: {sla.text}</span>
+                                </div>
+                            );
+                        })()}
                     </div>
                 </header>
 
                 <div className="detail-main" style={{ flexDirection: 'column', height: 'auto', overflowY: 'auto', padding: '32px' }}>
-                    {/* Top: Workflow & Classification Section (Full Width Grid) */}
+                    {/* Top: Workflow Step Section */}
+                    <div className="workflow-section" style={{ marginBottom: '40px', padding: '0 20px' }}>
+                        <label className="input-label" style={{ marginBottom: '24px', fontSize: '14px', textAlign: 'center', display: 'block', color: 'var(--brand-primary)' }}>요청 처리 프로세스 (Status Flow)</label>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative' }}>
+                            {/* Background Line */}
+                            <div style={{ position: 'absolute', top: '50%', left: '50px', right: '50px', height: '2px', background: 'rgba(255,255,255,0.1)', zIndex: 0 }} />
+                            
+                            {codes.SR_STATUS?.map((s: CommonCode, idx: number) => {
+                                const currentStatus = isEditing ? editData.status : request.status;
+                                const isActive = currentStatus === s.codeId;
+                                // Simple logic: if index <= current status index? 
+                                // Actually better to just highlight active and passed.
+                                const statusList = codes.SR_STATUS || [];
+                                const currentIndex = statusList.findIndex(x => x.codeId === currentStatus);
+                                const isPassed = idx < currentIndex;
+
+                                return (
+                                    <div 
+                                        key={s.codeId} 
+                                        style={{ 
+                                            display: 'flex', 
+                                            flexDirection: 'column', 
+                                            alignItems: 'center', 
+                                            gap: '12px', 
+                                            zIndex: 1, 
+                                            cursor: isAdmin ? 'pointer' : 'default',
+                                            flex: 1
+                                        }}
+                                        onClick={() => isAdmin && handleStatusChange(s.codeId)}
+                                    >
+                                        <div style={{ 
+                                            width: '32px', 
+                                            height: '32px', 
+                                            borderRadius: '50%', 
+                                            background: isActive ? 'hsl(var(--brand-primary))' : isPassed ? '#00ff88' : 'rgba(255,255,255,0.1)',
+                                            border: '4px solid #1a1a1c',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            transition: 'all 0.3s ease',
+                                            boxShadow: isActive ? '0 0 15px hsl(var(--brand-primary))' : 'none'
+                                        }}>
+                                            {isPassed ? '✓' : idx + 1}
+                                        </div>
+                                        <span style={{ 
+                                            fontSize: '11px', 
+                                            fontWeight: (isActive || isPassed) ? 700 : 400,
+                                            color: isActive ? 'white' : isPassed ? '#00ff88' : 'var(--text-secondary)',
+                                            textTransform: 'uppercase',
+                                            letterSpacing: '0.5px'
+                                        }}>
+                                            {s.codeName}
+                                        </span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+
                     <div className="glass-card" style={{ padding: '24px', marginBottom: '32px', background: 'rgba(255,255,255,0.03)' }}>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '32px' }}>
-                            {/* Status Section */}
-                            <div style={{ gridColumn: 'span 4', marginBottom: '16px' }}>
-                                <label className="input-label" style={{ marginBottom: '16px' }}>상태 처리</label>
-                                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                                    {codes.SR_STATUS?.map((s: CommonCode) => (
-                                        <button
-                                            key={s.codeId}
-                                            data-testid={`status-button-${s.codeId}`}
-                                            onClick={() => handleStatusChange(s.codeId)}
-                                            className={`btn-ghost ${editData.status === s.codeId ? 'active' : ''}`}
-                                            style={{ 
-                                                padding: '8px 20px',
-                                                background: (isEditing ? editData.status : request.status) === s.codeId ? 'hsla(184, 100%, 50%, 0.1)' : 'transparent',
-                                                borderColor: (isEditing ? editData.status : request.status) === s.codeId ? 'hsla(184, 100%, 50%, 0.3)' : 'var(--glass-border)',
-                                                color: (isEditing ? editData.status : request.status) === s.codeId ? 'hsl(var(--brand-primary))' : 'var(--text-secondary)',
-                                                fontSize: '13px'
-                                            }}
-                                            disabled={!isAdmin && !isEditing}
-                                        >
-                                            {s.codeName}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
                             {/* Classification Grid */}
                             <div className="form-group">
                                 <label>요청 유형</label>
@@ -289,12 +367,12 @@ const RequestDetail: React.FC<Props> = ({ requestId, onClose, onUpdated }) => {
                                 )}
                             </div>
 
-                            {/* Priority Info Row */}
-                            <div style={{ gridColumn: 'span 4', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)', padding: '12px 20px', borderRadius: '8px' }}>
+                            {/* Priority Info Row - Removed box line/bg */}
+                            <div style={{ gridColumn: 'span 4', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0' }}>
                                 <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
                                     산합 공식: <code style={{ color: 'var(--brand-primary)' }}>영향도({isEditing ? editData.srImpactCode : request.srImpactCode}) + 긴급도({isEditing ? editData.srUrgencyCode : request.srUrgencyCode})</code>
                                 </span>
-                                <span className={`priority-badge priority-${(isEditing ? editData.priority : request.priority)?.toLowerCase()}`} style={{ fontSize: '14px', padding: '6px 16px' }}>
+                                <span className={`priority-badge priority-${(isEditing ? editData.priority : request.priority)?.toLowerCase()}`} style={{ fontSize: '14px', padding: '6px 16px', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
                                     최종 우선순위: {isEditing ? editData.priority : request.priority}
                                 </span>
                             </div>
@@ -386,51 +464,88 @@ const RequestDetail: React.FC<Props> = ({ requestId, onClose, onUpdated }) => {
                     <div style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '32px' }}>
                         <h3 className="section-title" style={{ marginBottom: '24px', fontSize: '16px' }}>커뮤니케이션 히스토리</h3>
                         
-                        <div className="comments-list" style={{ marginBottom: '32px', padding: '16px', background: 'rgba(0,0,0,0.1)', borderRadius: '16px', minHeight: '200px' }}>
+                        <div className="comments-list" style={{ marginBottom: '32px', padding: '16px', background: 'rgba(0,0,0,0.1)', borderRadius: '16px', minHeight: '100px' }}>
                             {comments.length > 0 ? comments.map(c => (
-                                <div key={c.id} style={{ display: 'flex', flexDirection: 'column', alignItems: c.isInternal ? 'flex-end' : 'flex-start' }}>
-                                    <div className={`comment-bubble ${c.isInternal ? 'internal' : 'external'}`} style={{ maxWidth: '80%' }}>
-                                        <div className="comment-header">
-                                            {c.isInternal ? 'Internal Note' : 'General Communication'}
-                                        </div>
-                                        <div style={{ fontSize: '14px', whiteSpace: 'pre-wrap' }}>{c.content}</div>
-                                        <div className="comment-meta">
-                                            <span>{c.authorId}</span>
-                                            <span>{new Date(c.createdAt!).toLocaleString()}</span>
-                                        </div>
-                                    </div>
+                                <div key={c.id} style={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    gap: '16px', 
+                                    padding: '2px 16px', 
+                                    borderBottom: '1px solid rgba(255,255,255,0.03)',
+                                    background: c.isInternal ? 'rgba(255, 170, 0, 0.05)' : 'transparent',
+                                    minHeight: '28px'
+                                }}>
+                                    <span style={{ width: '150px', fontSize: '11px', color: 'var(--text-secondary)', flexShrink: 0, opacity: 0.7 }}>
+                                        {new Date(c.createdAt!).toLocaleString('ko-KR', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                    <span style={{ width: '110px', fontSize: '12px', color: '#00ffc8', fontWeight: 600, flexShrink: 0 }}>
+                                        {userMap[c.authorId] || c.authorId}
+                                    </span>
+                                    <span style={{ flex: 1, fontSize: '13px', color: 'rgba(255,255,255,0.9)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                        {c.content}
+                                    </span>
+                                    <span style={{ 
+                                        width: '70px', 
+                                        fontSize: '9px', 
+                                        fontWeight: 800, 
+                                        textAlign: 'right',
+                                        color: c.isInternal ? '#ffaa00' : 'var(--brand-primary)',
+                                        flexShrink: 0,
+                                        letterSpacing: '0.5px'
+                                    }}>
+                                        {c.isInternal ? 'INTERNAL' : 'GENERAL'}
+                                    </span>
                                 </div>
                             )) : (
-                                <div style={{ height: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
+                                <div style={{ height: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', fontStyle: 'italic', fontSize: '12px' }}>
                                     등록된 히스토리가 없습니다.
                                 </div>
                             )}
                         </div>
 
-                        <form onSubmit={handleAddComment} className="comment-form glass-card" style={{ padding: '24px', background: 'rgba(255,255,255,0.02)' }}>
-                            <div style={{ display: 'flex', gap: '20px' }}>
+                        <form onSubmit={handleAddComment} className="comment-form glass-card" style={{ padding: '20px', background: 'rgba(255,255,255,0.02)' }}>
+                            <div style={{ display: 'flex', gap: '16px' }}>
                                 <textarea
                                     value={newComment}
                                     onChange={e => setNewComment(e.target.value)}
                                     placeholder="Add a comment or worknote..."
-                                    style={{ flex: 1, minHeight: '100px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', padding: '16px' }}
+                                    style={{ 
+                                        flex: 1, 
+                                        minHeight: '80px', 
+                                        background: 'rgba(255,255,255,0.05)', 
+                                        borderRadius: '12px', 
+                                        padding: '12px 16px',
+                                        color: 'white',
+                                        fontSize: '13px',
+                                        border: '1px solid var(--glass-border)',
+                                        resize: 'none'
+                                    }}
                                 />
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', justifyContent: 'flex-end' }}>
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: isInternal ? '#ffaa00' : 'var(--text-secondary)', fontSize: '12px' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', justifyContent: 'center', minWidth: '150px' }}>
+                                    <label style={{ 
+                                        display: 'flex', 
+                                        alignItems: 'center', 
+                                        gap: '8px', 
+                                        cursor: 'pointer', 
+                                        color: isInternal ? '#ffaa00' : 'var(--text-secondary)', 
+                                        fontSize: '11px',
+                                        fontWeight: 600,
+                                        userSelect: 'none'
+                                    }}>
                                         <input 
                                             type="checkbox" 
                                             checked={isInternal} 
                                             onChange={e => setIsInternal(e.target.checked)}
-                                            style={{ width: '18px', height: '18px' }}
+                                            style={{ width: '16px', height: '16px' }}
                                         />
                                         INTERNAL WORKNOTE
                                     </label>
                                     <button
                                         type="submit"
-                                        className="btn-primary"
-                                        style={{ padding: '12px 32px' }}
+                                        className="btn-secondary"
+                                        style={{ minWidth: '120px', height: '44px', padding: '0 32px', borderRadius: '12px', fontSize: '14px', fontWeight: 700 }}
                                     >
-                                        POST
+                                        등록
                                     </button>
                                 </div>
                             </div>

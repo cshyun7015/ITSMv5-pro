@@ -12,6 +12,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import jakarta.persistence.criteria.Predicate;
+import java.util.ArrayList;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -46,6 +51,36 @@ public class RequestServiceImpl implements RequestService {
                 .build();
 
         return convertToDTO(requestRepository.save(request));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<RequestDTO> getRequests(String companyId, String fromDate, String toDate, String title, String requesterId, Pageable pageable) {
+        Specification<Request> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            
+            // Company Isolation (unless MSP)
+            if (!"MSP".equals(companyId)) {
+                predicates.add(cb.equal(root.get("companyId"), companyId));
+            }
+            
+            if (fromDate != null && !fromDate.isEmpty()) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), LocalDateTime.parse(fromDate + "T00:00:00")));
+            }
+            if (toDate != null && !toDate.isEmpty()) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), LocalDateTime.parse(toDate + "T23:59:59")));
+            }
+            if (title != null && !title.isEmpty()) {
+                predicates.add(cb.like(root.get("title"), "%" + title + "%"));
+            }
+            if (requesterId != null && !requesterId.isEmpty()) {
+                predicates.add(cb.equal(root.get("requesterId"), requesterId));
+            }
+            
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+        
+        return requestRepository.findAll(spec, pageable).map(this::convertToDTO);
     }
 
     @Override
