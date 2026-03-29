@@ -19,8 +19,18 @@ public class RequestStatsController {
     private final RequestRepository requestRepository;
 
     @GetMapping("/summary")
-    public RequestStatsDTO getSummary(@RequestParam(required = false) String companyId) {
-        LocalDateTime startOfDay = LocalDateTime.of(LocalDate.now(), LocalTime.MIN);
+    public RequestStatsDTO getSummary(
+            @RequestParam(required = false) String companyId,
+            @RequestParam(required = false) String fromDate,
+            @RequestParam(required = false) String toDate) {
+        
+        LocalDateTime start = (fromDate != null && !fromDate.isEmpty()) 
+                ? LocalDate.parse(fromDate).atStartOfDay() 
+                : LocalDateTime.now().minusDays(30);
+        LocalDateTime end = (toDate != null && !toDate.isEmpty()) 
+                ? LocalDate.parse(toDate).atTime(LocalTime.MAX) 
+                : LocalDateTime.now();
+        LocalDateTime todayStart = LocalDateTime.of(LocalDate.now(), LocalTime.MIN);
         
         long total;
         long open;
@@ -28,18 +38,20 @@ public class RequestStatsController {
         long createdToday;
         long closedToday;
 
-        if (companyId != null && !companyId.isEmpty() && !"SYSTEM".equals(companyId)) {
-            total = requestRepository.countByCompanyId(companyId);
-            open = requestRepository.countByCompanyIdAndStatus(companyId, "OPEN");
-            inProgress = requestRepository.countByCompanyIdAndStatus(companyId, "IN_PROGRESS");
-            createdToday = requestRepository.countByCompanyIdAndCreatedAtAfter(companyId, startOfDay);
-            closedToday = requestRepository.countByCompanyIdAndUpdatedAtAfterAndStatus(companyId, startOfDay, "CLOSED");
+        boolean isFilteredCompany = companyId != null && !companyId.isEmpty() && !"SYSTEM".equals(companyId);
+
+        if (isFilteredCompany) {
+            total = requestRepository.countByCompanyIdAndCreatedAtBetween(companyId, start, end);
+            open = requestRepository.countByCompanyIdAndStatusAndCreatedAtBetween(companyId, "OPEN", start, end);
+            inProgress = requestRepository.countByCompanyIdAndStatusAndCreatedAtBetween(companyId, "IN_PROGRESS", start, end);
+            createdToday = requestRepository.countByCompanyIdAndCreatedAtAfter(companyId, todayStart);
+            closedToday = requestRepository.countByCompanyIdAndUpdatedAtAfterAndStatus(companyId, todayStart, "CLOSED");
         } else {
-            total = requestRepository.count();
-            open = requestRepository.countByStatus("OPEN");
-            inProgress = requestRepository.countByStatus("IN_PROGRESS");
-            createdToday = requestRepository.countByCreatedAtAfter(startOfDay);
-            closedToday = requestRepository.countByUpdatedAtAfterAndStatus(startOfDay, "CLOSED");
+            total = requestRepository.countByCreatedAtBetween(start, end);
+            open = requestRepository.countByStatusAndCreatedAtBetween("OPEN", start, end);
+            inProgress = requestRepository.countByStatusAndCreatedAtBetween("IN_PROGRESS", start, end);
+            createdToday = requestRepository.countByCreatedAtAfter(todayStart);
+            closedToday = requestRepository.countByUpdatedAtAfterAndStatus(todayStart, "CLOSED");
         }
 
         return RequestStatsDTO.builder()
@@ -48,19 +60,20 @@ public class RequestStatsController {
                 .inProgressRequests(inProgress)
                 .createdToday(createdToday)
                 .closedToday(closedToday)
-                .statusDistribution(fetchStatusDistribution(companyId))
-                .priorityDistribution(new HashMap<>()) // Placeholder for now
+                .statusDistribution(fetchStatusDistribution(companyId, start, end))
+                .priorityDistribution(new HashMap<>())
                 .build();
     }
 
-    private Map<String, Long> fetchStatusDistribution(String companyId) {
-        // Simplified Logic: In a real app, use a @Query for performance
+    private Map<String, Long> fetchStatusDistribution(String companyId, LocalDateTime start, LocalDateTime end) {
         Map<String, Long> dist = new HashMap<>();
         String[] statuses = {"OPEN", "IN_PROGRESS", "PENDING", "RESOLVED", "CLOSED", "CANCELLED"};
+        boolean isFilteredCompany = companyId != null && !companyId.isEmpty() && !"SYSTEM".equals(companyId);
+
         for (String s : statuses) {
-            long count = (companyId != null && !companyId.isEmpty() && !"SYSTEM".equals(companyId)) 
-                    ? requestRepository.countByCompanyIdAndStatus(companyId, s)
-                    : requestRepository.countByStatus(s);
+            long count = isFilteredCompany 
+                    ? requestRepository.countByCompanyIdAndStatusAndCreatedAtBetween(companyId, s, start, end)
+                    : requestRepository.countByStatusAndCreatedAtBetween(s, start, end);
             dist.put(s, count);
         }
         return dist;

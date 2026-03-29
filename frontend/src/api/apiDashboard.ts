@@ -12,5 +12,6 @@ export interface DashboardSummary {
 }
 
 export const apiDashboard = {
-  getSummary: () => apiClient.get<DashboardSummary>('/dashboard/summary'),
+  getSummary: (params?: { fromDate?: string; toDate?: string; targetCompanyId?: string }) => 
+    apiClient.get<DashboardSummary>('/dashboard/summary', { params }),
 };

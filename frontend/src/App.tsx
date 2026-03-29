@@ -13,6 +13,7 @@ function AppContent() {
   const [currentView, setCurrentView] = useState('dashboard');
   const [scale, setScale] = useState(1);
   const { user, logout } = useAuth();
+  const isAdmin = user?.role === 'ROLE_ADMIN' || user?.role === 'ROLE_OPERATOR';
 
   // 1280x1024 Responsive Scaling Logic
   useEffect(() => {
@@ -53,24 +54,29 @@ function AppContent() {
           >
             요청 관리
           </div>
-          <div 
-            className={`nav-item ${currentView === 'companies' ? 'active' : ''}`}
-            onClick={() => setCurrentView('companies')}
-          >
-            고객사 관리
-          </div>
-          <div 
-            className={`nav-item ${currentView === 'users' ? 'active' : ''}`}
-            onClick={() => setCurrentView('users')}
-          >
-            사용자 관리
-          </div>
-          <div 
-            className={`nav-item ${currentView === 'codes' ? 'active' : ''}`}
-            onClick={() => setCurrentView('codes')}
-          >
-            공통 코드 관리
-          </div>
+          
+          {isAdmin && (
+            <>
+              <div 
+                className={`nav-item ${currentView === 'companies' ? 'active' : ''}`}
+                onClick={() => setCurrentView('companies')}
+              >
+                고객사 관리
+              </div>
+              <div 
+                className={`nav-item ${currentView === 'users' ? 'active' : ''}`}
+                onClick={() => setCurrentView('users')}
+              >
+                사용자 관리
+              </div>
+              <div 
+                className={`nav-item ${currentView === 'codes' ? 'active' : ''}`}
+                onClick={() => setCurrentView('codes')}
+              >
+                공통 코드 관리
+              </div>
+            </>
+          )}
           <div className="nav-item sign-out" onClick={logout} style={{ marginTop: 'auto', borderTop: '1px solid var(--glass-border)', color: '#ff5555' }}>
             로그아웃
           </div>

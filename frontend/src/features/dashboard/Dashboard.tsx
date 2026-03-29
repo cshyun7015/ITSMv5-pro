@@ -1,44 +1,131 @@
 import React, { useEffect, useState } from 'react';
-import { apiDashboard, DashboardSummary } from '../../api/apiDashboard';
+import { apiDashboard, type DashboardSummary } from '../../api/apiDashboard';
 import { useAuth } from '../auth/AuthProvider';
 import { 
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend,
   BarChart, Bar, XAxis, YAxis, CartesianGrid
 } from 'recharts';
+import apiCompany, { type CompanyDTO } from '../../api/apiCompany';
 import './Dashboard.css';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
+  
+  // States
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [companies, setCompanies] = useState<CompanyDTO[]>([]);
+
+  // Filter States
+  const [fromDate, setFromDate] = useState(() => {
+    const d = new Date();
+    d.setDate(1); // 1st of current month
+    return d.toISOString().split('T')[0];
+  });
+  const [toDate, setToDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [selectedCompany, setSelectedCompany] = useState(user?.role === 'ROLE_USER' ? user.companyId : 'SYSTEM');
 
   const isAdmin = user?.role === 'ROLE_ADMIN' || user?.role === 'ROLE_OPERATOR';
 
+  const fetchStats = async (isManual = false) => {
+    if (isManual) setRefreshing(true);
+    else setLoading(true);
+
+    try {
+      const res = await apiDashboard.getSummary({
+        fromDate,
+        toDate,
+        targetCompanyId: selectedCompany
+      });
+      setSummary(res.data);
+    } catch (err) {
+      console.error('Failed to fetch dashboard data', err);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const res = await apiDashboard.getSummary();
-        setSummary(res.data);
-      } catch (err) {
-        console.error('Failed to fetch dashboard data', err);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchStats();
+    if (isAdmin) {
+      apiCompany.list().then(setCompanies).catch(console.error);
+    }
   }, []);
+
+  const handleSearch = () => {
+    fetchStats(true);
+  };
 
   if (loading) return <div className="loading-state">Syncing Dashboard Analytics...</div>;
   if (!summary) return <div className="error-state">Failed to load dashboard data.</div>;
 
   const pieData = Object.entries(summary.statusDistribution)
-    .filter(([_, value]) => value > 0)
+    .filter(([_, value]) => (value as number) > 0)
     .map(([key, value]) => ({ name: key, value }));
 
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
 
   return (
     <div className="dashboard-root">
+      {/* Filter Bar */}
+      <div className="filter-bar glass-card">
+        <div className="filter-group">
+          <label>발생 일자</label>
+          <div className="custom-date-container" onClick={(e) => {
+             const input = e.currentTarget.querySelector('input');
+             if (input && 'showPicker' in input) (input as any).showPicker();
+          }}>
+            <div className="display-value">{fromDate.replace(/-/g, '.')}</div>
+            <input 
+              type="date" 
+              value={fromDate} 
+              onChange={(e) => setFromDate(e.target.value)} 
+            />
+          </div>
+          <span>~</span>
+          <div className="custom-date-container" onClick={(e) => {
+             const input = e.currentTarget.querySelector('input');
+             if (input && 'showPicker' in input) (input as any).showPicker();
+          }}>
+            <div className="display-value">{toDate.replace(/-/g, '.')}</div>
+            <input 
+              type="date" 
+              value={toDate} 
+              onChange={(e) => setToDate(e.target.value)} 
+            />
+          </div>
+        </div>
+
+        <div className="filter-group">
+          <label>고객사</label>
+          {isAdmin ? (
+            <select 
+              value={selectedCompany} 
+              onChange={(e) => setSelectedCompany(e.target.value)}
+            >
+              <option value="SYSTEM">전체 고객사</option>
+              {companies.map((c: CompanyDTO) => (
+                <option key={c.companyId} value={c.companyId}>{c.name}</option>
+              ))}
+            </select>
+          ) : (
+            <div className="company-badge">
+              {user?.companyId} (고정)
+            </div>
+          )}
+        </div>
+
+        <button 
+          className="search-btn" 
+          onClick={handleSearch}
+          disabled={refreshing}
+        >
+          {refreshing ? '조회 중...' : '검색'}
+        </button>
+      </div>
+
       {/* Top Metric Cards */}
       <div className="metric-grid">
         {isAdmin && (

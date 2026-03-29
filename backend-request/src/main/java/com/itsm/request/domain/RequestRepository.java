@@ -11,9 +11,14 @@ public interface RequestRepository extends JpaRepository<Request, Long> {
     List<Request> findByCompanyId(String companyId);
     List<Request> findByCompanyIdOrderByCreatedAtDesc(String companyId);
     
-    long countByCompanyId(String companyId);
-    long countByStatus(String status);
-    long countByCompanyIdAndStatus(String companyId, String status);
+    long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
+    long countByCompanyIdAndCreatedAtBetween(String companyId, LocalDateTime start, LocalDateTime end);
+    
+    long countByStatusAndCreatedAtBetween(String status, LocalDateTime start, LocalDateTime end);
+    long countByCompanyIdAndStatusAndCreatedAtBetween(String companyId, String status, LocalDateTime start, LocalDateTime end);
+    
+    long countByUpdatedAtBetweenAndStatus(LocalDateTime start, LocalDateTime end, String status);
+    long countByCompanyIdAndUpdatedAtBetweenAndStatus(String companyId, LocalDateTime start, LocalDateTime end, String status);
     
     long countByCreatedAtAfter(LocalDateTime dateTime);
     long countByCompanyIdAndCreatedAtAfter(String companyId, LocalDateTime dateTime);

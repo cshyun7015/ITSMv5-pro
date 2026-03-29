@@ -13,13 +13,13 @@ public class DashboardService {
 
     private final ExternalApiService apiService;
 
-    public Mono<DashboardSummaryDTO> getSummary(String role, String companyId, String token) {
+    public Mono<DashboardSummaryDTO> getSummary(String role, String companyId, String fromDate, String toDate, String token) {
         boolean isAdmin = role.equals("ROLE_ADMIN") || role.equals("ROLE_OPERATOR");
         
-        Mono<Map> systemStats = isAdmin ? apiService.getSystemStats(token) 
-                : Mono.just(Map.of("companyCount", 0L, "userCount", 0L));
+        // If companyId is provided (even for Admin), system stats should reflect that company
+        Mono<Map> systemStats = apiService.getSystemStats(companyId, token);
         
-        Mono<Map> requestStats = apiService.getRequestStats(isAdmin ? null : companyId, token);
+        Mono<Map> requestStats = apiService.getRequestStats(companyId, fromDate, toDate, token);
 
         return Mono.zip(systemStats, requestStats)
                 .map(tuple -> {
