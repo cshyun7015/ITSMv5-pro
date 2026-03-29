@@ -50,7 +50,7 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     fetchStats();
     // Fetch companies for all roles to ensure name mapping (even for non-admins)
-    apiCompany.list().then(setCompanies).catch(console.error);
+    apiCompany.list({ size: 1000 }).then(res => setCompanies(res.content)).catch(console.error);
   }, []);
 
   const handleSearch = () => {

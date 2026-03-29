@@ -8,7 +8,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 
 @RestController
 @RequestMapping("/api/v1/system/companies")
@@ -21,7 +24,6 @@ public class CompanyController {
     public ResponseEntity<CompanyResponseDTO> createCompany(
             @RequestHeader(value = "X-Company-ID", required = false) String companyId,
             @RequestBody CompanyRequestDTO dto) {
-        // If companyId is provided in header, we can use it or validate against body
         return ResponseEntity.status(HttpStatus.CREATED).body(companyService.createCompany(dto));
     }
 
@@ -36,8 +38,11 @@ public class CompanyController {
     }
 
     @GetMapping
-    public ResponseEntity<List<CompanyResponseDTO>> getAllCompanies() {
-        return ResponseEntity.ok(companyService.getAllCompanies());
+    public ResponseEntity<Page<CompanyResponseDTO>> searchCompanies(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String status,
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(companyService.searchCompanies(name, status, pageable));
     }
 
     @PutMapping("/{id}")

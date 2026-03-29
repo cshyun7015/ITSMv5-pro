@@ -19,8 +19,8 @@ const SignupPage: React.FC = () => {
     useEffect(() => {
         const fetchCompanies = async () => {
             try {
-                const data = await apiCompany.list();
-                setCompanies(data);
+                const res = await apiCompany.list({ size: 1000 });
+                setCompanies(res.content);
             } catch (err) {
                 console.error('Failed to load companies');
             }
@@ -48,10 +48,10 @@ const SignupPage: React.FC = () => {
 
     return (
         <div className="auth-container anime-fade-in">
-            <div className="auth-card glass-card shadow-2xl animate-scale-in" style={{ width: '450px' }}>
+            <div className="auth-card premium-card animate-scale-in">
                 <div className="auth-header">
                     <h1 className="text-gradient neon-glow">Join ITSM v5</h1>
-                    <p className="subtitle">Create your individual account</p>
+                    <p className="subtitle text-muted">Create your individual account</p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="auth-form">

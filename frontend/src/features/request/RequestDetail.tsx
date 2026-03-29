@@ -17,15 +17,17 @@ const RequestDetail: React.FC<Props> = ({ requestId, onClose, onUpdated }) => {
     const storedUser = localStorage.getItem('authUser');
     const authUser = storedUser ? JSON.parse(storedUser) : null;
     const userRole = authUser?.role || 'ROLE_USER';
-    const isAdmin = userRole?.includes('ADMIN') || userRole?.includes('OPERATOR');
+    
+    const isAdmin = userRole?.includes('ADMIN') || userRole?.includes('OPERATOR') || userRole?.includes('MANAGER');
 
-    const [isEditing, setIsEditing] = useState(isAdmin);
+    const [isEditing, setIsEditing] = useState(false);
     const [editData, setEditData] = useState<Partial<RequestItem>>({});
     const [newComment, setNewComment] = useState('');
     const [isInternal, setIsInternal] = useState(false);
     const [codes, setCodes] = useState<{ [key: string]: CommonCode[] }>({});
     const [now, setNow] = useState(new Date());
     const [userMap, setUserMap] = useState<{[key: string]: string}>({});
+    const [isSaving, setIsSaving] = useState(false);
     
     useEffect(() => {
         loadDetail();
@@ -33,9 +35,8 @@ const RequestDetail: React.FC<Props> = ({ requestId, onClose, onUpdated }) => {
         return () => clearInterval(timer);
     }, [requestId]);
 
-    // Priority Calculation Logic (Sync with Backend)
     const calculatePriority = (impact?: string, urgency?: string) => {
-        if (!impact || !urgency) return 'P3';
+        if (!impact || !urgency) return 'P4';
         if (impact === 'HIGH') {
             if (urgency === 'HIGH') return 'P1';
             if (urgency === 'MEDIUM') return 'P2';
@@ -44,7 +45,7 @@ const RequestDetail: React.FC<Props> = ({ requestId, onClose, onUpdated }) => {
             if (urgency === 'HIGH') return 'P2';
             if (urgency === 'MEDIUM') return 'P3';
             return 'P4';
-        } else { // LOW Impact
+        } else {
             if (urgency === 'HIGH') return 'P3';
             return 'P4';
         }
@@ -63,21 +64,14 @@ const RequestDetail: React.FC<Props> = ({ requestId, onClose, onUpdated }) => {
         if (!targetAt) return null;
         const target = new Date(targetAt);
         const diff = target.getTime() - now.getTime();
-        
         if (diff <= 0) return { text: 'EXPIRED', colorClass: 'sla-red' };
-        
         const hours = Math.floor(diff / (1000 * 60 * 60));
         const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
         const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
         let colorClass = 'sla-emerald';
         if (hours < 1) colorClass = 'sla-orange';
         if (hours < 0.5) colorClass = 'sla-red';
-
-        return { 
-            text: `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`,
-            colorClass 
-        };
+        return { text: `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`, colorClass };
     };
 
     const loadDetail = async () => {
@@ -85,67 +79,58 @@ const RequestDetail: React.FC<Props> = ({ requestId, onClose, onUpdated }) => {
             const [reqRes, comRes, userRes] = await Promise.all([
                 apiRequest.getRequest(requestId),
                 apiRequest.getComments(requestId),
-                apiUser.list('all')
+                apiUser.list({ size: 1000 })
             ]);
             setRequest(reqRes.data);
             setEditData(reqRes.data);
             setComments(comRes.data);
 
             const map: {[key: string]: string} = {};
-            userRes.forEach((u: any) => { map[u.userId] = u.name; });
+            userRes.content.forEach((u: UserDTO) => { map[u.userId] = u.name; });
             setUserMap(map);
 
-            // Fetch SR_STATUS with await for better error logging
-            try {
-                const statusRes = await apiCommonCode.getCodesByGroup('SR_STATUS');
-                setCodes(prev => ({ ...prev, SR_STATUS: statusRes.data }));
-            } catch (err) {
-                console.error('SR_STATUS fetch failed:', err);
-            }
+            const statusRes = await apiCommonCode.getCodesByGroup('SR_STATUS');
+            setCodes(prev => ({ ...prev, SR_STATUS: statusRes.data }));
 
-            // Fetch other codes
             const codesToFetch = ['SR_TYPE', 'SR_CATEGORY', 'SR_IMPACT', 'SR_URGENCY', 'SR_RESOLUTION'];
-            codesToFetch.forEach(group => {
-                apiCommonCode.getCodesByGroup(group)
-                    .then(res => setCodes(prev => ({ ...prev, [group]: res.data })))
-                    .catch(err => console.error(`Failed to load ${group}`, err));
-            });
+            await Promise.all(codesToFetch.map(async (group) => {
+                const res = await apiCommonCode.getCodesByGroup(group);
+                setCodes(prev => ({ ...prev, [group]: res.data }));
+            }));
 
-            const filteredAgents = userRes.filter((u: any) => 
-                u.companyId === 'MSP' && (u.role === 'ROLE_ADMIN' || u.role === 'ROLE_OPERATOR')
+            const filteredAgents = userRes.content.filter((u: UserDTO) => 
+                u.companyId === 'MSP' && (u.role === 'ROLE_ADMIN' || u.role === 'ROLE_OPERATOR' || u.role === 'ROLE_MANAGER')
             );
             setAgents(filteredAgents);
 
+            if (isAdmin) {
+                setIsEditing(true);
+            }
+
         } catch (err) {
-            console.error('Critical failure loading request detail', err);
+            console.error('Failed to load request detail', err);
         }
     };
 
     const handleSave = async () => {
         if (!request) return;
-        
-        // Validation for resolver fields if status is RESOLVED or CLOSED
         if (isAdmin && (editData.status === 'RESOLVED' || editData.status === 'CLOSED')) {
             if (!editData.srResolutionCode || !editData.resolutionText) {
                 alert('해결 시 해결 코드와 해결 내용을 입력해야 합니다.');
                 return;
             }
         }
-
         try {
+            setIsSaving(true);
             await apiRequest.updateRequest(requestId, editData as RequestItem);
             setIsEditing(false);
             onUpdated();
             loadDetail();
         } catch (err) {
-            alert('저장에 실패했습니다.');
+            alert('요청 저장에 실패했습니다.');
+        } finally {
+            setIsSaving(false);
         }
-    };
-
-    const handleStatusChange = (newStatus: string) => {
-        if (!request) return;
-        setIsEditing(true);
-        setEditData(prev => ({ ...prev, status: newStatus }));
     };
 
     const handleAddComment = async (e: React.FormEvent) => {
@@ -153,406 +138,343 @@ const RequestDetail: React.FC<Props> = ({ requestId, onClose, onUpdated }) => {
         if (!newComment.trim()) return;
         try {
             await apiRequest.addComment(requestId, {
-                requestId,
-                authorId: authUser?.userId || 'UNKNOWN', 
+                requestId: requestId,
+                authorId: authUser?.userId || 'system',
                 content: newComment,
-                isInternal
-            });
+                isInternal: isInternal
+            } as RequestComment);
             setNewComment('');
-            loadDetail();
+            const comRes = await apiRequest.getComments(requestId);
+            setComments(comRes.data);
         } catch (err) {
-            alert('Failed to add comment');
+            alert('댓글 등록에 실패했습니다.');
         }
     };
 
-    if (!request) return null;
+    if (!request) return (
+        <div className="modal-overlay">
+            <div className="glass-card loading-container" style={{ padding: '40px', textAlign: 'center' }}>
+                <span className="animate-pulse" style={{ fontSize: '12px', fontWeight: 800, color: 'var(--brand-primary)' }}>AUTHENTICATING DATA...</span>
+            </div>
+        </div>
+    );
+
+    const sla = getSLARemaining(request.slaTargetAt);
+    const flowStates = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'];
+    const currentFlowIndex = flowStates.indexOf(isEditing ? editData.status || '' : request.status);
 
     return (
-        <div className="request-detail-fixed">
-            <div className="request-detail-content glass-card shadow-2xl">
-                <header className="panel-header" style={{ padding: '24px 32px', borderBottom: '1px solid var(--glass-border)', display: 'block' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        {/* Request Number - Compact 16px */}
-                        <span style={{ 
-                            fontSize: '16px', 
-                            color: 'var(--brand-primary)', 
-                            fontWeight: 700,
-                            letterSpacing: '0.5px'
-                        }}>
-                            {request.reqNumber}
-                        </span>
-
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '24px' }}>
-                            {/* Title - Compact 22px */}
-                            <div style={{ flex: 1 }}>
-                                {isEditing ? (
-                                    <input 
-                                        type="text" 
-                                        value={editData.title} 
-                                        onChange={e => setEditData({...editData, title: e.target.value})}
-                                        style={{ 
-                                            background: 'rgba(255,255,255,0.1)', 
-                                            fontSize: '22px', 
-                                            fontWeight: 700, 
-                                            border: '1px solid var(--brand-primary)', 
-                                            width: '100%',
-                                            color: 'white',
-                                            padding: '6px 12px',
-                                            borderRadius: '8px'
-                                        }}
-                                    />
-                                ) : (
-                                    <h1 style={{ fontSize: '22px', fontWeight: 700, color: 'white', margin: 0, lineHeight: 1.2 }}>
-                                        {request.title}
-                                    </h1>
-                                )}
-                            </div>
-
-                            {/* Actions - Now Aligned with Title */}
-                            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                                {isEditing ? (
-                                    <button onClick={handleSave} className="btn-primary" style={{ minWidth: '120px', height: '44px', padding: '0 32px', borderRadius: '12px', fontSize: '14px', fontWeight: 700 }}>저장</button>
-                                ) : (
-                                    isAdmin && (
-                                        <>
-                                            <button onClick={() => setIsEditing(true)} className="btn-ghost" style={{ padding: '8px 20px', borderRadius: '8px' }} data-testid="edit-button">수정</button>
-                                            <button 
-                                                onClick={async () => {
-                                                    if (window.confirm('이 요청을 정말 삭제하시겠습니까?')) {
-                                                        try {
-                                                            await apiRequest.deleteRequest(requestId);
-                                                            onUpdated();
-                                                            onClose();
-                                                        } catch (err) {
-                                                            alert('삭제에 실패했습니다.');
-                                                        }
-                                                    }
-                                                }}
-                                                className="btn-ghost"
-                                                style={{ padding: '8px 20px', borderRadius: '8px', color: '#ff4d4d', borderColor: 'rgba(255, 77, 77, 0.3)' }}
-                                            >
-                                                삭제
-                                            </button>
-                                        </>
-                                    )
-                                )}
-                                <button onClick={onClose} className="btn-ghost" style={{ minWidth: '120px', height: '44px', padding: '0 32px', borderRadius: '12px', fontSize: '14px', fontWeight: 700 }}>목록</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Metadata Row */}
-                    <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
-                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>요청자: <strong>{userMap[request.requesterId] || request.requesterId}</strong></span>
-                            <span style={{ width: '1px', height: '10px', background: 'rgba(255,255,255,0.1)' }} />
-                            <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>생성일시: {new Date(request.createdAt!).toLocaleString()}</span>
-                         </div>
-
-                        {(() => {
-                            const sla = getSLARemaining(request.slaTargetAt);
-                            return sla && (
-                                <div className={`sla-badge ${sla.colorClass}`} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--glass-border)', padding: '3px 10px' }}>
-                                    <div className="sla-dot animate-pulse"></div>
-                                    <span style={{ fontWeight: 600, fontSize: '11px' }}>SLA 남은 시간: {sla.text}</span>
+        <div className="modal-overlay animate-fade-in" style={{ zIndex: 1000 }}>
+            <div className="modal-content glass-card premium-modal animate-scale-in" style={{ width: '1300px', height: '94vh', display: 'flex', flexDirection: 'column', padding: '0', background: 'rgba(10, 10, 12, 0.95)', backdropFilter: 'blur(20px)' }}>
+                
+                {/* Visual Status Flow Stepper - High End */}
+                <div className="premium-stepper-container">
+                    <div className="stepper-track">
+                        {flowStates.map((state, idx) => (
+                            <React.Fragment key={state}>
+                                <div className={`stepper-node ${idx <= currentFlowIndex ? 'active' : ''} ${idx === currentFlowIndex ? 'current' : ''}`}>
+                                    <div className="node-circle">
+                                        <div className="node-inner" />
+                                        <span className="node-idx">{idx + 1}</span>
+                                    </div>
+                                    <span className="node-label">{codes.SR_STATUS?.find(s => s.codeId === state)?.codeName || state}</span>
                                 </div>
-                            );
-                        })()}
+                                {idx < flowStates.length - 1 && (
+                                    <div className={`stepper-connector ${idx < currentFlowIndex ? 'active' : ''}`}>
+                                        <div className="connector-glow" />
+                                    </div>
+                                )}
+                            </React.Fragment>
+                        ))}
+                    </div>
+                </div>
+
+                <header className="premium-header">
+                    <div className="header-meta">
+                        <div className="id-strip">
+                            <span className="req-id-text">{request.reqNumber || `#${request.id}`}</span>
+                            <div className="divider-v" />
+                            {sla && (
+                                <div className={`sla-indicator ${sla.colorClass}`}>
+                                    <span className="sla-time">{sla.text}</span>
+                                    <span className="sla-label">TIME REMAINING</span>
+                                </div>
+                            )}
+                        </div>
+                        <h2 className="header-title">{request.title}</h2>
+                    </div>
+                    
+                    <div className="header-actions">
+                        <button className="btn-glass" onClick={onClose}>창 닫기</button>
+                        {isAdmin && (
+                            <button 
+                                className="btn-glow-primary" 
+                                onClick={() => isEditing ? handleSave() : setIsEditing(true)}
+                                disabled={isSaving}
+                            >
+                                {isSaving ? '보내는 중...' : (isEditing ? '변경사항 저장' : '수정 모드')}
+                            </button>
+                        )}
                     </div>
                 </header>
 
-                <div className="detail-main" style={{ flexDirection: 'column', height: 'auto', overflowY: 'auto', padding: '32px' }}>
-                    {/* Top: Workflow Step Section */}
-                    <div className="workflow-section" style={{ marginBottom: '40px', padding: '0 20px' }}>
-                        <label className="input-label" style={{ marginBottom: '24px', fontSize: '14px', textAlign: 'center', display: 'block', color: 'var(--brand-primary)' }}>요청 처리 프로세스 (Status Flow)</label>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative' }}>
-                            {/* Background Line */}
-                            <div style={{ position: 'absolute', top: '50%', left: '50px', right: '50px', height: '2px', background: 'rgba(255,255,255,0.1)', zIndex: 0 }} />
-                            
-                            {codes.SR_STATUS?.map((s: CommonCode, idx: number) => {
-                                const currentStatus = isEditing ? editData.status : request.status;
-                                const isActive = currentStatus === s.codeId;
-                                // Simple logic: if index <= current status index? 
-                                // Actually better to just highlight active and passed.
-                                const statusList = codes.SR_STATUS || [];
-                                const currentIndex = statusList.findIndex(x => x.codeId === currentStatus);
-                                const isPassed = idx < currentIndex;
-
-                                return (
-                                    <div 
-                                        key={s.codeId} 
-                                        style={{ 
-                                            display: 'flex', 
-                                            flexDirection: 'column', 
-                                            alignItems: 'center', 
-                                            gap: '12px', 
-                                            zIndex: 1, 
-                                            cursor: isAdmin ? 'pointer' : 'default',
-                                            flex: 1
-                                        }}
-                                        onClick={() => isAdmin && handleStatusChange(s.codeId)}
-                                    >
-                                        <div style={{ 
-                                            width: '32px', 
-                                            height: '32px', 
-                                            borderRadius: '50%', 
-                                            background: isActive ? 'hsl(var(--brand-primary))' : isPassed ? '#00ff88' : 'rgba(255,255,255,0.1)',
-                                            border: '4px solid #1a1a1c',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            transition: 'all 0.3s ease',
-                                            boxShadow: isActive ? '0 0 15px hsl(var(--brand-primary))' : 'none'
-                                        }}>
-                                            {isPassed ? '✓' : idx + 1}
-                                        </div>
-                                        <span style={{ 
-                                            fontSize: '11px', 
-                                            fontWeight: (isActive || isPassed) ? 700 : 400,
-                                            color: isActive ? 'white' : isPassed ? '#00ff88' : 'var(--text-secondary)',
-                                            textTransform: 'uppercase',
-                                            letterSpacing: '0.5px'
-                                        }}>
-                                            {s.codeName}
-                                        </span>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    <div className="glass-card" style={{ padding: '24px', marginBottom: '32px', background: 'rgba(255,255,255,0.03)' }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '32px' }}>
-                            {/* Classification Grid */}
-                            <div className="form-group">
-                                <label>요청 유형</label>
-                                {isEditing ? (
-                                    <select value={editData.srTypeCode || ''} onChange={e => setEditData({...editData, srTypeCode: e.target.value})}>
-                                        <option value="">-- 선택 --</option>
-                                        {codes.SR_TYPE?.map((c: CommonCode) => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
-                                    </select>
-                                ) : (
-                                    <div className="code-name-cell">{codes.SR_TYPE?.find((c: CommonCode) => c.codeId === request.srTypeCode)?.codeName || request.srTypeCode || '-'}</div>
-                                )}
+                <div className="premium-scroll-area">
+                    
+                    {/* HUD: Logic Visualizer */}
+                    <div className="logic-hud-panel glass-card">
+                        <div className="hud-label">ITIL v5 PRIORITY CALCULATION ENGINE</div>
+                        <div className="hud-content">
+                            <div className="hud-item editable">
+                                <label>IMPACT</label>
+                                <div className="hud-value">{codes.SR_IMPACT?.find(c => c.codeId === (isEditing ? editData.srImpactCode : request.srImpactCode))?.codeName || '-'}</div>
                             </div>
-                            <div className="form-group">
-                                <label>서비스 카테고리</label>
-                                {isEditing ? (
-                                    <select value={editData.srCategoryCode || ''} onChange={e => setEditData({...editData, srCategoryCode: e.target.value})}>
-                                        <option value="">-- 선택 --</option>
-                                        {codes.SR_CATEGORY?.map((c: CommonCode) => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
-                                    </select>
-                                ) : (
-                                    <div className="code-name-cell">{codes.SR_CATEGORY?.find((c: CommonCode) => c.codeId === request.srCategoryCode)?.codeName || request.srCategoryCode || '-'}</div>
-                                )}
+                            <div className="hud-operator">×</div>
+                            <div className="hud-item editable">
+                                <label>URGENCY</label>
+                                <div className="hud-value">{codes.SR_URGENCY?.find(c => c.codeId === (isEditing ? editData.srUrgencyCode : request.srUrgencyCode))?.codeName || '-'}</div>
                             </div>
-                            <div className="form-group">
-                                <label>영향도</label>
-                                {isEditing ? (
-                                    <select value={editData.srImpactCode || 'LOW'} onChange={e => setEditData({...editData, srImpactCode: e.target.value})}>
-                                        {codes.SR_IMPACT?.map((c: CommonCode) => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
-                                    </select>
-                                ) : (
-                                    <div className="code-name-cell">{codes.SR_IMPACT?.find((c: CommonCode) => c.codeId === request.srImpactCode)?.codeName || '-'}</div>
-                                )}
-                            </div>
-                            <div className="form-group">
-                                <label>긴급도</label>
-                                {isEditing ? (
-                                    <select value={editData.srUrgencyCode || 'LOW'} onChange={e => setEditData({...editData, srUrgencyCode: e.target.value})}>
-                                        {codes.SR_URGENCY?.map((c: CommonCode) => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
-                                    </select>
-                                ) : (
-                                    <div className="code-name-cell">{codes.SR_URGENCY?.find((c: CommonCode) => c.codeId === request.srUrgencyCode)?.codeName || '-'}</div>
-                                )}
-                            </div>
-
-                            {/* Priority Info Row - Removed box line/bg */}
-                            <div style={{ gridColumn: 'span 4', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0' }}>
-                                <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-                                    산합 공식: <code style={{ color: 'var(--brand-primary)' }}>영향도({isEditing ? editData.srImpactCode : request.srImpactCode}) + 긴급도({isEditing ? editData.srUrgencyCode : request.srUrgencyCode})</code>
-                                </span>
-                                <span className={`priority-badge priority-${(isEditing ? editData.priority : request.priority)?.toLowerCase()}`} style={{ fontSize: '14px', padding: '6px 16px', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
-                                    최종 우선순위: {isEditing ? editData.priority : request.priority}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Middle: Management Section (2 Columns) */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '32px', marginBottom: '32px' }}>
-                        <div className="form-group">
-                            <label>담당 전문가 배정</label>
-                            {isEditing ? (
-                                <select
-                                    value={editData.assigneeId || ''} 
-                                    onChange={e => setEditData({...editData, assigneeId: e.target.value})}
-                                    style={{ width: '100%' }}
-                                >
-                                    <option value="">-- 미배정 --</option>
-                                    {agents.map((a: UserDTO) => (
-                                        <option key={a.userId} value={a.userId}>{a.name} ({a.userId})</option>
-                                    ))}
-                                </select>
-                            ) : (
-                                <div className="code-name-cell">{agents.find((a: UserDTO) => a.userId === request.assigneeId)?.name || request.assigneeId || '미배정'}</div>
-                            )}
-                        </div>
-
-                        {/* Description Section */}
-                        <div className="form-group">
-                            <label>요청 상세 내용</label>
-                            {isEditing ? (
-                                <textarea 
-                                    value={editData.description} 
-                                    onChange={e => setEditData({...editData, description: e.target.value})}
-                                    style={{ minHeight: '120px' }}
-                                />
-                            ) : (
-                                <div style={{ 
-                                    background: 'rgba(255,255,255,0.05)', 
-                                    padding: '16px', 
-                                    borderRadius: '12px', 
-                                    border: '1px solid var(--glass-border)',
-                                    fontSize: '14px',
-                                    whiteSpace: 'pre-wrap',
-                                    minHeight: '120px'
-                                }}>
-                                    {request.description}
+                            <div className="hud-operator">=</div>
+                            <div className="hud-item result-node">
+                                <label>PRIORITY</label>
+                                <div className={`hud-priority-badge ${(isEditing ? editData.priority : request.priority)?.toLowerCase()}`}>
+                                    {isEditing ? editData.priority : request.priority}
                                 </div>
-                            )}
+                            </div>
                         </div>
+                        <div className="hud-footer">AUTO-CALCULATION ACTIVE</div>
                     </div>
 
-                    {/* Conditional Resolution Section (Full Width) */}
-                    {(isEditing ? (editData.status === 'RESOLVED' || editData.status === 'CLOSED') : (request.status === 'RESOLVED' || request.status === 'CLOSED')) && (
-                        <div className="resolution-section glass-card" style={{ padding: '24px', marginBottom: '32px', background: 'rgba(0, 255, 100, 0.05)', border: '1px solid rgba(0, 255, 100, 0.2)' }}>
-                            <h3 style={{ fontSize: '15px', color: '#00ff64', marginBottom: '20px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#00ff64' }} />
-                                해결 정보 (ITIL Mandatory)
-                            </h3>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '32px' }}>
-                                <div className="form-group">
-                                    <label>해결 코드</label>
-                                    {isEditing ? (
-                                        <select value={editData.srResolutionCode || ''} onChange={e => setEditData({...editData, srResolutionCode: e.target.value})}>
-                                            <option value="">-- 해결 구분 선택 --</option>
-                                            {codes.SR_RESOLUTION?.map((c: CommonCode) => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
+                    <div className="content-grid-system">
+                        <div className="main-form">
+                            <div className="glass-card field-set">
+                                <div className="field-row">
+                                    <div className="field-group">
+                                        <label>영향도 (Impact)</label>
+                                        <select disabled={!isEditing} value={isEditing ? editData.srImpactCode : request.srImpactCode} onChange={e => setEditData({...editData, srImpactCode: e.target.value})}>
+                                            {codes.SR_IMPACT?.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
                                         </select>
-                                    ) : (
-                                        <div className="code-name-cell" style={{ color: '#00ff64' }}>{codes.SR_RESOLUTION?.find((c: CommonCode) => c.codeId === request.srResolutionCode)?.codeName || request.srResolutionCode || '-'}</div>
-                                    )}
+                                    </div>
+                                    <div className="field-group">
+                                        <label>긴급도 (Urgency)</label>
+                                        <select disabled={!isEditing} value={isEditing ? editData.srUrgencyCode : request.srUrgencyCode} onChange={e => setEditData({...editData, srUrgencyCode: e.target.value})}>
+                                            {codes.SR_URGENCY?.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
+                                        </select>
+                                    </div>
                                 </div>
-                                <div className="form-group">
-                                    <label>해결 조치 상세</label>
+                                <div className="field-group full">
+                                    <label>서비스 카테고리</label>
+                                    <select disabled={!isEditing} value={isEditing ? editData.srCategoryCode : request.srCategoryCode} onChange={e => setEditData({...editData, srCategoryCode: e.target.value})}>
+                                        {codes.SR_CATEGORY?.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
+                                    </select>
+                                </div>
+                                <div className="field-group full">
+                                    <label>전문가 배정</label>
+                                    <select disabled={!isEditing} value={(isEditing ? editData.assigneeId : request.assigneeId) || ''} onChange={e => setEditData({...editData, assigneeId: e.target.value})}>
+                                        <option value="">-- 미배정 --</option>
+                                        {agents.map(a => <option key={a.userId} value={a.userId}>{a.name} ({a.userId})</option>)}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="glass-card field-set">
+                                <div className="field-group full">
+                                    <label>요청 상세 내역</label>
                                     {isEditing ? (
-                                        <textarea 
-                                            value={editData.resolutionText || ''} 
-                                            onChange={e => setEditData({...editData, resolutionText: e.target.value})}
-                                            placeholder="해결한 구체적인 방법이나 조치 내용을 입력하세요."
-                                            style={{ minHeight: '100px', border: '1px solid rgba(0, 255, 100, 0.2)' }}
-                                        />
+                                        <textarea value={editData.description} onChange={e => setEditData({...editData, description: e.target.value})} style={{ minHeight: '180px' }} />
                                     ) : (
-                                        <div style={{ fontSize: '14px', color: 'var(--text-secondary)', whiteSpace: 'pre-wrap', background: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: '8px' }}>{request.resolutionText || '조치 내용 없음'}</div>
+                                        <div className="rich-display-box" style={{ minHeight: '180px' }}>{request.description}</div>
                                     )}
                                 </div>
                             </div>
                         </div>
-                    )}
 
-                    {/* Bottom: Timeline & Comment Section */}
-                    <div style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '32px' }}>
-                        <h3 className="section-title" style={{ marginBottom: '24px', fontSize: '16px' }}>커뮤니케이션 히스토리</h3>
-                        
-                        <div className="comments-list" style={{ marginBottom: '32px', padding: '16px', background: 'rgba(0,0,0,0.1)', borderRadius: '16px', minHeight: '100px' }}>
-                            {comments.length > 0 ? comments.map(c => (
-                                <div key={c.id} style={{ 
-                                    display: 'flex', 
-                                    alignItems: 'center', 
-                                    gap: '16px', 
-                                    padding: '2px 16px', 
-                                    borderBottom: '1px solid rgba(255,255,255,0.03)',
-                                    background: c.isInternal ? 'rgba(255, 170, 0, 0.05)' : 'transparent',
-                                    minHeight: '28px'
-                                }}>
-                                    <span style={{ width: '150px', fontSize: '11px', color: 'var(--text-secondary)', flexShrink: 0, opacity: 0.7 }}>
-                                        {new Date(c.createdAt!).toLocaleString('ko-KR', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                                    </span>
-                                    <span style={{ width: '110px', fontSize: '12px', color: '#00ffc8', fontWeight: 600, flexShrink: 0 }}>
-                                        {userMap[c.authorId] || c.authorId}
-                                    </span>
-                                    <span style={{ flex: 1, fontSize: '13px', color: 'rgba(255,255,255,0.9)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                        {c.content}
-                                    </span>
-                                    <span style={{ 
-                                        width: '70px', 
-                                        fontSize: '9px', 
-                                        fontWeight: 800, 
-                                        textAlign: 'right',
-                                        color: c.isInternal ? '#ffaa00' : 'var(--brand-primary)',
-                                        flexShrink: 0,
-                                        letterSpacing: '0.5px'
-                                    }}>
-                                        {c.isInternal ? 'INTERNAL' : 'GENERAL'}
-                                    </span>
+                        <div className="side-form">
+                            <div className="glass-card field-set highlighted">
+                                <div className="set-header">STATUS CONTROL</div>
+                                <div className="field-group full">
+                                    <label>현재 단계</label>
+                                    <select disabled={!isEditing} value={isEditing ? editData.status : request.status} onChange={e => setEditData({...editData, status: e.target.value})} className="status-select">
+                                        {codes.SR_STATUS?.map(s => <option key={s.codeId} value={s.codeId}>{s.codeName}</option>)}
+                                    </select>
                                 </div>
-                            )) : (
-                                <div style={{ height: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', fontStyle: 'italic', fontSize: '12px' }}>
-                                    등록된 히스토리가 없습니다.
+                                <div className="metadata-list">
+                                    <div className="meta-item">
+                                        <span className="m-label">작성자</span>
+                                        <span className="m-val">{userMap[request.requesterId] || request.requesterId}</span>
+                                    </div>
+                                    <div className="meta-item">
+                                        <span className="m-label">유형</span>
+                                        <span className="m-val">{codes.SR_TYPE?.find(c => c.codeId === request.srTypeCode)?.codeName || request.srTypeCode}</span>
+                                    </div>
+                                    <div className="meta-item">
+                                        <span className="m-label">최종 수정</span>
+                                        <span className="m-val">{new Date(request.updatedAt || request.createdAt!).toLocaleString()}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {(isEditing ? (['RESOLVED', 'CLOSED'].includes(editData.status || '')) : (['RESOLVED', 'CLOSED'].includes(request.status))) && (
+                                <div className="glass-card field-set resolution-glow">
+                                    <div className="set-header green">RESOLUTION DETAILS</div>
+                                    <div className="field-group full">
+                                        <label>해결 코드</label>
+                                        <select disabled={!isEditing} value={isEditing ? editData.srResolutionCode : request.srResolutionCode} onChange={e => setEditData({...editData, srResolutionCode: e.target.value})}>
+                                            <option value="">-- 해결 코드 선택 --</option>
+                                            {codes.SR_RESOLUTION?.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
+                                        </select>
+                                    </div>
+                                    <div className="field-group full">
+                                        <label>처리 내용</label>
+                                        <textarea disabled={!isEditing} value={isEditing ? editData.resolutionText : request.resolutionText} onChange={e => setEditData({...editData, resolutionText: e.target.value})} style={{ minHeight: '120px' }} />
+                                    </div>
                                 </div>
                             )}
                         </div>
+                    </div>
 
-                        <form onSubmit={handleAddComment} className="comment-form glass-card" style={{ padding: '20px', background: 'rgba(255,255,255,0.02)' }}>
-                            <div style={{ display: 'flex', gap: '16px' }}>
-                                <textarea
-                                    value={newComment}
-                                    onChange={e => setNewComment(e.target.value)}
-                                    placeholder="Add a comment or worknote..."
-                                    style={{ 
-                                        flex: 1, 
-                                        minHeight: '80px', 
-                                        background: 'rgba(255,255,255,0.05)', 
-                                        borderRadius: '12px', 
-                                        padding: '12px 16px',
-                                        color: 'white',
-                                        fontSize: '13px',
-                                        border: '1px solid var(--glass-border)',
-                                        resize: 'none'
-                                    }}
-                                />
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', justifyContent: 'center', minWidth: '150px' }}>
-                                    <label style={{ 
-                                        display: 'flex', 
-                                        alignItems: 'center', 
-                                        gap: '8px', 
-                                        cursor: 'pointer', 
-                                        color: isInternal ? '#ffaa00' : 'var(--text-secondary)', 
-                                        fontSize: '11px',
-                                        fontWeight: 600,
-                                        userSelect: 'none'
-                                    }}>
-                                        <input 
-                                            type="checkbox" 
-                                            checked={isInternal} 
-                                            onChange={e => setIsInternal(e.target.checked)}
-                                            style={{ width: '16px', height: '16px' }}
-                                        />
-                                        INTERNAL WORKNOTE
-                                    </label>
-                                    <button
-                                        type="submit"
-                                        className="btn-secondary"
-                                        style={{ minWidth: '120px', height: '44px', padding: '0 32px', borderRadius: '12px', fontSize: '14px', fontWeight: 700 }}
-                                    >
-                                        등록
-                                    </button>
-                                </div>
+                    <div className="timeline-panel glass-card">
+                        <div className="panel-header-sub">
+                            <h3>HISTORY & INVESTIGATION</h3>
+                            <span className="count-badge">{comments.length} ACTIVITIES</span>
+                        </div>
+                        
+                        <div className="timeline-table-premium">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th className="t-time">발생 일시</th>
+                                        <th className="t-user">작성자</th>
+                                        <th className="t-content">설명 및 코멘트</th>
+                                        <th className="t-type">분류</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {comments.map(c => (
+                                        <tr key={c.id} className={c.isInternal ? 'is-internal' : ''}>
+                                            <td className="t-time">{new Date(c.createdAt!).toLocaleDateString()} <br/><small>{new Date(c.createdAt!).toLocaleTimeString()}</small></td>
+                                            <td className="t-user">
+                                                <div className="user-pill">{userMap[c.authorId] || c.authorId}</div>
+                                            </td>
+                                            <td className="t-content">{c.content}</td>
+                                            <td className="t-type">
+                                                <span className={`tag-${c.isInternal ? 'internal' : 'public'}`}>
+                                                    {c.isInternal ? 'INTERNAL' : 'GENERAL'}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {comments.length === 0 && (
+                                        <tr><td colSpan={4} className="empty-row">기록된 이력이 없습니다.</td></tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div className="composer-premium">
+                            <textarea value={newComment} onChange={e => setNewComment(e.target.value)} placeholder="분석 결과 또는 대응 메시지를 입력하세요..." />
+                            <div className="composer-footer">
+                                <label className="internal-toggle">
+                                    <input type="checkbox" checked={isInternal} onChange={e => setIsInternal(e.target.checked)} />
+                                    <span className="toggle-label">내부 전용 노트로 기록</span>
+                                </label>
+                                <button className="btn-send" onClick={handleAddComment}>기록 전송</button>
                             </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
             </div>
+
+            <style>{`
+                .premium-stepper-container { background: rgba(0,0,0,0.5); padding: 32px 60px; border-bottom: 2px solid rgba(255,255,255,0.03); }
+                .stepper-track { display: flex; align-items: center; justify-content: space-between; max-width: 900px; margin: 0 auto; position: relative; }
+                .stepper-node { display: flex; flex-direction: column; align-items: center; gap: 12px; z-index: 2; position: relative; opacity: 0.3; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+                .stepper-node.active { opacity: 1; }
+                .node-circle { width: 32px; height: 32px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; background: #0a0a0c; position: relative; }
+                .node-inner { width: 100%; height: 100%; border-radius: 50%; opacity: 0; transition: all 0.4s; position: absolute; }
+                .stepper-node.active .node-circle { border-color: hsl(var(--brand-primary)); }
+                .stepper-node.current .node-inner { background: radial-gradient(circle, hsl(var(--brand-primary)), transparent); opacity: 0.3; transform: scale(3); }
+                .stepper-node.current .node-circle { background: hsl(var(--brand-primary)); }
+                .stepper-node.current .node-idx { color: #000; font-weight: 900; }
+                .node-idx { font-size: 11px; font-weight: 700; color: #fff; }
+                .node-label { font-size: 11px; font-weight: 800; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; }
+                .stepper-node.current .node-label { color: hsl(var(--brand-primary)); }
+                .stepper-connector { flex: 1; height: 2px; background: rgba(255,255,255,0.05); margin: 0 10px; position: relative; overflow: hidden; }
+                .stepper-connector.active { background: rgba(255,255,255,0.1); }
+                .connector-glow { position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, hsl(var(--brand-primary)), transparent); opacity: 0.5; animation: flow-glow 3s infinite; }
+                @keyframes flow-glow { 0% { left: -100%; } 100% { left: 100%; } }
+
+                .premium-header { padding: 40px 60px; display: flex; justify-content: space-between; align-items: flex-end; }
+                .id-strip { display: flex; align-items: center; gap: 20px; margin-bottom: 12px; }
+                .req-id-text { font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 900; color: hsl(var(--brand-primary)); letter-spacing: 1px; }
+                .divider-v { width: 1px; height: 12px; background: rgba(255,255,255,0.2); }
+                .sla-indicator { display: flex; flex-direction: column; }
+                .sla-time { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 800; line-height: 1; }
+                .sla-label { font-size: 8px; font-weight: 700; opacity: 0.5; margin-top: 2px; }
+                .header-title { font-size: 32px; font-weight: 900; letter-spacing: -1px; }
+                .btn-glass { border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.03); color: #fff; padding: 12px 24px; border-radius: 12px; font-weight: 700; cursor: pointer; transition: all 0.3s; }
+                .btn-glass:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.3); }
+                .btn-glow-primary { background: hsl(var(--brand-primary)); color: #000; border: none; padding: 12px 32px; border-radius: 12px; font-weight: 800; cursor: pointer; box-shadow: 0 0 20px hsla(var(--brand-primary), 0.3); transition: all 0.3s; }
+                .btn-glow-primary:hover { transform: translateY(-2px); box-shadow: 0 0 30px hsla(var(--brand-primary), 0.5); }
+
+                .premium-scroll-area { flex: 1; overflow-y: auto; padding: 0 60px 60px; }
+                .logic-hud-panel { background: linear-gradient(135deg, rgba(20,20,25,0.8), rgba(10,10,12,0.9)); border: 1px solid rgba(255,255,255,0.05); padding: 32px; margin-bottom: 48px; border-radius: 24px; position: relative; }
+                .hud-label { position: absolute; top: 12px; left: 24px; font-size: 9px; font-weight: 900; color: rgba(255,255,255,0.3); letter-spacing: 2px; }
+                .hud-content { display: flex; align-items: center; justify-content: center; gap: 40px; }
+                .hud-item { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+                .hud-item label { font-size: 10px; font-weight: 800; opacity: 0.4; }
+                .hud-value { font-size: 20px; font-weight: 900; }
+                .hud-operator { font-size: 24px; font-weight: 200; opacity: 0.2; }
+                .hud-priority-badge { font-family: 'JetBrains Mono', monospace; font-size: 24px; font-weight: 950; padding: 8px 32px; border-radius: 8px; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+                .hud-priority-badge.p1 { background: linear-gradient(135deg, #ff4d4d, #990000); color: #fff; text-shadow: 0 0 10px #ff0000; }
+                .hud-priority-badge.p2 { background: linear-gradient(135deg, #ffaa00, #cc7a00); color: #000; }
+                .hud-priority-badge.p3 { background: linear-gradient(135deg, #0088ff, #004488); color: #fff; }
+                .hud-priority-badge.p4 { background: linear-gradient(135deg, #555, #222); color: #ccc; }
+                .hud-footer { position: absolute; bottom: 12px; right: 24px; font-size: 8px; font-weight: 800; color: hsl(var(--brand-primary)); opacity: 0.6; }
+
+                .content-grid-system { display: grid; grid-template-columns: 2fr 1fr; gap: 40px; margin-bottom: 48px; }
+                .field-set { padding: 32px; display: flex; flex-direction: column; gap: 32px; margin-bottom: 24px; }
+                .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+                .field-group label { font-size: 11px; font-weight: 800; color: rgba(255,255,255,0.4); margin-bottom: 12px; display: block; text-transform: uppercase; }
+                .field-group select, .field-group textarea { width: 100%; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; color: #fff; padding: 14px 20px; font-size: 14px; transition: all 0.3s; }
+                .field-group select:focus, .field-group textarea:focus { border-color: hsl(var(--brand-primary)); background: rgba(255,255,255,0.06); outline: none; }
+                .rich-display-box { padding: 20px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; font-size: 15px; line-height: 1.7; color: rgba(255,255,255,0.8); white-space: pre-wrap; }
+
+                .highlighted { background: linear-gradient(135deg, rgba(80, 80, 100, 0.05), transparent); border: 1px solid hsla(var(--brand-primary), 0.1); }
+                .set-header { font-size: 10px; font-weight: 900; color: hsl(var(--brand-primary)); letter-spacing: 2px; margin-bottom: 16px; border-left: 3px solid hsl(var(--brand-primary)); padding-left: 12px; }
+                .set-header.green { color: #00ff88; border-color: #00ff88; }
+                .resolution-glow { box-shadow: 0 0 30px rgba(0, 255, 136, 0.05); border-color: rgba(0, 255, 136, 0.2); }
+                .metadata-list { display: flex; flex-direction: column; gap: 16px; margin-top: 16px; border-top: 1px solid rgba(255,255,255,0.05); paddingTop: 24px; }
+                .meta-item { display: flex; justify-content: space-between; align-items: center; }
+                .m-label { font-size: 11px; font-weight: 700; opacity: 0.4; }
+                .m-val { font-size: 13px; font-weight: 800; }
+
+                .timeline-panel { padding: 40px; }
+                .panel-header-sub { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+                .panel-header-sub h3 { font-size: 18px; font-weight: 900; letter-spacing: 1px; }
+                .count-badge { padding: 4px 12px; background: rgba(255,255,255,0.05); border-radius: 20px; font-size: 10px; font-weight: 800; color: rgba(255,255,255,0.5); }
+                .timeline-table-premium table { width: 100%; border-collapse: separate; border-spacing: 0 8px; }
+                .timeline-table-premium th { padding: 12px 24px; font-size: 10px; font-weight: 800; color: rgba(255,255,255,0.3); text-transform: uppercase; text-align: left; }
+                .timeline-table-premium td { padding: 20px 24px; background: rgba(255,255,255,0.02); vertical-align: middle; transition: all 0.2s; }
+                .timeline-table-premium tr:hover td { background: rgba(255,255,255,0.04); }
+                .timeline-table-premium tr td:first-child { border-top-left-radius: 12px; border-bottom-left-radius: 12px; }
+                .timeline-table-premium tr td:last-child { border-top-right-radius: 12px; border-bottom-right-radius: 12px; }
+                .t-time { font-family: 'JetBrains Mono', monospace; line-height: 1.4; color: rgba(255,255,255,0.4); }
+                .user-pill { padding: 6px 16px; background: rgba(255,255,255,0.05); border-radius: 30px; font-size: 13px; font-weight: 700; width: fit-content; }
+                .t-content { font-size: 14px; opacity: 0.9; line-height: 1.5; }
+                .is-internal td { border: 1px solid rgba(255, 170, 0, 0.1); border-left: none; border-right: none; }
+                .is-internal td:first-child { border-left: 2px solid #ffaa00; }
+                .tag-internal { color: #ffaa00; font-size: 10px; font-weight: 900; }
+                .tag-public { color: rgba(255,255,255,0.2); font-size: 10px; font-weight: 900; }
+
+                .composer-premium { margin-top: 48px; display: flex; flex-direction: column; gap: 20px; }
+                .composer-premium textarea { width: 100%; background: rgba(255,255,255,0.03); border: 2px solid rgba(255,255,255,0.05); border-radius: 16px; color: #fff; padding: 24px; font-size: 15px; min-height: 120px; transition: all 0.3s; }
+                .composer-premium textarea:focus { border-color: hsl(var(--brand-primary)); background: rgba(255,255,255,0.06); outline: none; }
+                .composer-footer { display: flex; justify-content: space-between; align-items: center; }
+                .internal-toggle { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+                .toggle-label { font-size: 13px; font-weight: 800; color: #ffaa00; }
+                .btn-send { background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 14px 40px; border-radius: 12px; font-weight: 800; cursor: pointer; transition: all 0.3s; }
+                .btn-send:hover { background: #fff; color: #000; }
+            `}</style>
         </div>
     );
 };

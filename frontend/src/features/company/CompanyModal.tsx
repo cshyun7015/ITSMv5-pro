@@ -26,8 +26,8 @@ const CompanyModal = ({ company, onClose, onSuccess }: Props) => {
     }
   }, [company]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     try {
       setIsSubmitting(true);
       if (company?.id) {
@@ -37,8 +37,8 @@ const CompanyModal = ({ company, onClose, onSuccess }: Props) => {
       }
       onSuccess();
     } catch (error: any) {
-      const msg = error.response?.data?.message || 'Check if Company ID is duplicate.';
-      alert(`Save failed: ${msg}`);
+      const msg = error.response?.data?.message || '회사 ID 중복 여부를 확인해 주세요.';
+      alert(`저장 실패: ${msg}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -46,45 +46,65 @@ const CompanyModal = ({ company, onClose, onSuccess }: Props) => {
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content glass-card">
-        <header className="modal-header">
-          <h3>{company ? 'Edit Company' : 'Register New Company'}</h3>
-          <button className="btn-close" onClick={onClose}>&times;</button>
+      <div className="modal-content glass-card" style={{ width: '800px', maxWidth: '90vw' }}>
+        <header className="modal-header" style={{ marginBottom: '40px' }}>
+          <h2 style={{ fontSize: '28px', fontWeight: 800 }}>{company ? '고객사 수정' : '고객사 등록'}</h2>
+          
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <button 
+              type="button" 
+              className="btn-secondary" 
+              onClick={onClose}
+              style={{ minWidth: '120px', height: '44px', padding: '0 32px', borderRadius: '12px', fontSize: '14px', fontWeight: 700 }}
+            >
+              목록
+            </button>
+            <button 
+              type="button" 
+              className="btn-primary" 
+              onClick={() => handleSubmit()} 
+              disabled={isSubmitting}
+              style={{ minWidth: '120px', height: '44px', padding: '0 32px', borderRadius: '12px', fontSize: '14px', fontWeight: 700 }}
+            >
+              {isSubmitting ? '저장 중...' : (company ? '수정' : '등록')}
+            </button>
+          </div>
         </header>
 
         <form onSubmit={handleSubmit} className="company-form">
           <div className="form-grid">
             <div className="form-group">
-              <label>Company ID (Unique)</label>
+              <label>회사 ID</label>
               <input
                 type="text"
                 value={formData.companyId}
                 onChange={e => setFormData({ ...formData, companyId: e.target.value })}
                 required
                 disabled={!!company}
-                placeholder="e.g. COMP-001"
+                placeholder="예: COMP-001"
               />
             </div>
             <div className="form-group">
-              <label>Company Name</label>
+              <label>회사명</label>
               <input
                 type="text"
                 value={formData.name}
                 onChange={e => setFormData({ ...formData, name: e.target.value })}
                 required
-                placeholder="Business Name"
+                placeholder="회사 정식 명칭"
               />
             </div>
             <div className="form-group">
-              <label>Business Number</label>
+              <label>전화번호</label>
               <input
                 type="text"
                 value={formData.businessNumber || ''}
                 onChange={e => setFormData({ ...formData, businessNumber: e.target.value })}
+                placeholder="지역번호 포함"
               />
             </div>
             <div className="form-group">
-              <label>Representative</label>
+              <label>대표자</label>
               <input
                 type="text"
                 value={formData.representativeName || ''}
@@ -92,7 +112,7 @@ const CompanyModal = ({ company, onClose, onSuccess }: Props) => {
               />
             </div>
             <div className="form-group">
-              <label>Email</label>
+              <label>이메일</label>
               <input
                 type="email"
                 value={formData.email || ''}
@@ -100,7 +120,7 @@ const CompanyModal = ({ company, onClose, onSuccess }: Props) => {
               />
             </div>
             <div className="form-group">
-              <label>Phone</label>
+              <label>핸드폰번호</label>
               <input
                 type="text"
                 value={formData.phone || ''}
@@ -108,62 +128,60 @@ const CompanyModal = ({ company, onClose, onSuccess }: Props) => {
               />
             </div>
             <div className="form-group full-width">
-              <label>Address</label>
+              <label>주소</label>
               <textarea
                 value={formData.address || ''}
                 onChange={e => setFormData({ ...formData, address: e.target.value })}
+                style={{ minHeight: '100px' }}
               />
             </div>
             <div className="form-group">
-              <label>Status</label>
+              <label>상태</label>
               <select
                 value={formData.status}
                 onChange={e => setFormData({ ...formData, status: e.target.value })}
               >
-                <option value="ACTIVE">ACTIVE</option>
-                <option value="INACTIVE">INACTIVE</option>
+                <option value="ACTIVE">활성 (ACTIVE)</option>
+                <option value="INACTIVE">비활성 (INACTIVE)</option>
               </select>
             </div>
           </div>
-
-          <footer className="modal-footer">
-            <button type="button" className="btn-secondary" onClick={onClose}>Cancel</button>
-            <button type="submit" className="btn-save neon-glow" disabled={isSubmitting}>
-              {isSubmitting ? 'Saving...' : (company ? 'Update' : 'Register')}
-            </button>
-          </footer>
         </form>
       </div>
 
       <style>{`
         .modal-overlay {
           position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-          background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px);
+          background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(8px);
           display: flex; align-items: center; justify-content: center; z-index: 1000;
         }
         .modal-content {
-          width: 600px; padding: 40px; position: relative;
+          padding: 48px; border: 1px solid var(--glass-border);
         }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        .btn-close { background: none; border: none; font-size: 28px; color: hsl(var(--text-secondary)); cursor: pointer; }
-        .company-form { display: flex; flex-direction: column; gap: 20px; }
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .form-group { display: flex; flex-direction: column; gap: 8px; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; }
+        .company-form { display: flex; flex-direction: column; gap: 24px; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+        .form-group { display: flex; flex-direction: column; gap: 10px; }
         .form-group.full-width { grid-column: span 2; }
-        .form-group label { font-size: 13px; color: hsl(var(--text-secondary)); font-weight: 600; }
+        .form-group label { font-size: 11px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
         .form-group input, .form-group select, .form-group textarea {
-          background: hsla(0, 0%, 100%, 0.05); border: 1px solid var(--glass-border);
-          border-radius: 6px; padding: 10px 12px; color: white; font-size: 14px; outline: none; transition: border 0.2s;
+          background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border);
+          border-radius: 8px; padding: 12px 16px; color: white; font-size: 15px; outline: none; transition: all 0.2s;
         }
-        .form-group input:focus { border-color: hsl(var(--brand-primary)); }
-        .form-group textarea { min-height: 80px; resize: vertical; }
-        .modal-footer { margin-top: 30px; display: flex; justify-content: flex-end; gap: 12px; }
-        .btn-secondary { background: none; border: 1px solid var(--glass-border); color: white; padding: 10px 24px; border-radius: 8px; cursor: pointer; }
-        .btn-save {
-          background: linear-gradient(135deg, hsl(var(--brand-primary)), hsl(var(--brand-secondary)));
-          border: none; color: white; padding: 10px 32px; border-radius: 8px;
-          cursor: pointer; font-weight: 800;
+        .form-group input:focus, .form-group textarea:focus { border-color: hsl(var(--brand-primary)); background: rgba(255,255,255,0.06); }
+        .form-group input:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        .btn-primary { 
+          background: linear-gradient(135deg, hsl(var(--brand-primary)), hsl(var(--brand-secondary))); 
+          border: none; color: white; cursor: pointer; transition: all 0.2s; 
         }
+        .btn-primary:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
+        .btn-secondary { 
+          background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); 
+          color: white; cursor: pointer; transition: all 0.2s; 
+        }
+        .btn-secondary:hover { background: rgba(255,255,255,0.1); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
       `}</style>
     </div>
   );

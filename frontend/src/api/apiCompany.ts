@@ -14,11 +14,18 @@ export interface CompanyDTO {
   updatedAt?: string;
 }
 
+export interface PageResponse<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+}
+
 const apiCompany = {
   // 조회 (Read List)
-  list: async (): Promise<CompanyDTO[]> => {
-    // baseURL is already '/api/v1' in apiClient.ts
-    const response = await apiClient.get('/system/companies');
+  list: async (params?: { name?: string; status?: string; page?: number; size?: number; sort?: string }): Promise<PageResponse<CompanyDTO>> => {
+    const response = await apiClient.get('/system/companies', { params });
     return response.data;
   },
 

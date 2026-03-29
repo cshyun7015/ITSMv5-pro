@@ -8,7 +8,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 
 @RestController
 @RequestMapping("/api/v1/system/users")
@@ -21,7 +24,6 @@ public class UserController {
     public ResponseEntity<UserResponseDTO> createUser(
             @RequestHeader(value = "X-Company-ID", required = false) String headerCompanyId,
             @RequestBody UserRequestDTO dto) {
-        // Enforce X-Company-ID in isolation context
         if (headerCompanyId != null && (dto.getCompanyId() == null || dto.getCompanyId().isEmpty())) {
             dto.setCompanyId(headerCompanyId);
         }
@@ -39,16 +41,13 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<List<UserResponseDTO>> getUsersByCompany(
-            @RequestHeader("X-Company-ID") String headerCompanyId,
-            @RequestParam(required = false) String companyId) {
-        
-        if ("all".equalsIgnoreCase(companyId)) {
-            return ResponseEntity.ok(userService.getAllUsers());
-        }
-        
-        String targetCompanyId = (companyId != null && !companyId.isEmpty()) ? companyId : headerCompanyId;
-        return ResponseEntity.ok(userService.getUsersByCompany(targetCompanyId));
+    public ResponseEntity<Page<UserResponseDTO>> searchUsers(
+            @RequestParam(required = false) String companyId,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String role,
+            @RequestParam(required = false) Boolean isActive,
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(userService.searchUsers(companyId, name, role, isActive, pageable));
     }
 
     @PutMapping("/{id}")

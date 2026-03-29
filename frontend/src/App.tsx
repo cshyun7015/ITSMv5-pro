@@ -95,7 +95,7 @@ function AppContent() {
       </aside>
 
       <main className="main-content">
-        {currentView !== 'requests' && (
+        {currentView !== 'requests' && currentView !== 'dashboard' && currentView !== 'companies' && currentView !== 'users' && currentView !== 'codes' && (
           <header className="page-header">
             <h1 className="text-gradient">
               {currentView === 'companies' ? '고객사 관리' : 

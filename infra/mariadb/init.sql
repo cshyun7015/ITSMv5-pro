@@ -105,18 +105,18 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 -- Seed Data: MSP Company & Default Users
-INSERT INTO companies (company_id, name, status) 
-VALUES ('MSP', 'MSP(삭제불가)', 'ACTIVE'),
-('TEST-COMP-1', '고객사1', 'ACTIVE'),
-('TEST-COMP-2', '고객사2', 'ACTIVE');
+INSERT INTO companies (company_id, name, business_number, representative_name, phone, email, address, status)
+VALUES ('MSP', 'MSP(삭제불가)', NULL, NULL, NULL, NULL, NULL, 'ACTIVE'),
+('126-81-03725', '하이닉스', '031-5185-4114', '곽노정', '031-5185-4114', 'www@skhynix.com', '경기도 이천시 부발읍 경충대로 2091', 'ACTIVE'),
+('124-81-00998', '삼성전자', '02-2255-0114', '한종희', '02-2255-0114', 'www@samsung.com', '경기도 수원시 영통구 삼성로 129 (매탄동)', 'ACTIVE');
 
 INSERT INTO users (user_id, password, name, email, role, company_id)
 VALUES 
 ('admin', '$2a$10$h8Dz0Jxxjv2hxT.oN/41tukeALShSKcQjCdwiJFQm6ogvOMsTKPm2', 'System Administrator', 'admin@msp.com', 'ROLE_ADMIN', 'MSP'),
 ('operator1', '$2a$10$9wEuO9flJ2.1D7ik6Cfsp.dwf7e1mOZEGN/wDCKXgE2PLcK8FCYKi', '운영자1', 'op1@msp.com', 'ROLE_OPERATOR', 'MSP'),
 ('operator2', '$2a$10$9wEuO9flJ2.1D7ik6Cfsp.dwf7e1mOZEGN/wDCKXgE2PLcK8FCYKi', '운영자2', 'op2@msp.com', 'ROLE_OPERATOR', 'MSP'),
-('user1', '$2a$10$9wEuO9flJ2.1D7ik6Cfsp.dwf7e1mOZEGN/wDCKXgE2PLcK8FCYKi', '사용자1', 'user1@comp1.com', 'ROLE_USER', 'TEST-COMP-1'),
-('user2', '$2a$10$9wEuO9flJ2.1D7ik6Cfsp.dwf7e1mOZEGN/wDCKXgE2PLcK8FCYKi', '사용자2', 'user2@comp1.com', 'ROLE_USER', 'TEST-COMP-2');
+('user1', '$2a$10$9wEuO9flJ2.1D7ik6Cfsp.dwf7e1mOZEGN/wDCKXgE2PLcK8FCYKi', '사용자1', 'user1@comp1.com', 'ROLE_USER', '126-81-03725'),
+('user2', '$2a$10$9wEuO9flJ2.1D7ik6Cfsp.dwf7e1mOZEGN/wDCKXgE2PLcK8FCYKi', '사용자2', 'user2@comp1.com', 'ROLE_USER', '124-81-00998');
 
 -- Seed Data: Common Code Groups
 INSERT INTO code_groups (group_id, name, description, is_system) VALUES 

@@ -13,12 +13,18 @@ export interface UserDTO {
   updatedAt?: string;
 }
 
+export interface PageResponse<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+}
+
 const apiUser = {
-  // 조회 (Read List by Company)
-  list: async (companyId?: string): Promise<UserDTO[]> => {
-    // baseURL is already '/api/v1' in apiClient.ts
-    const url = companyId ? `/system/users?companyId=${companyId}` : '/system/users';
-    const response = await apiClient.get(url);
+  // 조회 (Read List with Pagination & Filters)
+  list: async (params?: { companyId?: string; name?: string; role?: string; isActive?: boolean; page?: number; size?: number; sort?: string }): Promise<PageResponse<UserDTO>> => {
+    const response = await apiClient.get('/system/users', { params });
     return response.data;
   },
 

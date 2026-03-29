@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import apiUser, { type UserDTO } from '../../api/apiUser';
+import apiCompany, { type CompanyDTO } from '../../api/apiCompany';
 
 interface Props {
   user?: UserDTO;
@@ -14,12 +15,21 @@ const UserModal = ({ user, onClose, onSuccess }: Props) => {
     name: '',
     email: '',
     role: 'ROLE_USER',
-    companyId: localStorage.getItem('companyId') || 'SYSTEM',
+    companyId: '',
     isActive: true
   });
+  const [companies, setCompanies] = useState<CompanyDTO[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
+    // Fetch companies for dropdown
+    apiCompany.list({ size: 1000 }).then(res => {
+      setCompanies(res.content);
+      if (!user && res.content.length > 0) {
+        setFormData(prev => ({ ...prev, companyId: res.content[0].companyId }));
+      }
+    });
+
     if (user) {
       setFormData({
         ...user,
@@ -28,8 +38,8 @@ const UserModal = ({ user, onClose, onSuccess }: Props) => {
     }
   }, [user]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     try {
       setIsSubmitting(true);
       if (user?.id) {
@@ -39,8 +49,8 @@ const UserModal = ({ user, onClose, onSuccess }: Props) => {
       }
       onSuccess();
     } catch (error: any) {
-      const msg = error.response?.data?.message || 'Check if User ID is duplicate.';
-      alert(`Save failed: ${msg}`);
+      const msg = error.response?.data?.message || '아이디 중복 여부를 확인해 주세요.';
+      alert(`저장 실패: ${msg}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -48,28 +58,47 @@ const UserModal = ({ user, onClose, onSuccess }: Props) => {
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content glass-card">
-        <header className="modal-header">
-          <h3>{user ? 'Edit User' : 'Register New User'}</h3>
-          <button className="btn-close" onClick={onClose}>&times;</button>
+      <div className="modal-content glass-card" style={{ width: '800px', maxWidth: '90vw' }}>
+        <header className="modal-header" style={{ marginBottom: '40px' }}>
+          <h2 style={{ fontSize: '28px', fontWeight: 800 }}>{user ? '사용자 정보 수정' : '신규 사용자 등록'}</h2>
+          
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <button 
+              type="button" 
+              className="btn-secondary" 
+              onClick={onClose}
+              style={{ minWidth: '120px', height: '44px', padding: '0 32px', borderRadius: '12px', fontSize: '14px', fontWeight: 700 }}
+            >
+              목록
+            </button>
+            <button 
+              type="button" 
+              className="btn-primary" 
+              onClick={() => handleSubmit()} 
+              disabled={isSubmitting}
+              style={{ minWidth: '120px', height: '44px', padding: '0 32px', borderRadius: '12px', fontSize: '14px', fontWeight: 700 }}
+            >
+              {isSubmitting ? '저장 중...' : (user ? '수정' : '등록')}
+            </button>
+          </div>
         </header>
 
         <form onSubmit={handleSubmit} className="user-form">
           <div className="form-grid">
             <div className="form-group">
-              <label>Login ID (Unique)</label>
+              <label>로그인 ID</label>
               <input
                 type="text"
                 value={formData.userId}
                 onChange={e => setFormData({ ...formData, userId: e.target.value })}
                 required
                 disabled={!!user}
-                placeholder="e.g. jdoe"
+                placeholder="예: jdoe"
               />
             </div>
             
             <div className="form-group">
-              <label>{user ? 'New Password (Optional)' : 'Password'}</label>
+              <label>{user ? '새 비밀번호' : '비밀번호'}</label>
               <input
                 type="password"
                 value={formData.password}
@@ -80,114 +109,97 @@ const UserModal = ({ user, onClose, onSuccess }: Props) => {
             </div>
 
             <div className="form-group">
-              <label>Full Name</label>
+              <label>성명</label>
               <input
                 type="text"
                 value={formData.name}
                 onChange={e => setFormData({ ...formData, name: e.target.value })}
                 required
-                placeholder="Name"
+                placeholder="홍길동"
               />
             </div>
 
             <div className="form-group">
-              <label>Email Address</label>
+              <label>이메일</label>
               <input
                 type="email"
                 value={formData.email || ''}
                 onChange={e => setFormData({ ...formData, email: e.target.value })}
-                placeholder="email@company.com"
+                placeholder="you@company.com"
               />
             </div>
 
             <div className="form-group">
-              <label>System Role</label>
+              <label>권한</label>
               <select
                 value={formData.role}
                 onChange={e => setFormData({ ...formData, role: e.target.value })}
               >
-                <option value="ROLE_USER">Standard User (ROLE_USER)</option>
-                <option value="ROLE_ADMIN">Administrator (ROLE_ADMIN)</option>
-                <option value="ROLE_MANAGER">Manager (ROLE_MANAGER)</option>
+                <option value="ROLE_USER">일반 사용자 (ROLE_USER)</option>
+                <option value="ROLE_MANAGER">매니저 (ROLE_MANAGER)</option>
+                <option value="ROLE_ADMIN">관리자 (ROLE_ADMIN)</option>
               </select>
             </div>
 
             <div className="form-group">
-              <label>Active Status</label>
-              <div className="toggle-group">
-                <label className="switch">
-                  <input
-                    type="checkbox"
-                    checked={formData.isActive}
-                    onChange={e => setFormData({ ...formData, isActive: e.target.checked })}
-                  />
-                  <span className="slider round"></span>
-                </label>
-                <span className="toggle-label">{formData.isActive ? 'Enabled' : 'Disabled'}</span>
-              </div>
+              <label>상태</label>
+              <select
+                value={formData.isActive ? 'ACTIVE' : 'INACTIVE'}
+                onChange={e => setFormData({ ...formData, isActive: e.target.value === 'ACTIVE' })}
+              >
+                <option value="ACTIVE">활성 (ACTIVE)</option>
+                <option value="INACTIVE">비활성 (INACTIVE)</option>
+              </select>
             </div>
             
             <div className="form-group full-width">
-              <label>Company Context</label>
-              <input
-                type="text"
+              <label>소속 고객사</label>
+              <select
                 value={formData.companyId}
-                disabled
-                className="disabled-input"
-              />
+                onChange={e => setFormData({ ...formData, companyId: e.target.value })}
+                required
+              >
+                <option value="">고객사 선택...</option>
+                {companies.map(c => <option key={c.companyId} value={c.companyId}>{c.name} ({c.companyId})</option>)}
+              </select>
             </div>
           </div>
-
-          <footer className="modal-footer">
-            <button type="button" className="btn-secondary" onClick={onClose}>Cancel</button>
-            <button type="submit" className="btn-save neon-glow" disabled={isSubmitting}>
-              {isSubmitting ? 'Processing...' : (user ? 'Update' : 'Register')}
-            </button>
-          </footer>
         </form>
       </div>
 
       <style>{`
         .modal-overlay {
           position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-          background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px);
+          background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(8px);
           display: flex; align-items: center; justify-content: center; z-index: 1000;
         }
         .modal-content {
-          width: 580px; padding: 40px; position: relative;
+          padding: 48px; border: 1px solid var(--glass-border);
         }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        .btn-close { background: none; border: none; font-size: 28px; color: hsl(var(--text-secondary)); cursor: pointer; }
-        .user-form { display: flex; flex-direction: column; gap: 20px; }
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .form-group { display: flex; flex-direction: column; gap: 8px; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; }
+        .user-form { display: flex; flex-direction: column; gap: 24px; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+        .form-group { display: flex; flex-direction: column; gap: 10px; }
         .form-group.full-width { grid-column: span 2; }
-        .form-group label { font-size: 13px; color: hsl(var(--text-secondary)); font-weight: 600; }
+        .form-group label { font-size: 11px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
         .form-group input, .form-group select {
-          background: hsla(0, 0%, 100%, 0.05); border: 1px solid var(--glass-border);
-          border-radius: 6px; padding: 10px 12px; color: white; font-size: 14px; outline: none; transition: border 0.2s;
+          background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border);
+          border-radius: 8px; padding: 12px 16px; color: white; font-size: 15px; outline: none; transition: all 0.2s;
         }
-        .form-group input:focus { border-color: hsl(var(--brand-primary)); }
-        .disabled-input { opacity: 0.5; cursor: not-allowed; }
-        .modal-footer { margin-top: 30px; display: flex; justify-content: flex-end; gap: 12px; }
-        .btn-secondary { background: none; border: 1px solid var(--glass-border); color: white; padding: 10px 24px; border-radius: 8px; cursor: pointer; }
-        .btn-save {
-          background: linear-gradient(135deg, hsl(var(--brand-primary)), hsl(var(--brand-secondary)));
-          border: none; color: white; padding: 10px 32px; border-radius: 8px;
-          cursor: pointer; font-weight: 800;
-        }
+        .form-group input:focus, .form-group select:focus { border-color: hsl(var(--brand-primary)); background: rgba(255,255,255,0.06); }
+        .form-group input:disabled { opacity: 0.5; cursor: not-allowed; }
         
-        /* Toggle Switch */
-        .toggle-group { display: flex; align-items: center; gap: 10px; }
-        .switch { position: relative; display: inline-block; width: 44px; height: 22px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; }
-        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .4s; }
-        input:checked + .slider { background-color: hsl(var(--brand-primary)); }
-        input:checked + .slider:before { transform: translateX(22px); }
-        .slider.round { border-radius: 34px; }
-        .slider.round:before { border-radius: 50%; }
-        .toggle-label { font-size: 13px; color: hsl(var(--text-primary)); }
+        .btn-primary { 
+          background: linear-gradient(135deg, hsl(var(--brand-primary)), hsl(var(--brand-secondary))); 
+          border: none; color: white; cursor: pointer; transition: all 0.2s; 
+        }
+        .btn-primary:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
+        .btn-secondary { 
+          background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); 
+          color: white; cursor: pointer; transition: all 0.2s; 
+        }
+        .btn-secondary:hover { background: rgba(255,255,255,0.1); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
       `}</style>
     </div>
   );
