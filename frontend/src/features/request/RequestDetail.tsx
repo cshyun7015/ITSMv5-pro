@@ -16,7 +16,14 @@ const RequestDetail: React.FC<Props> = ({ requestId, onClose, onUpdated }) => {
     const [comments, setComments] = useState<RequestComment[]>([]);
     const [agents, setAgents] = useState<UserDTO[]>([]);
     const storedUser = localStorage.getItem('authUser');
-    const authUser = storedUser ? JSON.parse(storedUser) : null;
+    
+    let authUser = null;
+    try {
+        authUser = storedUser ? JSON.parse(storedUser) : null;
+    } catch (e) {
+        console.error('Failed to parse authUser', e);
+    }
+
     const userRole = authUser?.role || 'ROLE_USER';
     
     const isAdmin = userRole?.includes('ADMIN') || userRole?.includes('OPERATOR') || userRole?.includes('MANAGER');
@@ -28,6 +35,7 @@ const RequestDetail: React.FC<Props> = ({ requestId, onClose, onUpdated }) => {
     const [codes, setCodes] = useState<{ [key: string]: CommonCode[] }>({});
     const [userMap, setUserMap] = useState<{[key: string]: string}>({});
     const [isSaving, setIsSaving] = useState(false);
+    const [isInitialLoading, setIsInitialLoading] = useState(true);
     
     useEffect(() => {
         loadDetail();
@@ -61,6 +69,7 @@ const RequestDetail: React.FC<Props> = ({ requestId, onClose, onUpdated }) => {
 
     const loadDetail = async () => {
         try {
+            setIsInitialLoading(true);
             const [reqRes, comRes, userRes] = await Promise.all([
                 apiRequest.getRequest(requestId),
                 apiRequest.getComments(requestId),
@@ -78,10 +87,17 @@ const RequestDetail: React.FC<Props> = ({ requestId, onClose, onUpdated }) => {
             setCodes(prev => ({ ...prev, SR_STATUS: statusRes.data }));
 
             const codesToFetch = ['SR_TYPE', 'SR_CATEGORY', 'SR_IMPACT', 'SR_URGENCY', 'SR_RESOLUTION'];
-            await Promise.all(codesToFetch.map(async (group) => {
-                const res = await apiCommonCode.getCodesByGroup(group);
-                setCodes(prev => ({ ...prev, [group]: res.data }));
-            }));
+            const codeResponses = await Promise.all(
+                codesToFetch.map(group => apiCommonCode.getCodesByGroup(group))
+            );
+            
+            setCodes(prev => {
+                const newCodes = { ...prev };
+                codesToFetch.forEach((group, idx) => {
+                    newCodes[group] = codeResponses[idx].data;
+                });
+                return newCodes;
+            });
 
             const filteredAgents = userRes.content.filter((u: UserDTO) => 
                 u.companyId === 'MSP' && (u.role === 'ROLE_ADMIN' || u.role === 'ROLE_OPERATOR' || u.role === 'ROLE_MANAGER')
@@ -89,11 +105,13 @@ const RequestDetail: React.FC<Props> = ({ requestId, onClose, onUpdated }) => {
             setAgents(filteredAgents);
 
             if (isAdmin) {
-                setIsEditing(true);
+                // Keep editing mode if admin, but ensure we have valid codes
             }
 
         } catch (err) {
             console.error('Failed to load request detail', err);
+        } finally {
+            setIsInitialLoading(false);
         }
     };
 
@@ -110,7 +128,8 @@ const RequestDetail: React.FC<Props> = ({ requestId, onClose, onUpdated }) => {
             await apiRequest.updateRequest(requestId, editData as RequestItem);
             setIsEditing(false);
             onUpdated();
-            loadDetail();
+            // User requested to close the modal and return to list after save
+            onClose(); 
         } catch (err) {
             alert('요청 저장에 실패했습니다.');
         } finally {
@@ -136,19 +155,48 @@ const RequestDetail: React.FC<Props> = ({ requestId, onClose, onUpdated }) => {
         }
     };
 
-    if (!request) return (
+    const isAttributeEditable = (segment: 'CORE' | 'CLASSIFICATION' | 'SLA' | 'OWNERSHIP' | 'RESOLUTION') => {
+        if (!isEditing || !request) return false;
+        const status = request.status;
+        if (['CLOSED', 'CANCELLED'].includes(status)) return false;
+
+        switch (segment) {
+            case 'CORE':
+                return ['OPEN', 'ASSIGNED'].includes(status);
+            case 'CLASSIFICATION':
+                return ['OPEN', 'ASSIGNED', 'IN_PROGRESS'].includes(status);
+            case 'SLA':
+                return ['OPEN', 'ASSIGNED', 'IN_PROGRESS'].includes(status);
+            case 'OWNERSHIP':
+                return ['OPEN', 'ASSIGNED', 'IN_PROGRESS', 'ON_HOLD', 'RESOLVED'].includes(status);
+            case 'RESOLUTION':
+                return ['IN_PROGRESS', 'RESOLVED'].includes(status);
+            default:
+                return false;
+        }
+    };
+
+    const getEditableStyle = (segment: 'CORE' | 'CLASSIFICATION' | 'SLA' | 'OWNERSHIP' | 'RESOLUTION') => {
+        if (!isEditing) return {};
+        const editable = isAttributeEditable(segment);
+        return editable ? {} : { opacity: 0.6, cursor: 'not-allowed' };
+    };
+
+    const DetailSkeleton = () => (
         <div className="modal-overlay">
-            <div className="premium-card" style={{ padding: '60px', textAlign: 'center' }}>
-                <motion.span 
-                    animate={{ opacity: [0.4, 1, 0.4] }}
-                    transition={{ repeat: Infinity, duration: 2 }}
-                    style={{ fontSize: '12px', fontWeight: 900, color: 'hsl(var(--brand-primary))', letterSpacing: '2px' }}
-                >
-                    LOADING SYSTEM DATA...
-                </motion.span>
-            </div>
+            <motion.div className="modal-content premium-card" style={{ width: '900px', height: '94vh', padding: '60px', background: 'rgba(10, 10, 12, 0.95)' }}>
+                <div className="skeleton" style={{ height: '40px', width: '300px', marginBottom: '40px' }} />
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px', marginBottom: '40px' }}>
+                    {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="skeleton" style={{ height: '60px' }} />)}
+                </div>
+                <div className="skeleton" style={{ height: '200px', width: '100%', marginBottom: '40px' }} />
+                <div className="skeleton" style={{ height: '150px', width: '100%' }} />
+            </motion.div>
         </div>
     );
+
+    if (isInitialLoading) return <DetailSkeleton />;
+    if (!request) return null;
 
     const flowStatesMapping = {
         'OPEN': 0,
@@ -214,13 +262,13 @@ const RequestDetail: React.FC<Props> = ({ requestId, onClose, onUpdated }) => {
                     </div>
                     
                     <div className="header-actions" style={{ display: 'flex', gap: '12px' }}>
-                        <button className="btn-secondary" onClick={onClose} style={{ width: '120px', padding: '12px 0' }}>목록</button>
-                        {isAdmin && (
+                        <button className="btn-premium-secondary" onClick={onClose} style={{ width: '120px' }}>목록</button>
+                        {isAdmin && !['CLOSED', 'CANCELLED'].includes(request.status) && (
                             <button 
-                                className="auth-submit" 
+                                className="btn-premium" 
                                 onClick={() => isEditing ? handleSave() : setIsEditing(true)}
                                 disabled={isSaving}
-                                style={{ width: '120px', padding: '12px 0' }}
+                                style={{ width: '120px' }}
                             >
                                 {isSaving ? '저장...' : (isEditing ? '저장' : '수정')}
                             </button>
@@ -230,36 +278,60 @@ const RequestDetail: React.FC<Props> = ({ requestId, onClose, onUpdated }) => {
 
                 <div className="premium-scroll-area" style={{ padding: '0 60px 100px' }}>
                     
-                            <div className="premium-card field-set" style={{ background: 'hsla(0, 0%, 100%, 0.02)', padding: '24px' }}>
+                            <div className="premium-card field-set" style={{ background: 'hsla(0, 0%, 100%, 0.02)', padding: '32px' }}>
                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' }}>
                                     <div className="form-group">
                                         <label>영향도 (Impact)</label>
-                                        <select disabled={!isEditing} value={isEditing ? editData.srImpactCode : request.srImpactCode} onChange={e => setEditData({...editData, srImpactCode: e.target.value})}>
+                                        <select 
+                                            disabled={!isAttributeEditable('SLA')} 
+                                            value={isEditing ? editData.srImpactCode : request.srImpactCode} 
+                                            onChange={e => setEditData({...editData, srImpactCode: e.target.value})}
+                                            style={getEditableStyle('SLA')}
+                                        >
                                             {codes.SR_IMPACT?.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
                                         </select>
                                     </div>
                                     <div className="form-group">
                                         <label>긴급도 (Urgency)</label>
-                                        <select disabled={!isEditing} value={isEditing ? editData.srUrgencyCode : request.srUrgencyCode} onChange={e => setEditData({...editData, srUrgencyCode: e.target.value})}>
+                                        <select 
+                                            disabled={!isAttributeEditable('SLA')} 
+                                            value={isEditing ? editData.srUrgencyCode : request.srUrgencyCode} 
+                                            onChange={e => setEditData({...editData, srUrgencyCode: e.target.value})}
+                                            style={getEditableStyle('SLA')}
+                                        >
                                             {codes.SR_URGENCY?.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
                                         </select>
                                     </div>
                                     <div className="form-group">
                                         <label>서비스 카테고리</label>
-                                        <select disabled={!isEditing} value={isEditing ? editData.srCategoryCode : request.srCategoryCode} onChange={e => setEditData({...editData, srCategoryCode: e.target.value})}>
+                                        <select 
+                                            disabled={!isAttributeEditable('CLASSIFICATION')} 
+                                            value={isEditing ? editData.srCategoryCode : request.srCategoryCode} 
+                                            onChange={e => setEditData({...editData, srCategoryCode: e.target.value})}
+                                            style={getEditableStyle('CLASSIFICATION')}
+                                        >
                                             {codes.SR_CATEGORY?.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
                                         </select>
                                     </div>
                                     <div className="form-group">
                                         <label>전문가 배정</label>
-                                        <select disabled={!isEditing} value={(isEditing ? editData.assigneeId : request.assigneeId) || ''} onChange={e => setEditData({...editData, assigneeId: e.target.value})}>
+                                        <select 
+                                            disabled={!isAttributeEditable('OWNERSHIP')} 
+                                            value={(isEditing ? editData.assigneeId : request.assigneeId) || ''} 
+                                            onChange={e => setEditData({...editData, assigneeId: e.target.value})}
+                                            style={getEditableStyle('OWNERSHIP')}
+                                        >
                                             <option value="">-- 미배정 --</option>
                                             {agents.map(a => <option key={a.userId} value={a.userId}>{a.name} ({a.userId})</option>)}
                                         </select>
                                     </div>
                                     <div className="form-group">
                                         <label>현재 단계</label>
-                                        <select disabled={!isEditing} value={isEditing ? editData.status : request.status} onChange={e => setEditData({...editData, status: e.target.value})}>
+                                        <select 
+                                            disabled={!isEditing} 
+                                            value={isEditing ? editData.status : request.status} 
+                                            onChange={e => setEditData({...editData, status: e.target.value})}
+                                        >
                                             {codes.SR_STATUS?.map(s => <option key={s.codeId} value={s.codeId}>{s.codeName}</option>)}
                                         </select>
                                     </div>
@@ -273,7 +345,7 @@ const RequestDetail: React.FC<Props> = ({ requestId, onClose, onUpdated }) => {
                         className="logic-hud-panel"
                         style={{ margin: '24px 0 48px' }}
                     >
-                        <div className="hud-label">ITIL v5 PRIORITY CALCULATION ENGINE</div>
+                        {/* Removed redundant ITIL title as per request */}
                         <div className="hud-content">
                             <div className="hud-item">
                                 <label>IMPACT</label>
@@ -297,14 +369,17 @@ const RequestDetail: React.FC<Props> = ({ requestId, onClose, onUpdated }) => {
                                 </motion.div>
                             </div>
                         </div>
-                        <div className="hud-footer">REAL-TIME ENGINE ACTIVE</div>
                     </motion.div>
 
-                            <div className="premium-card field-set" style={{ background: 'hsla(0, 0%, 100%, 0.02)', marginTop: '24px' }}>
+                            <div className="premium-card field-set" style={{ background: 'hsla(0, 0%, 100%, 0.02)', marginTop: '24px', padding: '32px' }}>
                                 <div className="form-group full">
                                     <label>요청 상세 내역</label>
-                                    {isEditing ? (
-                                        <textarea value={editData.description} onChange={e => setEditData({...editData, description: e.target.value})} style={{ minHeight: '180px' }} />
+                                    {isEditing && isAttributeEditable('CORE') ? (
+                                        <textarea 
+                                            value={editData.description} 
+                                            onChange={e => setEditData({...editData, description: e.target.value})} 
+                                            style={{ minHeight: '180px', ...getEditableStyle('CORE') }} 
+                                        />
                                     ) : (
                                         <div className="premium-card" style={{ padding: '24px', minHeight: '180px', background: 'rgba(0,0,0,0.2)', fontSize: '15px', lineHeight: '1.7', whiteSpace: 'pre-wrap' }}>
                                             {request.description}
@@ -313,25 +388,36 @@ const RequestDetail: React.FC<Props> = ({ requestId, onClose, onUpdated }) => {
                                 </div>
                             </div>
 
-                            {isAdmin && (['RESOLVED', 'CLOSED'].includes(isEditing ? editData.status || '' : request.status)) && (
+                            {/* Improved visibility logic: Show resolution details from IN_PROGRESS or when RESOLVED/CLOSED */}
+                            {isAdmin && (['IN_PROGRESS', 'RESOLVED', 'CLOSED'].includes(isEditing ? editData.status || '' : request.status)) && (
                                 <motion.div 
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     className="premium-card field-set" 
-                                    style={{ border: '1px solid hsla(var(--status-resolved), 0.2)', background: 'hsla(var(--status-resolved), 0.02)', marginTop: '24px' }}
+                                    style={{ border: '1px solid hsla(var(--status-resolved), 0.2)', background: 'hsla(var(--status-resolved), 0.02)', marginTop: '24px', padding: '32px' }}
                                 >
                                     <div className="hud-label" style={{ position: 'static', marginBottom: '16px', color: 'hsl(var(--status-resolved))' }}>RESOLUTION DETAILS</div>
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '24px' }}>
                                         <div className="form-group">
                                             <label>해결 코드</label>
-                                            <select disabled={!isEditing} value={isEditing ? editData.srResolutionCode : request.srResolutionCode} onChange={e => setEditData({...editData, srResolutionCode: e.target.value})}>
+                                            <select 
+                                                disabled={!isAttributeEditable('RESOLUTION')} 
+                                                value={isEditing ? editData.srResolutionCode : request.srResolutionCode} 
+                                                onChange={e => setEditData({...editData, srResolutionCode: e.target.value})}
+                                                style={getEditableStyle('RESOLUTION')}
+                                            >
                                                 <option value="">-- 해결 코드 선택 --</option>
                                                 {codes.SR_RESOLUTION?.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
                                             </select>
                                         </div>
                                         <div className="form-group">
                                             <label>처리 내용</label>
-                                            <textarea disabled={!isEditing} value={isEditing ? editData.resolutionText : request.resolutionText} onChange={e => setEditData({...editData, resolutionText: e.target.value})} style={{ minHeight: '100px' }} />
+                                            <textarea 
+                                                disabled={!isAttributeEditable('RESOLUTION')} 
+                                                value={isEditing ? editData.resolutionText : request.resolutionText} 
+                                                onChange={e => setEditData({...editData, resolutionText: e.target.value})} 
+                                                style={{ minHeight: '100px', ...getEditableStyle('RESOLUTION') }} 
+                                            />
                                         </div>
                                     </div>
                                 </motion.div>
@@ -400,7 +486,7 @@ const RequestDetail: React.FC<Props> = ({ requestId, onClose, onUpdated }) => {
                                     <input type="checkbox" checked={isInternal} onChange={e => setIsInternal(e.target.checked)} />
                                     <span style={{ fontSize: '13px', fontWeight: 800, color: 'hsl(var(--status-high))' }}>내부 전용 노트로 기록</span>
                                 </label>
-                                <button className="auth-submit" onClick={handleAddComment} style={{ width: 'auto', padding: '14px 40px' }}>기록 전송</button>
+                                <button className="btn-premium" onClick={handleAddComment} style={{ width: '120px' }}>기록</button>
                             </div>
                         </div>
                     </div>

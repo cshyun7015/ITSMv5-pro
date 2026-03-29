@@ -100,17 +100,16 @@ const RequestForm: React.FC<Props> = ({ onClose, onSuccess }) => {
             >
                 <header className="premium-header" style={{ padding: '32px 48px', borderBottom: '1px solid hsla(0,0%,100%,0.05)' }}>
                     <div>
-                        <div className="hud-label" style={{ position: 'static', marginBottom: '8px' }}>NEW SERVICE EVALUATION</div>
                         <h2 style={{ fontSize: '28px', fontWeight: 950, letterSpacing: '-1px' }}>신규 요청 매니페스트 작성</h2>
                     </div>
                     <div style={{ display: 'flex', gap: '16px' }}>
-                        <button type="button" className="btn-secondary" onClick={onClose} style={{ padding: '12px 24px' }}>목록으로</button>
+                        <button type="button" className="btn-premium-secondary" onClick={onClose} style={{ padding: '0 24px' }}>목록으로</button>
                         <button 
-                            type="button" 
-                            className="auth-submit" 
-                            onClick={(e) => handleSubmit(e as any)}
+                            type="submit" 
+                            form="request-manifest-form"
+                            className="btn-premium" 
                             disabled={isSubmitting}
-                            style={{ width: 'auto', padding: '12px 40px' }}
+                            style={{ padding: '0 40px' }}
                         >
                             {isSubmitting ? 'ENGINEERING...' : '요청 배포'}
                         </button>
@@ -118,7 +117,7 @@ const RequestForm: React.FC<Props> = ({ onClose, onSuccess }) => {
                 </header>
 
                 <div className="premium-scroll-area" style={{ padding: '48px', maxHeight: '70vh', overflowY: 'auto' }}>
-                    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '48px' }}>
+                    <form id="request-manifest-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '48px' }}>
                         
                         {/* Section 1: Core Identifiers */}
                         <section>
@@ -153,7 +152,6 @@ const RequestForm: React.FC<Props> = ({ onClose, onSuccess }) => {
 
                         {/* Section 2: Impact Analysis HUD */}
                         <section className="logic-hud-panel" style={{ margin: '0', padding: '40px' }}>
-                            <div className="hud-label">SLA PRIORITY CALCULATION MATRIX</div>
                             <div className="hud-content">
                                 <div className="hud-item editable">
                                     <label>IMPACT</label>

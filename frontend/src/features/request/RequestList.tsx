@@ -3,6 +3,21 @@ import { apiRequest, type RequestItem } from '../../api/apiRequest';
 import apiUser from '../../api/apiUser';
 import RequestForm from './RequestForm';
 import RequestDetail from './RequestDetail';
+import './Request.css';
+
+const RequestSkeleton = () => (
+    <>
+        {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+            <tr key={i} className="table-row" style={{ pointerEvents: 'none' }}>
+                <td><div className="skeleton" style={{ height: '20px', width: '80%' }}></div></td>
+                <td><div className="skeleton" style={{ height: '20px', width: '90%' }}></div></td>
+                <td><div className="skeleton" style={{ height: '20px', width: '100px' }}></div></td>
+                <td><div className="skeleton" style={{ height: '24px', width: '60px', borderRadius: '12px' }}></div></td>
+                <td><div className="skeleton" style={{ height: '24px', width: '80px', borderRadius: '12px' }}></div></td>
+            </tr>
+        ))}
+    </>
+);
 
 const RequestList = () => {
     const [requests, setRequests] = useState<RequestItem[]>([]);
@@ -99,8 +114,8 @@ const RequestList = () => {
                     <p>지원 티켓 및 서비스 요청을 추적하고 관리합니다.</p>
                 </div>
                 <div style={{ display: 'flex', gap: '12px' }}>
-                    <button onClick={handleSearch} className="btn-secondary">조회</button>
-                    <button onClick={() => setIsFormOpen(true)} className="btn-primary">등록</button>
+                    <button onClick={handleSearch} className="btn-premium-secondary" style={{ padding: '0 24px' }}>조회</button>
+                    <button onClick={() => setIsFormOpen(true)} className="btn-premium" style={{ padding: '0 32px' }}>등록</button>
                 </div>
             </div>
 
@@ -172,8 +187,8 @@ const RequestList = () => {
                     </thead>
                     <tbody>
                         {loading ? (
-                            <tr><td colSpan={5} style={{ textAlign: 'center', padding: '100px' }}>Syncing data...</td></tr>
-                        ) : requests.map(req => (
+                            <RequestSkeleton />
+                        ) : requests.length > 0 ? requests.map(req => (
                             <tr 
                                 key={req.id} 
                                 className="table-row"
@@ -196,8 +211,7 @@ const RequestList = () => {
                                     </div>
                                 </td>
                             </tr>
-                        ))}
-                        {!loading && requests.length === 0 && (
+                        )) : (
                             <tr><td colSpan={5} style={{ textAlign: 'center', padding: '100px', color: 'var(--text-muted)' }}>조건에 맞는 요청이 없습니다.</td></tr>
                         )}
                     </tbody>
@@ -211,8 +225,8 @@ const RequestList = () => {
                     <button 
                         disabled={page === 0} 
                         onClick={(e) => { e.stopPropagation(); setPage(p => p - 1); }}
-                        className="btn-secondary"
-                        style={{ padding: '6px 12px', minWidth: '40px' }}
+                        className="btn-premium-secondary"
+                        style={{ padding: '0', minWidth: '40px', height: '36px' }}
                     >
                         ◀
                     </button>
@@ -220,8 +234,8 @@ const RequestList = () => {
                     <button 
                         disabled={(page + 1) * size >= totalElements} 
                         onClick={(e) => { e.stopPropagation(); setPage(p => p + 1); }}
-                        className="btn-secondary"
-                        style={{ padding: '6px 12px', minWidth: '40px' }}
+                        className="btn-premium-secondary"
+                        style={{ padding: '0', minWidth: '40px', height: '36px' }}
                     >
                         ▶
                     </button>
