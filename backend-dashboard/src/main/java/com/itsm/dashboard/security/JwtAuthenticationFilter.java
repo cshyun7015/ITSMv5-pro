@@ -32,6 +32,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
+        log.trace("Dashboard Filter processing request: {} {}", request.getMethod(), request.getServletPath());
+        
+        // Debug headers
+        if (log.isTraceEnabled()) {
+            java.util.Collections.list(request.getHeaderNames()).forEach(h -> 
+                log.trace("Header: {} = {}", h, request.getHeader(h)));
+        }
+
         String token = tokenProvider.resolveToken(request);
 
         if (token != null && tokenProvider.validateToken(token)) {
@@ -52,10 +60,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 
                 SecurityContextHolder.getContext().setAuthentication(auth);
             } catch (Exception e) {
-                log.error("Dashboard Auth Error: {}", e.getMessage());
+                log.error("Dashboard Auth Error during claim extraction: {}", e.getMessage());
             }
         } else {
-            log.warn("Dashboard Auth Failed: token exists={}, validated=false", token != null);
+            if (token == null) {
+                log.warn("Dashboard Auth Failed: No ITSMSession cookie found in request from {}", request.getRemoteAddr());
+            } else {
+                log.warn("Dashboard Auth Failed: Token found but validation failed (Secret key mismatch or expired)");
+            }
         }
 
         filterChain.doFilter(request, response);
