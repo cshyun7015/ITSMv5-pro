@@ -64,7 +64,7 @@ const RequestTable: React.FC<TableProps> = ({
                         <tr 
                             key={req.id} 
                             className="table-row"
-                            onClick={() => onRowClick(req.id || 0)}
+                            onClick={() => req.id !== undefined && onRowClick(req.id)}
                         >
                             <td className="text-muted">{formatDate(req.createdAt)}</td>
                             <td>

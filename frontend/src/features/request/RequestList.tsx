@@ -70,7 +70,7 @@ const RequestList = () => {
                 />
             )}
             
-            {selectedRequestId && (
+            {selectedRequestId !== null && (
                 <RequestDetail 
                     requestId={selectedRequestId} 
                     onClose={() => setSelectedRequestId(null)} 
