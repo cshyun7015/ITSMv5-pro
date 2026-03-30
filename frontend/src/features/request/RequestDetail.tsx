@@ -137,7 +137,7 @@ const RequestDetail: React.FC<Props> = ({ requestId, onClose, onUpdated }) => {
 
                 <div className="premium-scroll-area" style={{ padding: '0 60px 100px' }}>
                     <div className="premium-card field-set" style={{ background: 'hsla(0, 0%, 100%, 0.02)', padding: '32px' }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' }}>
+                        <div className="content-grid-system">
                             <div className="form-group">
                                 <label>영향도 (Impact)</label>
                                 <select 
@@ -161,17 +161,6 @@ const RequestDetail: React.FC<Props> = ({ requestId, onClose, onUpdated }) => {
                                 </select>
                             </div>
                             <div className="form-group">
-                                <label>서비스 카테고리</label>
-                                <select 
-                                    disabled={!isAttributeEditable('CLASSIFICATION')} 
-                                    value={isEditing ? editData.srCategoryCode : request.srCategoryCode} 
-                                    onChange={e => setEditData({...editData, srCategoryCode: e.target.value})}
-                                    style={getEditableStyle('CLASSIFICATION')}
-                                >
-                                    {codes.SR_CATEGORY?.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
-                                </select>
-                            </div>
-                            <div className="form-group">
                                 <label>전문가 배정</label>
                                 <select 
                                     disabled={!isAttributeEditable('OWNERSHIP')} 
@@ -184,6 +173,17 @@ const RequestDetail: React.FC<Props> = ({ requestId, onClose, onUpdated }) => {
                                 </select>
                             </div>
                             <div className="form-group">
+                                <label>서비스 카테고리</label>
+                                <select 
+                                    disabled={!isAttributeEditable('CLASSIFICATION')} 
+                                    value={isEditing ? editData.srCategoryCode : request.srCategoryCode} 
+                                    onChange={e => setEditData({...editData, srCategoryCode: e.target.value})}
+                                    style={getEditableStyle('CLASSIFICATION')}
+                                >
+                                    {codes.SR_CATEGORY?.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
+                                </select>
+                            </div>
+                            <div className="form-group">
                                 <label>현재 단계</label>
                                 <select 
                                     disabled={!isEditing} 
@@ -193,15 +193,11 @@ const RequestDetail: React.FC<Props> = ({ requestId, onClose, onUpdated }) => {
                                     {codes.SR_STATUS?.map(s => <option key={s.codeId} value={s.codeId}>{s.codeName}</option>)}
                                 </select>
                             </div>
+                            <div className="form-group" style={{ display: 'flex', alignItems: 'flex-end', paddingBottom: '12px' }}>
+                                <RequestLogicHUD priority={currentPriority} />
+                            </div>
                         </div>
                     </div>
-
-                    <RequestLogicHUD 
-                        impactCode={currentImpact || ''} 
-                        urgencyCode={currentUrgency || ''} 
-                        priority={currentPriority} 
-                        codes={codes} 
-                    />
 
                     <div className="premium-card field-set" style={{ background: 'hsla(0, 0%, 100%, 0.02)', marginTop: '24px', padding: '32px' }}>
                         <div className="form-group full">

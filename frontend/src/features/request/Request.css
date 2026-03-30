@@ -16,8 +16,8 @@
 
 .panel-header h2 {
   font-size: 28px;
-  font-weight: 800;
-  letter-spacing: -0.03em;
+  font-weight: 900;
+  letter-spacing: -0.05em;
   background: linear-gradient(135deg, #fff 0%, #aaa 100%);
   -webkit-background-clip: text;
   background-clip: text;
@@ -31,10 +31,11 @@
 }
 
 .header-title {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 800;
   letter-spacing: -0.02em;
   color: white;
+  line-height: 1.2;
 }
 
 .premium-scroll-area {
@@ -118,8 +119,8 @@
 }
 
 .table-row td {
-  padding: 16px 24px;
-  font-size: 13px;
+  padding: 12px 24px;
+  font-size: 14px;
   color: var(--text-secondary);
   border-top: 1px solid transparent;
   border-bottom: 1px solid transparent;
@@ -127,25 +128,25 @@
 
 .table-row td:first-child { 
   border-left: 1px solid transparent; 
-  border-top-left-radius: 12px; 
-  border-bottom-left-radius: 12px; 
+  border-top-left-radius: 8px; 
+  border-bottom-left-radius: 8px; 
 }
 
 .table-row td:last-child { 
   border-right: 1px solid transparent; 
-  border-top-right-radius: 12px; 
-  border-bottom-right-radius: 12px; 
+  border-top-right-radius: 8px; 
+  border-bottom-right-radius: 8px; 
 }
 
 .table-row:hover {
-  background: hsla(0, 0%, 100%, 0.05);
-  transform: scale(1.005) translateX(4px);
-  box-shadow: 0 8px 24px -12px rgba(0, 240, 255, 0.2);
+  background: hsla(0, 0%, 100%, 0.04);
+  transform: scale(1.002) translateX(4px);
+  box-shadow: 0 4px 20px -8px rgba(0, 240, 255, 0.15);
 }
 
 .table-row:hover td {
   color: white;
-  border-color: var(--glass-border-bright);
+  border-color: hsla(0, 0%, 100%, 0.1);
 }
 
 /* Priority & Status Markers */
@@ -246,16 +247,16 @@
 }
 
 .premium-input-large {
-  font-size: 18px !important;
-  padding: 16px 24px !important;
-  background: hsla(0, 0%, 100%, 0.03) !important;
-  border-radius: 12px !important;
+  font-size: 16px !important;
+  padding: 12px 20px !important;
+  background: hsla(0, 0%, 100%, 0.02) !important;
+  border-radius: 8px !important;
 }
 
 .content-grid-system {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
 }
 
 /* =========================================================================

@@ -52,7 +52,7 @@ const RequestTable: React.FC<TableProps> = ({
                         <th onClick={() => handleSort('priority')} className="cursor-pointer w-130">
                             우선순위 {sortBy === 'priority' && (sortDir === 'asc' ? '▴' : '▾')}
                         </th>
-                        <th onClick={() => handleSort('status')} className="cursor-pointer w-160">
+                        <th onClick={() => handleSort('status')} className="cursor-pointer w-130">
                             상태 {sortBy === 'status' && (sortDir === 'asc' ? '▴' : '▾')}
                         </th>
                     </tr>
@@ -66,11 +66,9 @@ const RequestTable: React.FC<TableProps> = ({
                             className="table-row"
                             onClick={() => req.id !== undefined && onRowClick(req.id)}
                         >
-                            <td className="text-muted">{formatDate(req.createdAt)}</td>
-                            <td>
-                                <div className="fw-600">{req.title}</div>
-                            </td>
-                            <td>{userMap[req.requesterId] || req.requesterId}</td>
+                            <td className="text-muted text-12">{formatDate(req.createdAt)}</td>
+                            <td className="fw-600">{req.title}</td>
+                            <td className="text-13">{userMap[req.requesterId] || req.requesterId}</td>
                             <td>
                                 <div className={`priority-marker priority-${req.priority?.toLowerCase()}`}>
                                     <span className="priority-dot"></span>

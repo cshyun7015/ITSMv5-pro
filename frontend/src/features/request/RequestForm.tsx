@@ -119,58 +119,43 @@ const RequestForm: React.FC<Props> = ({ onClose, onSuccess }) => {
                                     style={{ width: '100%', fontSize: '18px', padding: '16px 24px' }}
                                 />
                             </div>
-                            <div className="content-grid-system" style={{ gridTemplateColumns: '1fr 1fr', marginTop: '24px', gap: '24px' }}>
-                                <div className="form-group">
-                                    <label>요청 유형</label>
-                                    <select value={formData.srTypeCode} onChange={e => setFormData({...formData, srTypeCode: e.target.value})}>
-                                        {codes.SR_TYPE.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
-                                    </select>
-                                </div>
+                            <div className="content-grid-system">
                                 <div className="form-group">
                                     <label>서비스 카테고리</label>
                                     <select value={formData.srCategoryCode} onChange={e => setFormData({...formData, srCategoryCode: e.target.value})}>
                                         {codes.SR_CATEGORY.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
                                     </select>
                                 </div>
+                                <div className="form-group">
+                                    <label>요청 유형</label>
+                                    <select value={formData.srTypeCode} onChange={e => setFormData({...formData, srTypeCode: e.target.value})}>
+                                        {codes.SR_TYPE.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
+                                    </select>
+                                </div>
                             </div>
                         </section>
 
-                        {/* Section 2: Impact Analysis HUD */}
-                        <section className="logic-hud-panel" style={{ margin: '0', padding: '40px' }}>
-                            <div className="hud-content">
-                                <div className="hud-item editable">
-                                    <label>IMPACT</label>
+                        {/* Section 2: Impact & Urgency Analysis */}
+                        <section>
+                            <div className="set-header">SLA CLASSIFICATION</div>
+                            <div className="content-grid-system">
+                                <div className="form-group">
+                                    <label>영향도 (IMPACT)</label>
                                     <select 
                                         value={formData.srImpactCode} 
                                         onChange={e => setFormData({...formData, srImpactCode: e.target.value})}
-                                        style={{ background: 'transparent', border: 'none', textAlign: 'center', fontSize: '16px', fontWeight: 800, color: 'hsl(var(--brand-primary))' }}
                                     >
                                         {codes.SR_IMPACT.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
                                     </select>
                                 </div>
-                                <div className="hud-operator">×</div>
-                                <div className="hud-item editable">
-                                    <label>URGENCY</label>
+                                <div className="form-group">
+                                    <label>긴급도 (URGENCY)</label>
                                     <select 
                                         value={formData.srUrgencyCode} 
                                         onChange={e => setFormData({...formData, srUrgencyCode: e.target.value})}
-                                        style={{ background: 'transparent', border: 'none', textAlign: 'center', fontSize: '16px', fontWeight: 800, color: 'hsl(var(--brand-primary))' }}
                                     >
                                         {codes.SR_URGENCY.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
                                     </select>
-                                </div>
-                                <div className="hud-operator">=</div>
-                                <div className="hud-item">
-                                    <label>PRIORITY</label>
-                                    <motion.div 
-                                        key={formData.priority}
-                                        initial={{ scale: 0.8, opacity: 0 }}
-                                        animate={{ scale: 1.2, opacity: 1 }}
-                                        className={`hud-priority-badge ${formData.priority?.toLowerCase()}`}
-                                        style={{ fontSize: '18px' }}
-                                    >
-                                        {formData.priority}
-                                    </motion.div>
                                 </div>
                             </div>
                         </section>

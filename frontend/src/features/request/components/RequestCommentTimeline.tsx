@@ -86,7 +86,7 @@ const RequestCommentTimeline: React.FC<Props> = ({
                         <input type="checkbox" checked={isInternal} onChange={e => setIsInternal(e.target.checked)} />
                         <span style={{ fontSize: '13px', fontWeight: 800, color: 'hsl(var(--status-high))' }}>내부 전용 노트로 기록</span>
                     </label>
-                    <button className="btn-premium" onClick={onAddComment} style={{ width: '120px' }}>기록</button>
+                    <button className="btn-premium btn-header" onClick={onAddComment}>기록</button>
                 </div>
             </div>
         </div>
