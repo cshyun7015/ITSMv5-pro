@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { apiRequest, type RequestItem } from '../../api/apiRequest';
+import { apiRequest, type RequestItem } from './api/apiRequest';
 import apiUser from '../../api/apiUser';
 import RequestForm from './RequestForm';
 import RequestDetail from './RequestDetail';
+import { formatDate } from './utils/requestUtils';
 import './Request.css';
 
 const RequestSkeleton = () => (
@@ -95,15 +96,6 @@ const RequestList = () => {
             setSortDir('asc');
         }
         setPage(0);
-    };
-
-    const formatDate = (dateStr?: string) => {
-        if (!dateStr) return '-';
-        const d = new Date(dateStr);
-        const y = d.getFullYear();
-        const m = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        return `${y}.${m}.${day}`;
     };
 
     return (

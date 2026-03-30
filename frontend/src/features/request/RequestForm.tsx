@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { apiRequest } from '../../api/apiRequest';
+import { motion } from 'framer-motion';
+import { apiRequest } from './api/apiRequest';
 import { apiCommonCode, type CommonCode } from '../../api/apiCommonCode';
-import type { RequestItem } from '../../api/apiRequest';
+import type { RequestItem } from './api/apiRequest';
+import { calculatePriority } from './utils/requestUtils';
 import './Request.css';
 
 interface Props {
@@ -55,23 +56,8 @@ const RequestForm: React.FC<Props> = ({ onClose, onSuccess }) => {
         }
     };
 
-    const calculatePriority = (impact: string, urgency: string) => {
-        if (impact === 'HIGH') {
-            if (urgency === 'HIGH') return 'P1';
-            if (urgency === 'MEDIUM') return 'P2';
-            return 'P3';
-        } else if (impact === 'MEDIUM') {
-            if (urgency === 'HIGH') return 'P2';
-            if (urgency === 'MEDIUM') return 'P3';
-            return 'P4';
-        } else {
-            if (urgency === 'HIGH') return 'P3';
-            return 'P4';
-        }
-    };
-
     useEffect(() => {
-        const newPriority = calculatePriority(formData.srImpactCode || 'LOW', formData.srUrgencyCode || 'LOW');
+        const newPriority = calculatePriority(formData.srImpactCode, formData.srUrgencyCode);
         if (formData.priority !== newPriority) {
             setFormData(prev => ({ ...prev, priority: newPriority }));
         }

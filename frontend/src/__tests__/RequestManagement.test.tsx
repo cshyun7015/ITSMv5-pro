@@ -1,7 +1,7 @@
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import RequestList from '../features/request/RequestList';
-import { apiRequest } from '../api/apiRequest';
+import { apiRequest } from '../features/request/api/apiRequest';
 
 vi.mock('../api/apiRequest', () => ({
     apiRequest: {

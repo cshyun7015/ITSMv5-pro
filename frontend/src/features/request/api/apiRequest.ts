@@ -1,4 +1,4 @@
-import apiClient from './apiClient';
+import apiClient from '../../../api/apiClient';
 
 const API_BASE_URL = '/request'; // Removed redundant /api/v1 prefix
 

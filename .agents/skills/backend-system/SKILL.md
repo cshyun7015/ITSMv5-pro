@@ -1,5 +1,5 @@
 ---
-name: BackendSystemAgent
+name: backend-system
 description: Specialized assistant for ITIL v5 System Administration, Multi-tenancy, and RBAC development.
 ---
 

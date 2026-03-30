@@ -1,5 +1,5 @@
 ---
-name: BackendRequestAgent
+name: backend-request
 description: Specialized assistant for ITIL v5 Request Management lifecycle, SLAs, and workflow development.
 ---
 
