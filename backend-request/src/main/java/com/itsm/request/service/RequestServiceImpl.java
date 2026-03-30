@@ -28,6 +28,7 @@ public class RequestServiceImpl implements RequestService {
 
     private final RequestRepository requestRepository;
     private final RequestCommentRepository commentRepository;
+    private final com.itsm.request.domain.AttachmentRepository attachmentRepository;
 
     @Override
     @Transactional
@@ -158,6 +159,38 @@ public class RequestServiceImpl implements RequestService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    @Transactional
+    public com.itsm.request.dto.AttachmentDTO addAttachment(Long requestId, String fileName, String fileType, long fileSize, byte[] fileData) {
+        Request request = requestRepository.findById(requestId)
+                .orElseThrow(() -> new BusinessException("Request not found: " + requestId, HttpStatus.NOT_FOUND));
+        
+        com.itsm.request.domain.Attachment attachment = com.itsm.request.domain.Attachment.builder()
+                .request(request)
+                .fileName(fileName)
+                .fileType(fileType)
+                .fileSize(fileSize)
+                .fileData(fileData)
+                .build();
+        
+        return convertToAttachmentDTO(attachmentRepository.save(attachment));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<com.itsm.request.dto.AttachmentDTO> getAttachments(Long requestId) {
+        return attachmentRepository.findByRequestId(requestId).stream()
+                .map(this::convertToAttachmentDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public com.itsm.request.domain.Attachment getAttachment(Long attachmentId) {
+        return attachmentRepository.findById(attachmentId)
+                .orElseThrow(() -> new BusinessException("Attachment not found: " + attachmentId, HttpStatus.NOT_FOUND));
+    }
+
     private String generateRequestNumber() {
         String prefix = "SR-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMM")) + "-";
         Request lastRequest = requestRepository.findTopByReqNumberStartingWithOrderByReqNumberDesc(prefix);
@@ -214,6 +247,20 @@ public class RequestServiceImpl implements RequestService {
                 .slaTargetAt(req.getSlaTargetAt())
                 .createdAt(req.getCreatedAt())
                 .updatedAt(req.getUpdatedAt())
+                .attachments(req.getAttachments() != null ? req.getAttachments().stream()
+                        .map(this::convertToAttachmentDTO)
+                        .collect(Collectors.toList()) : new ArrayList<>())
+                .build();
+    }
+
+    private com.itsm.request.dto.AttachmentDTO convertToAttachmentDTO(com.itsm.request.domain.Attachment attachment) {
+        return com.itsm.request.dto.AttachmentDTO.builder()
+                .id(attachment.getId())
+                .requestId(attachment.getRequest().getId())
+                .fileName(attachment.getFileName())
+                .fileType(attachment.getFileType())
+                .fileSize(attachment.getFileSize())
+                .createdAt(attachment.getCreatedAt())
                 .build();
     }
 

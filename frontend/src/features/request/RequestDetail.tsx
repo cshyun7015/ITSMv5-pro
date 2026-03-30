@@ -1,246 +1,334 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { useRequestDetail } from './hooks/useRequestDetail';
-import RequestStatusStepper from './components/RequestStatusStepper';
-import RequestLogicHUD from './components/RequestLogicHUD';
-import RequestCommentTimeline from './components/RequestCommentTimeline';
-import RequestResolutionForm from './components/RequestResolutionForm';
-import { calculatePriority } from './utils/requestUtils';
-import type { RequestItem } from './api/apiRequest';
-import './Request.css';
+import React, { useState, useEffect } from 'react';
+import { 
+  X, Edit2, RotateCcw, Clock, Shield, User, 
+  FileText, Paperclip, Download, File,
+  Send, Check
+} from 'lucide-react';
+import requestApi from './api/requestApi';
+import type { RequestDTO, AttachmentDTO, RequestCommentDTO } from './api/requestApi';
+import StatusStepper from './components/StatusStepper';
+import Badge from './components/Badge';
 
-interface Props {
-    requestId: number;
-    onClose: () => void;
-    onUpdated: () => void;
+interface RequestDetailProps {
+  requestId: number;
+  onClose: () => void;
 }
 
-const RequestDetail: React.FC<Props> = ({ requestId, onClose, onUpdated }) => {
-    const {
-        request,
-        comments,
-        agents,
-        userMap,
-        codes,
-        loading,
-        isSaving,
-        updateRequest,
-        addComment
-    } = useRequestDetail(requestId);
+const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => {
+  const [request, setRequest] = useState<RequestDTO | null>(null);
+  const [comments, setComments] = useState<RequestCommentDTO[]>([]);
+  const [newComment, setNewComment] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [editedData, setEditedData] = useState<Partial<RequestDTO>>({});
 
-    const storedUser = localStorage.getItem('authUser');
-    const authUser = storedUser ? JSON.parse(storedUser) : null;
-    const userRole = authUser?.role || 'ROLE_USER';
-    const isAdmin = userRole?.includes('ADMIN') || userRole?.includes('OPERATOR') || userRole?.includes('MANAGER');
+  const fetchDetail = async () => {
+    try {
+      setLoading(true);
+      const [reqRes, commRes] = await Promise.all([
+        requestApi.getRequest(requestId),
+        requestApi.getComments(requestId)
+      ]);
+      setRequest(reqRes.data);
+      setComments(commRes.data);
+      setEditedData(reqRes.data);
+    } catch (err) {
+      console.error('Failed to fetch detail', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const [isEditing, setIsEditing] = useState(false);
-    const [editData, setEditData] = useState<Partial<RequestItem>>({});
-    const [newComment, setNewComment] = useState('');
-    const [isInternal, setIsInternal] = useState(false);
+  useEffect(() => {
+    fetchDetail();
+  }, [requestId]);
 
-    const handleEditToggle = () => {
-        if (!isEditing && request) {
-            setEditData(request);
-        }
-        setIsEditing(!isEditing);
-    };
+  const handleSave = async () => {
+    try {
+      await requestApi.updateRequest(requestId, editedData as RequestDTO);
+      setIsEditing(false);
+      fetchDetail();
+    } catch (err) {
+      console.error('Failed to save', err);
+    }
+  };
 
-    const handleSave = async () => {
-        const finalData = {
-            ...editData,
-            priority: calculatePriority(editData.srImpactCode, editData.srUrgencyCode)
-        };
+  const handleAddComment = async () => {
+    if (!newComment.trim()) return;
+    try {
+      await requestApi.addComment(requestId, {
+        authorId: 'admin_user', // Mock
+        content: newComment,
+        isInternal: false
+      });
+      setNewComment('');
+      fetchDetail();
+    } catch (err) {
+      console.error('Failed to add comment', err);
+    }
+  };
 
-        if (isAdmin && (finalData.status === 'RESOLVED' || finalData.status === 'CLOSED')) {
-            if (!finalData.srResolutionCode || !finalData.resolutionText) {
-                alert('해결 시 해결 코드와 해결 내용을 입력해야 합니다.');
-                return;
-            }
-        }
+  const handleDownload = async (attachmentId: number, fileName: string) => {
+    try {
+      const res = await requestApi.downloadAttachment(attachmentId);
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      console.error('Failed to download', err);
+    }
+  };
 
-        const success = await updateRequest(finalData);
-        if (success) {
-            setIsEditing(false);
-            onUpdated();
-            onClose();
-        } else {
-            alert('요청 저장에 실패했습니다.');
-        }
-    };
+  if (!request) return null;
 
-    const handleAddComment = async () => {
-        if (!newComment.trim()) return;
-        const success = await addComment(newComment, isInternal);
-        if (success) {
-            setNewComment('');
-        } else {
-            alert('댓글 등록에 실패했습니다.');
-        }
-    };
-
-    const isAttributeEditable = (segment: 'CORE' | 'CLASSIFICATION' | 'SLA' | 'OWNERSHIP' | 'RESOLUTION') => {
-        if (!isEditing || !request) return false;
-        const status = request.status;
-        if (['CLOSED', 'CANCELLED'].includes(status)) return false;
-
-        switch (segment) {
-            case 'CORE': return ['OPEN', 'ASSIGNED'].includes(status);
-            case 'CLASSIFICATION':
-            case 'SLA': return ['OPEN', 'ASSIGNED', 'IN_PROGRESS'].includes(status);
-            case 'OWNERSHIP': return ['OPEN', 'ASSIGNED', 'IN_PROGRESS', 'ON_HOLD', 'RESOLVED'].includes(status);
-            case 'RESOLUTION': return ['IN_PROGRESS', 'RESOLVED'].includes(status);
-            default: return false;
-        }
-    };
-
-    const getEditableStyle = (segment: 'CORE' | 'CLASSIFICATION' | 'SLA' | 'OWNERSHIP' | 'RESOLUTION') => {
-        if (!isEditing) return {};
-        const editable = isAttributeEditable(segment);
-        return editable ? {} : { opacity: 0.6, cursor: 'not-allowed' };
-    };
-
-    if (loading) return <div className="modal-overlay"><div className="loader">Loading...</div></div>;
-    if (!request) return null;
-
-    const currentImpact = isEditing ? editData.srImpactCode : request.srImpactCode;
-    const currentUrgency = isEditing ? editData.srUrgencyCode : request.srUrgencyCode;
-    const currentPriority = calculatePriority(currentImpact, currentUrgency);
-
-    return (
-        <div className="modal-overlay animate-fade-in" style={{ zIndex: 1000 }}>
-            <motion.div 
-                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                className="modal-content premium-card" 
-                style={{ width: '900px', height: '94vh', display: 'flex', flexDirection: 'column', padding: '0', background: 'rgba(10, 10, 12, 0.95)', backdropFilter: 'blur(20px)' }}
-            >
-                <RequestStatusStepper status={isEditing ? editData.status || '' : request.status} />
-
-                <header className="premium-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '24px 60px' }}>
-                    <div className="header-meta" style={{ flex: 1 }}>
-                        <div className="id-strip"><span className="req-id-text">{request.reqNumber || `#${request.id}`}</span></div>
-                        <h2 className="header-title" style={{ margin: 0 }}>{request.title}</h2>
-                    </div>
-                    <div className="header-actions">
-                        <button className="btn-premium-secondary btn-header" onClick={onClose}>목록</button>
-                        {isAdmin && !['CLOSED', 'CANCELLED'].includes(request.status) && (
-                            <button 
-                                className="btn-premium btn-header" 
-                                onClick={isEditing ? handleSave : handleEditToggle}
-                                disabled={isSaving}
-                            >
-                                {isSaving ? '저장...' : (isEditing ? '저장' : '수정')}
-                            </button>
-                        )}
-                    </div>
-                </header>
-
-                <div className="premium-scroll-area" style={{ padding: '0 60px 100px' }}>
-                    <div className="premium-card field-set" style={{ background: 'hsla(0, 0%, 100%, 0.02)', padding: '32px' }}>
-                        <div className="content-grid-system">
-                            <div className="form-group">
-                                <label>영향도 (Impact)</label>
-                                <select 
-                                    disabled={!isAttributeEditable('SLA')} 
-                                    value={currentImpact} 
-                                    onChange={e => setEditData({...editData, srImpactCode: e.target.value})}
-                                    style={getEditableStyle('SLA')}
-                                >
-                                    {codes.SR_IMPACT?.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
-                                </select>
-                            </div>
-                            <div className="form-group">
-                                <label>긴급도 (Urgency)</label>
-                                <select 
-                                    disabled={!isAttributeEditable('SLA')} 
-                                    value={currentUrgency} 
-                                    onChange={e => setEditData({...editData, srUrgencyCode: e.target.value})}
-                                    style={getEditableStyle('SLA')}
-                                >
-                                    {codes.SR_URGENCY?.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
-                                </select>
-                            </div>
-                            <div className="form-group">
-                                <label>전문가 배정</label>
-                                <select 
-                                    disabled={!isAttributeEditable('OWNERSHIP')} 
-                                    value={(isEditing ? editData.assigneeId : request.assigneeId) || ''} 
-                                    onChange={e => setEditData({...editData, assigneeId: e.target.value})}
-                                    style={getEditableStyle('OWNERSHIP')}
-                                >
-                                    <option value="">-- 미배정 --</option>
-                                    {agents.map(a => <option key={a.userId} value={a.userId}>{a.name} ({a.userId})</option>)}
-                                </select>
-                            </div>
-                            <div className="form-group">
-                                <label>서비스 카테고리</label>
-                                <select 
-                                    disabled={!isAttributeEditable('CLASSIFICATION')} 
-                                    value={isEditing ? editData.srCategoryCode : request.srCategoryCode} 
-                                    onChange={e => setEditData({...editData, srCategoryCode: e.target.value})}
-                                    style={getEditableStyle('CLASSIFICATION')}
-                                >
-                                    {codes.SR_CATEGORY?.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
-                                </select>
-                            </div>
-                            <div className="form-group">
-                                <label>현재 단계</label>
-                                <select 
-                                    disabled={!isEditing} 
-                                    value={isEditing ? editData.status : request.status} 
-                                    onChange={e => setEditData({...editData, status: e.target.value})}
-                                >
-                                    {codes.SR_STATUS?.map(s => <option key={s.codeId} value={s.codeId}>{s.codeName}</option>)}
-                                </select>
-                            </div>
-                            <div className="form-group" style={{ display: 'flex', alignItems: 'flex-end', paddingBottom: '12px' }}>
-                                <RequestLogicHUD priority={currentPriority} />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="premium-card field-set" style={{ background: 'hsla(0, 0%, 100%, 0.02)', marginTop: '24px', padding: '32px' }}>
-                        <div className="form-group full">
-                            <label>요청 상세 내역</label>
-                            {isEditing && isAttributeEditable('CORE') ? (
-                                <textarea 
-                                    value={editData.description} 
-                                    onChange={e => setEditData({...editData, description: e.target.value})} 
-                                    style={{ minHeight: '180px', ...getEditableStyle('CORE') }} 
-                                />
-                            ) : (
-                                <div className="premium-card" style={{ padding: '24px', minHeight: '180px', background: 'rgba(0,0,0,0.2)', fontSize: '15px', lineHeight: '1.7', whiteSpace: 'pre-wrap' }}>
-                                    {request.description}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    <RequestResolutionForm 
-                        isAdmin={isAdmin}
-                        status={isEditing ? editData.status || '' : request.status}
-                        resolutionCode={isEditing ? editData.srResolutionCode || '' : request.srResolutionCode || ''}
-                        resolutionText={isEditing ? editData.resolutionText || '' : request.resolutionText || ''}
-                        setResolutionCode={(val: string) => setEditData({...editData, srResolutionCode: val})}
-                        setResolutionText={(val: string) => setEditData({...editData, resolutionText: val})}
-                        codes={codes}
-                        isAttributeEditable={isAttributeEditable}
-                        getEditableStyle={getEditableStyle}
-                    />
-
-                    <RequestCommentTimeline 
-                        comments={comments}
-                        userMap={userMap}
-                        newComment={newComment}
-                        setNewComment={setNewComment}
-                        isInternal={isInternal}
-                        setIsInternal={setIsInternal}
-                        onAddComment={handleAddComment}
-                    />
-                </div>
-            </motion.div>
+  return (
+    <div className="tw-fixed tw-inset-0 tw-z-50 tw-flex tw-items-center tw-justify-center tw-p-4 tw-bg-obsidian/80 tw-backdrop-blur-md">
+      <div className="tw-bg-obsidian tw-border tw-border-slate-800 tw-rounded-2xl tw-w-full tw-max-w-6xl tw-max-h-[90vh] tw-overflow-hidden tw-flex tw-flex-col tw-shadow-2xl">
+        
+        {/* Modal Header */}
+        <div className="tw-p-4 tw-border-b tw-border-slate-800 tw-flex tw-items-center tw-justify-between tw-bg-slate-800/30">
+          <div className="tw-flex tw-items-center tw-gap-3">
+             <span className="tw-text-brand-400 tw-font-mono tw-text-lg">{request.reqNumber}</span>
+             <h2 className="tw-text-xl tw-font-medium tw-text-white">{request.title}</h2>
+          </div>
+          <button 
+            onClick={onClose}
+            className="tw-p-2 tw-rounded-lg hover:tw-bg-slate-700 tw-text-slate-400 tw-transition-colors"
+          >
+            <X size={24} />
+          </button>
         </div>
-    );
+
+        {/* Modal Body */}
+        <div className="tw-flex-1 tw-overflow-y-auto tw-p-6 tw-custom-scrollbar">
+          
+          {/* Top Section: Stepper & Core Actions */}
+          <div className="tw-mb-8">
+            <StatusStepper currentStatus={request.status || 'OPEN'} />
+          </div>
+
+          {/* Main Grid Layout */}
+          <div className="tw-grid tw-grid-cols-12 tw-gap-8">
+            
+            {/* Left: Content (8 cols) */}
+            <div className="tw-col-span-8 tw-flex tw-flex-col tw-gap-8">
+              
+              {/* Basic Info Section */}
+              <section className="tw-card tw-p-6">
+                <div className="tw-flex tw-items-center tw-gap-2 tw-mb-4 tw-text-brand-400">
+                  <FileText size={18} />
+                  <h3 className="tw-text-sm tw-font-bold tw-uppercase tw-tracking-widest">Basic Information</h3>
+                </div>
+                <div className="tw-space-y-6">
+                  <div>
+                    <label className="tw-text-[14px] tw-font-bold tw-text-slate-500 tw-mb-2 tw-block">Description</label>
+                    <div className="tw-text-slate-300 tw-leading-relaxed tw-text-sm tw-bg-slate-800/20 tw-p-4 tw-rounded-lg">
+                      {request.description}
+                    </div>
+                  </div>
+                  {request.resolutionText && (
+                    <div className="tw-animate-slide-up">
+                      <label className="tw-text-[14px] tw-font-bold tw-text-emerald-500 tw-mb-2 tw-block">Resolution Notes</label>
+                      <div className="tw-text-emerald-400/90 tw-bg-emerald-500/5 tw-border tw-border-emerald-500/10 tw-p-4 tw-rounded-lg tw-text-sm">
+                        {request.resolutionText}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              {/* Attachments Section */}
+              <section className="tw-card tw-p-6">
+                <div className="tw-flex tw-items-center tw-justify-between tw-mb-4">
+                  <div className="tw-flex tw-items-center tw-gap-2 tw-text-brand-400">
+                    <Paperclip size={18} />
+                    <h3 className="tw-text-sm tw-font-bold tw-uppercase tw-tracking-widest">Attachments</h3>
+                  </div>
+                  <span className="tw-text-xs tw-text-slate-500">{request.attachments?.length || 0} Files</span>
+                </div>
+                <div className="tw-grid tw-grid-cols-2 tw-gap-3">
+                  {request.attachments?.map((file) => (
+                    <div key={file.id} className="tw-flex tw-items-center tw-justify-between tw-bg-obsidian tw-border tw-border-slate-800 tw-p-3 tw-rounded-lg hover:tw-border-slate-600 tw-transition-all">
+                      <div className="tw-flex tw-items-center tw-gap-3">
+                        <div className="tw-bg-slate-800 tw-p-2 tw-rounded">
+                          <File size={16} className="tw-text-brand-400" />
+                        </div>
+                        <div className="tw-flex tw-flex-col">
+                          <span className="tw-text-xs tw-text-slate-200 tw-font-medium tw-truncate tw-max-w-[150px]">{file.fileName}</span>
+                          <span className="tw-text-[10px] tw-text-slate-500">{(file.fileSize / 1024).toFixed(1)} KB</span>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => handleDownload(file.id, file.fileName)}
+                        className="tw-p-2 hover:tw-bg-slate-800 tw-rounded-full tw-text-slate-400"
+                      >
+                        <Download size={14} />
+                      </button>
+                    </div>
+                  ))}
+                  {(!request.attachments || request.attachments.length === 0) && (
+                    <div className="tw-col-span-2 tw-text-center tw-py-4 tw-text-slate-600 tw-text-sm">
+                      No attachments found
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              {/* Comments Section */}
+              <section className="tw-card tw-p-6">
+                <div className="tw-flex tw-items-center tw-gap-2 tw-mb-6 tw-text-brand-400">
+                  <RotateCcw size={18} />
+                  <h3 className="tw-text-sm tw-font-bold tw-uppercase tw-tracking-widest">댓글 목록</h3>
+                </div>
+                <div className="tw-space-y-4">
+                  <div className="tw-relative group">
+                    <textarea 
+                      placeholder="Write operational notes or updates here..."
+                      className="tw-input tw-w-full tw-min-h-[80px] tw-pr-12 tw-bg-obsidian-dark focus:tw-bg-obsidian"
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                    />
+                    <button 
+                      onClick={handleAddComment}
+                      className="tw-absolute tw-right-3 tw-bottom-3 tw-bg-brand-600 tw-text-white tw-p-2 tw-rounded-lg hover:tw-bg-brand-700 tw-transition-all"
+                    >
+                      <Send size={16} />
+                    </button>
+                  </div>
+                  <div className="tw-space-y-4 tw-mt-6">
+                    {comments.map((comment) => (
+                      <div key={comment.id} className="tw-flex tw-gap-3">
+                        <div className="tw-w-8 tw-h-8 tw-rounded-lg tw-bg-slate-800 tw-flex tw-items-center tw-justify-center tw-text-xs tw-font-bold tw-text-brand-400">
+                          {comment.authorId.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="tw-flex-1">
+                          <div className="tw-flex tw-items-center tw-gap-2 tw-mb-1">
+                            <span className="tw-text-xs tw-font-bold tw-text-slate-300">{comment.authorId}</span>
+                            <span className="tw-text-[10px] tw-text-slate-500">{comment.createdAt?.replace('T', ' ')}</span>
+                          </div>
+                          <div className="tw-text-sm tw-text-slate-400 tw-bg-slate-800/10 tw-p-3 tw-rounded-lg tw-border tw-border-slate-800/30">
+                            {comment.content}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            {/* Right: Sidebar (4 cols) */}
+            <div className="tw-col-span-4 tw-flex tw-flex-col tw-gap-6">
+              
+              {/* Allocation & Ownership */}
+              <section className="tw-card tw-p-5">
+                <div className="tw-flex tw-items-center tw-gap-2 tw-mb-6 tw-text-brand-400">
+                  <User size={16} />
+                  <h3 className="tw-text-xs tw-font-bold tw-uppercase tw-tracking-widest">Ownership</h3>
+                </div>
+                <div className="tw-space-y-5">
+                  <div className="tw-flex tw-justify-between tw-items-center">
+                    <span className="tw-text-[14px] tw-text-slate-500">Requester</span>
+                    <span className="tw-text-sm tw-text-slate-200 tw-font-medium">{request.requesterId}</span>
+                  </div>
+                  <div className="tw-flex tw-justify-between tw-items-center">
+                    <span className="tw-text-[14px] tw-text-slate-500">Assignee</span>
+                    <div className="tw-flex tw-items-center tw-gap-2">
+                       <div className="tw-w-6 tw-h-6 tw-rounded tw-bg-slate-800 tw-flex tw-items-center tw-justify-center tw-text-[10px]">
+                        <Shield size={12} className="tw-text-brand-400" />
+                       </div>
+                       <span className="tw-text-sm tw-text-brand-400">{request.assigneeId || 'Needs Assignment'}</span>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              {/* Assessment Section */}
+              <section className="tw-card tw-p-5">
+                <div className="tw-flex tw-items-center tw-gap-2 tw-mb-6 tw-text-brand-400">
+                  <Shield size={16} />
+                  <h3 className="tw-text-xs tw-font-bold tw-uppercase tw-tracking-widest">Assessment</h3>
+                </div>
+                <div className="tw-space-y-6">
+                  <div className="tw-flex tw-justify-between tw-items-center">
+                    <span className="tw-text-[14px] tw-text-slate-500">Impact</span>
+                    <Badge label={request.srImpactCode || 'MEDIUM'} type="priority" />
+                  </div>
+                  <div className="tw-flex tw-justify-between tw-items-center">
+                    <span className="tw-text-[14px] tw-text-slate-500">Urgency</span>
+                    <Badge label={request.srUrgencyCode || 'MEDIUM'} type="priority" />
+                  </div>
+                  <div className="tw-pt-4 tw-border-t tw-border-slate-800 tw-flex tw-justify-between tw-items-end">
+                    <span className="tw-text-[14px] tw-text-slate-500">Calculated Priority</span>
+                    <Badge label={request.priority || 'P3'} type="priority" className="tw-scale-110" />
+                  </div>
+                </div>
+              </section>
+
+              {/* SLA & Timeline */}
+              <section className="tw-card tw-p-5 tw-bg-gradient-to-br tw-from-slate-800/20 tw-to-transparent">
+                <div className="tw-flex tw-items-center tw-gap-2 tw-mb-6 tw-text-brand-400">
+                  <Clock size={16} />
+                  <h3 className="tw-text-xs tw-font-bold tw-uppercase tw-tracking-widest">SLA Timeline</h3>
+                </div>
+                <div className="tw-space-y-4">
+                  <div className="tw-bg-obsidian tw-p-3 tw-rounded-lg tw-border tw-border-slate-800">
+                    <div className="tw-flex tw-justify-between tw-mb-2">
+                      <span className="tw-text-[10px] tw-text-slate-500 tw-uppercase">Resolution Target</span>
+                      <span className="tw-text-[10px] tw-text-emerald-500 tw-font-bold">ON TARGET</span>
+                    </div>
+                    <div className="tw-text-sm tw-text-slate-200">
+                      {request.slaTargetAt?.replace('T', ' ').substring(0, 16)}
+                    </div>
+                  </div>
+                  <div className="tw-bg-obsidian tw-p-3 tw-rounded-lg tw-border tw-border-slate-800">
+                    <div className="tw-flex tw-justify-between tw-mb-2">
+                      <span className="tw-text-[10px] tw-text-slate-500 tw-uppercase">Created At</span>
+                    </div>
+                    <div className="tw-text-sm tw-text-slate-400">
+                       {request.createdAt?.replace('T', ' ').substring(0, 16)}
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+            </div>
+          </div>
+        </div>
+
+        {/* Modal Footer / Actions */}
+        <div className="tw-p-4 tw-border-t tw-border-slate-800 tw-flex tw-items-center tw-justify-end tw-gap-3 tw-bg-slate-800/30">
+          <button 
+            onClick={onClose}
+            className="tw-bg-slate-800 hover:tw-bg-slate-700 tw-text-slate-300 tw-px-6 tw-py-2 tw-rounded-lg tw-transition-all"
+          >
+            Cancel
+          </button>
+          {!isEditing ? (
+            <button 
+              onClick={() => setIsEditing(true)}
+              className="tw-bg-brand-600 hover:tw-bg-brand-700 tw-text-white tw-px-6 tw-py-2 tw-rounded-lg tw-transition-all tw-flex tw-items-center tw-gap-2"
+            >
+              <Edit2 size={16} />
+              Edit Request
+            </button>
+          ) : (
+            <button 
+              onClick={handleSave}
+              className="tw-bg-emerald-600 hover:tw-bg-emerald-700 tw-text-white tw-px-6 tw-py-2 tw-rounded-lg tw-transition-all tw-flex tw-items-center tw-gap-2"
+            >
+              <Check size={16} />
+              Save Changes
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default RequestDetail;

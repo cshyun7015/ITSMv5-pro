@@ -1,188 +1,244 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { apiRequest } from './api/apiRequest';
-import { apiCommonCode, type CommonCode } from '../../api/apiCommonCode';
-import type { RequestItem } from './api/apiRequest';
-import { calculatePriority } from './utils/requestUtils';
-import './Request.css';
+import React, { useState, useRef } from 'react';
+import { X, Send, Paperclip, AlertCircle, File, Trash2, UploadCloud, Plus } from 'lucide-react';
+import requestApi from './api/requestApi';
+import { cn } from './components/Badge';
 
-interface Props {
-    onClose: () => void;
-    onSuccess: () => void;
+interface RequestFormProps {
+  onClose: () => void;
 }
 
-const RequestForm: React.FC<Props> = ({ onClose, onSuccess }) => {
-    const [formData, setFormData] = useState<Partial<RequestItem>>({
-        title: '',
-        description: '',
-        srTypeCode: 'SERVICE_REQUEST',
-        srCategoryCode: 'SOFTWARE',
-        srImpactCode: 'LOW',
-        srUrgencyCode: 'LOW',
-        priority: 'P4',
-        companyId: localStorage.getItem('companyId') || 'SYSTEM',
-        requesterId: localStorage.getItem('userId') || 'admin',
-        status: 'OPEN'
-    });
+const RequestForm: React.FC<RequestFormProps> = ({ onClose }) => {
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    srTypeCode: 'INCIDENT',
+    srCategoryCode: 'HARDWARE',
+    srImpactCode: 'LOW',
+    srUrgencyCode: 'LOW',
+    companyId: 'COMP-ALPHA', // Mock
+    requesterId: 'admin_user' // Mock
+  });
+  const [files, setFiles] = useState<File[]>([]);
+  const [loading, setLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const [codes, setCodes] = useState<{ [key: string]: CommonCode[] }>({
-        SR_TYPE: [],
-        SR_CATEGORY: [],
-        SR_IMPACT: [],
-        SR_URGENCY: []
-    });
-    const [isSubmitting, setIsSubmitting] = useState(false);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.title.trim() || !formData.description.trim()) return;
 
-    useEffect(() => {
-        loadCodes();
-    }, []);
+    try {
+      setLoading(true);
+      // 1. Create Request
+      const res = await requestApi.createRequest(formData);
+      const requestId = res.data.id;
 
-    const loadCodes = async () => {
-        try {
-            const [types, categories, impacts, urgencies] = await Promise.all([
-                apiCommonCode.getCodesByGroup('SR_TYPE'),
-                apiCommonCode.getCodesByGroup('SR_CATEGORY'),
-                apiCommonCode.getCodesByGroup('SR_IMPACT'),
-                apiCommonCode.getCodesByGroup('SR_URGENCY')
-            ]);
-            setCodes({
-                SR_TYPE: types.data,
-                SR_CATEGORY: categories.data,
-                SR_IMPACT: impacts.data,
-                SR_URGENCY: urgencies.data
-            });
-        } catch (err) {
-            console.error('Failed to load codes', err);
+      // 2. Upload Files if any
+      if (files.length > 0 && requestId) {
+        for (const file of files) {
+          await requestApi.uploadAttachment(requestId, file);
         }
-    };
+      }
 
-    useEffect(() => {
-        const newPriority = calculatePriority(formData.srImpactCode, formData.srUrgencyCode);
-        if (formData.priority !== newPriority) {
-            setFormData(prev => ({ ...prev, priority: newPriority }));
-        }
-    }, [formData.srImpactCode, formData.srUrgencyCode]);
+      onClose();
+    } catch (err) {
+      console.error('Failed to create request', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        try {
-            setIsSubmitting(true);
-            await apiRequest.createRequest(formData as RequestItem);
-            onSuccess();
-        } catch (err) {
-            alert('요청 등록에 실패했습니다.');
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files);
+      setFiles(prev => [...prev, ...newFiles]);
+    }
+  };
 
-    return (
-        <div className="modal-overlay animate-fade-in">
-            <motion.div 
-                initial={{ opacity: 0, scale: 0.9, y: 30 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                className="modal-content premium-card" 
-                style={{ width: '900px', padding: '0', background: 'rgba(10, 10, 12, 0.98)', backdropFilter: 'blur(30px)' }}
-            >
-                <header className="premium-header" style={{ padding: '32px 48px', borderBottom: '1px solid hsla(0,0%,100%,0.05)' }}>
-                    <div>
-                        <h2 style={{ fontSize: '28px', fontWeight: 950, letterSpacing: '-1px' }}>신규 요청 매니페스트 작성</h2>
-                    </div>
-                    <div className="header-actions">
-                        <button type="button" className="btn-premium-secondary btn-md" onClick={onClose}>목록</button>
-                        <button 
-                            type="submit" 
-                            form="request-manifest-form"
-                            className="btn-premium btn-header" 
-                            disabled={isSubmitting}
-                        >
-                            {isSubmitting ? 'ENGINEERING...' : '등록'}
-                        </button>
-                    </div>
-                </header>
+  const removeFile = (idx: number) => {
+    setFiles(prev => prev.filter((_, i) => i !== idx));
+  };
 
-                <div className="premium-scroll-area" style={{ padding: '48px', maxHeight: '70vh', overflowY: 'auto' }}>
-                    <form id="request-manifest-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '48px' }}>
-                        
-                        {/* Section 1: Core Identifiers */}
-                        <section>
-                            <div className="set-header">IDENTIFICATION</div>
-                            <div className="form-group full">
-                                <label>요청 제목 (MANIFEST TITLE)</label>
-                                <input 
-                                    type="text"
-                                    value={formData.title}
-                                    onChange={e => setFormData({...formData, title: e.target.value})}
-                                    placeholder="핵심 요약을 입력하세요."
-                                    required
-                                    className="premium-input-large"
-                                    style={{ width: '100%', fontSize: '18px', padding: '16px 24px' }}
-                                />
-                            </div>
-                            <div className="content-grid-system">
-                                <div className="form-group">
-                                    <label>서비스 카테고리</label>
-                                    <select value={formData.srCategoryCode} onChange={e => setFormData({...formData, srCategoryCode: e.target.value})}>
-                                        {codes.SR_CATEGORY.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
-                                    </select>
-                                </div>
-                                <div className="form-group">
-                                    <label>요청 유형</label>
-                                    <select value={formData.srTypeCode} onChange={e => setFormData({...formData, srTypeCode: e.target.value})}>
-                                        {codes.SR_TYPE.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
-                                    </select>
-                                </div>
-                            </div>
-                        </section>
+  return (
+    <div className="tw-fixed tw-inset-0 tw-z-50 tw-flex tw-items-center tw-justify-center tw-p-4 tw-bg-obsidian/80 tw-backdrop-blur-md">
+      <div className="tw-bg-obsidian tw-border tw-border-slate-800 tw-rounded-2xl tw-w-full tw-max-w-4xl tw-h-[67%] tw-max-h-[90vh] tw-overflow-hidden tw-flex tw-flex-col tw-shadow-2xl tw-animate-slide-up">
+        
+        {/* Modal Header */}
+        <div className="tw-p-4 tw-border-b tw-border-slate-800 tw-flex tw-items-center tw-justify-between tw-bg-slate-800/30">
+          <div className="tw-flex tw-items-center tw-gap-3">
+             <div className="tw-bg-brand-600/20 tw-p-2 tw-rounded-lg">
+                <Plus size={20} className="tw-text-brand-500" />
+             </div>
+             <h2 className="tw-text-xl tw-font-bold tw-text-white">Create New Service Request</h2>
+          </div>
+          <button 
+            onClick={onClose}
+            className="tw-p-2 tw-rounded-lg hover:tw-bg-slate-700 tw-text-slate-400 tw-transition-colors"
+          >
+            <X size={24} />
+          </button>
+        </div>
 
-                        {/* Section 2: Impact & Urgency Analysis */}
-                        <section>
-                            <div className="set-header">SLA CLASSIFICATION</div>
-                            <div className="content-grid-system">
-                                <div className="form-group">
-                                    <label>영향도 (IMPACT)</label>
-                                    <select 
-                                        value={formData.srImpactCode} 
-                                        onChange={e => setFormData({...formData, srImpactCode: e.target.value})}
-                                    >
-                                        {codes.SR_IMPACT.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
-                                    </select>
-                                </div>
-                                <div className="form-group">
-                                    <label>긴급도 (URGENCY)</label>
-                                    <select 
-                                        value={formData.srUrgencyCode} 
-                                        onChange={e => setFormData({...formData, srUrgencyCode: e.target.value})}
-                                    >
-                                        {codes.SR_URGENCY.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
-                                    </select>
-                                </div>
-                            </div>
-                        </section>
+        {/* Modal Body */}
+        <form onSubmit={handleSubmit} className="tw-flex-1 tw-overflow-y-auto tw-p-8 tw-custom-scrollbar">
+          <div className="tw-grid tw-grid-cols-12 tw-gap-8">
+            
+            {/* Left: General Info (7 cols) */}
+            <div className="tw-col-span-12 lg:tw-col-span-7 tw-flex tw-flex-col tw-gap-6">
+              <div>
+                <label className="tw-text-[14px] tw-font-bold tw-text-slate-500 tw-mb-2 tw-block">Request Title</label>
+                <input 
+                  type="text"
+                  placeholder="Summarize the issue or request..."
+                  className="tw-input tw-w-full tw-text-lg"
+                  value={formData.title}
+                  onChange={e => setFormData(f => ({ ...f, title: e.target.value }))}
+                  required
+                />
+              </div>
+              <div>
+                <label className="tw-text-[14px] tw-font-bold tw-text-slate-500 tw-mb-2 tw-block">Detailed Description</label>
+                <textarea 
+                  placeholder="Provide all necessary details for the support team..."
+                  className="tw-input tw-w-full tw-min-h-[150px] tw-resize-none"
+                  value={formData.description}
+                  onChange={e => setFormData(f => ({ ...f, description: e.target.value }))}
+                  required
+                />
+              </div>
 
-                        {/* Section 3: Technical Details */}
-                        <section>
-                            <div className="set-header">TECHNICAL DETAILS</div>
-                            <div className="form-group full">
-                                <label>상세 분석 요구사항 (SPECIFICATIONS)</label>
-                                <textarea 
-                                    value={formData.description}
-                                    onChange={e => setFormData({...formData, description: e.target.value})}
-                                    placeholder="전문가가 인지해야 할 상세 내용을 입력하세요."
-                                    required
-                                    style={{ minHeight: '180px', width: '100%' }}
-                                />
-                            </div>
-                        </section>
-                    </form>
+              {/* Upload Zone */}
+              <div>
+                <label className="tw-text-[14px] tw-font-bold tw-text-slate-500 tw-mb-2 tw-block">Attachments (Max 10MB per file)</label>
+                <div 
+                  onClick={() => fileInputRef.current?.click()}
+                  className="tw-border-2 tw-border-dashed tw-border-slate-800 tw-rounded-xl tw-p-6 tw-flex tw-flex-col tw-items-center tw-justify-center tw-bg-obsidian-light hover:tw-border-brand-500 hover:tw-bg-brand-500/5 tw-cursor-pointer tw-transition-all Group"
+                >
+                  <UploadCloud size={32} className="tw-text-slate-500 group-hover:tw-text-brand-500 tw-mb-2" />
+                  <p className="tw-text-sm tw-text-slate-400">Click or Drag & Drop to upload files</p>
+                  <p className="tw-text-[10px] tw-text-slate-600 tw-mt-1">Supported formats: PDF, DOCX, PNG, JPG, ZIP</p>
+                  <input 
+                    type="file" 
+                    multiple 
+                    className="tw-hidden" 
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                  />
                 </div>
                 
-                <footer style={{ padding: '24px 48px', borderTop: '1px solid hsla(0,0%,100%,0.05)', textAlign: 'right', opacity: 0.5, fontSize: '10px', fontWeight: 800, letterSpacing: '1px' }}>
-                    ITIL v5 COMPLIANT REQUEST MANAGEMENT ENGINE
-                </footer>
-            </motion.div>
+                {/* File List */}
+                {files.length > 0 && (
+                  <div className="tw-mt-4 tw-space-y-2">
+                    {files.map((file, idx) => (
+                      <div key={idx} className="tw-flex tw-items-center tw-justify-between tw-bg-slate-800/20 tw-p-2 tw-px-3 tw-rounded-lg tw-border tw-border-slate-800/50">
+                        <div className="tw-flex tw-items-center tw-gap-3">
+                          <File size={14} className="tw-text-brand-400" />
+                          <span className="tw-text-xs tw-text-slate-300 tw-truncate tw-max-w-[200px]">{file.name}</span>
+                          <span className="tw-text-[10px] tw-text-slate-600">{(file.size / 1024).toFixed(1)} KB</span>
+                        </div>
+                        <button 
+                          type="button"
+                          onClick={() => removeFile(idx)}
+                          className="tw-p-1.5 tw-text-slate-500 hover:tw-text-red-500 tw-rounded-md hover:tw-bg-red-500/10 tw-transition-all"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Right: Categorization (5 cols) */}
+            <div className="tw-col-span-12 lg:tw-col-span-5 tw-bg-slate-800/20 tw-p-6 tw-rounded-xl tw-flex tw-flex-col tw-gap-6 tw-border tw-border-slate-800/50">
+              <div>
+                <label className="tw-text-[14px] tw-font-bold tw-text-slate-500 tw-mb-2 tw-block">Support Type</label>
+                <select 
+                  className="tw-input tw-w-full"
+                  value={formData.srTypeCode}
+                  onChange={e => setFormData(f => ({ ...f, srTypeCode: e.target.value }))}
+                >
+                  <option value="INCIDENT">Incident</option>
+                  <option value="SERVICE_REQUEST">Service Request</option>
+                  <option value="CHANGE">Change Request</option>
+                </select>
+              </div>
+              <div>
+                <label className="tw-text-[14px] tw-font-bold tw-text-slate-500 tw-mb-2 tw-block">Category</label>
+                <select 
+                  className="tw-input tw-w-full"
+                  value={formData.srCategoryCode}
+                  onChange={e => setFormData(f => ({ ...f, srCategoryCode: e.target.value }))}
+                >
+                  <option value="HARDWARE">Hardware</option>
+                  <option value="SOFTWARE">Software / OS</option>
+                  <option value="NETWORK">Network / Infrastructure</option>
+                  <option value="ACCESS">Access / Permission</option>
+                </select>
+              </div>
+              <div className="tw-grid tw-grid-cols-2 tw-gap-4 tw-pt-4 tw-border-t tw-border-slate-800">
+                <div>
+                  <label className="tw-text-[14px] tw-font-bold tw-text-slate-500 tw-mb-2 tw-block">Impact</label>
+                  <select 
+                    className="tw-input tw-w-full"
+                    value={formData.srImpactCode}
+                    onChange={e => setFormData(f => ({ ...f, srImpactCode: e.target.value }))}
+                  >
+                    <option value="LOW">Low</option>
+                    <option value="MEDIUM">Medium</option>
+                    <option value="HIGH">High</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="tw-text-[14px] tw-font-bold tw-text-slate-500 tw-mb-2 tw-block">Urgency</label>
+                  <select 
+                    className="tw-input tw-w-full"
+                    value={formData.srUrgencyCode}
+                    onChange={e => setFormData(f => ({ ...f, srUrgencyCode: e.target.value }))}
+                  >
+                    <option value="LOW">Low</option>
+                    <option value="MEDIUM">Medium</option>
+                    <option value="HIGH">High</option>
+                  </select>
+                </div>
+              </div>
+              <div className="tw-mt-auto tw-p-4 tw-bg-brand-500/5 tw-border tw-border-brand-500/10 tw-rounded-lg">
+                <div className="tw-flex tw-items-center tw-gap-2 tw-text-brand-500 tw-mb-2">
+                  <AlertCircle size={14} />
+                  <span className="tw-text-[10px] tw-font-bold tw-uppercase tw-tracking-widest">SLA Reminder</span>
+                </div>
+                <p className="tw-text-xs tw-text-slate-400 tw-leading-relaxed">
+                  Based on your selection, the default SLA will be set to **4 hours**. High priority cases are escalated automatically.
+                </p>
+              </div>
+            </div>
+          </div>
+        </form>
+
+        {/* Modal Footer */}
+        <div className="tw-p-4 tw-border-t tw-border-slate-800 tw-flex tw-items-center tw-justify-end tw-gap-3 tw-bg-slate-800/30">
+          <button 
+            onClick={onClose}
+            className="tw-bg-slate-800 hover:tw-bg-slate-700 tw-text-slate-300 tw-px-6 tw-py-2 tw-rounded-lg tw-transition-all"
+          >
+            Cancel
+          </button>
+          <button 
+            onClick={handleSubmit}
+            disabled={loading}
+            className="tw-bg-brand-600 hover:tw-bg-brand-700 tw-text-white tw-px-8 tw-py-2 tw-rounded-lg tw-transition-all tw-flex tw-items-center tw-gap-2 tw-font-bold"
+          >
+            {loading ? (
+              <div className="tw-animate-spin tw-rounded-full tw-h-4 tw-w-4 tw-border-b-2 tw-border-white"></div>
+            ) : (
+              <Send size={18} />
+            )}
+            Submit Request
+          </button>
         </div>
-    );
+      </div>
+    </div>
+  );
 };
 
 export default RequestForm;

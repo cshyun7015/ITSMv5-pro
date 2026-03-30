@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  .tw-body-base {
+    @apply tw-bg-obsidian tw-text-slate-300 tw-font-sans;
+  }
+}
+
+@layer components {
+  .tw-btn-primary {
+    @apply tw-bg-brand-600 hover:tw-bg-brand-700 tw-text-white tw-px-4 tw-py-2 tw-rounded-md tw-transition-all tw-duration-200 tw-flex tw-items-center tw-gap-2;
+  }
+  
+  .tw-card {
+    @apply tw-bg-obsidian-light tw-border tw-border-slate-800 tw-rounded-xl tw-overflow-hidden;
+  }
+
+  .tw-input {
+    @apply tw-bg-obsidian tw-border tw-border-slate-800 tw-text-slate-200 tw-rounded-lg tw-px-3 tw-py-2 focus:tw-border-brand-500 focus:tw-ring-1 focus:tw-ring-brand-500 tw-outline-none tw-transition-all;
+  }
+  
+  .tw-label {
+    @apply tw-text-xs tw-font-bold tw-uppercase tw-tracking-wider tw-text-slate-500 tw-mb-1;
+  }
+  
+  .tw-badge {
+    @apply tw-px-2 tw-py-0.5 tw-rounded-full tw-text-[10px] tw-font-bold tw-uppercase tw-tracking-tight;
+  }
+}
+
+/* Custom Scrollbar for Dark Theme */
+.tw-custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.tw-custom-scrollbar::-webkit-scrollbar-track {
+  @apply tw-bg-obsidian;
+}
+
+.tw-custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply tw-bg-slate-800 tw-rounded-full hover:tw-bg-slate-700;
+}

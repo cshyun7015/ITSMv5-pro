@@ -18,4 +18,9 @@ public interface RequestService {
     // Comments
     RequestCommentDTO addComment(Long requestId, RequestCommentDTO dto);
     List<RequestCommentDTO> getComments(Long requestId);
+
+    // Attachments
+    com.itsm.request.dto.AttachmentDTO addAttachment(Long requestId, String fileName, String fileType, long fileSize, byte[] fileData);
+    List<com.itsm.request.dto.AttachmentDTO> getAttachments(Long requestId);
+    com.itsm.request.domain.Attachment getAttachment(Long attachmentId);
 }

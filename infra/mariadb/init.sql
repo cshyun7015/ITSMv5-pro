@@ -45,6 +45,18 @@ CREATE TABLE IF NOT EXISTS request_comments (
     CONSTRAINT fk_comment_request FOREIGN KEY (request_id) REFERENCES requests(id) ON DELETE CASCADE
 );
 
+-- Storage for attachments (as BLOB in table)
+CREATE TABLE IF NOT EXISTS attachments (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    request_id BIGINT NOT NULL,
+    file_name VARCHAR(255) NOT NULL,
+    file_type VARCHAR(100),
+    file_size BIGINT,
+    file_data LONGBLOB NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_attachment_request FOREIGN KEY (request_id) REFERENCES requests(id) ON DELETE CASCADE
+);
+
 -- System Administration Service Schema
 CREATE DATABASE IF NOT EXISTS system_mgmt;
 GRANT ALL PRIVILEGES ON system_mgmt.* TO 'root'@'%';

@@ -65,4 +65,47 @@ public class RequestController {
     public List<RequestCommentDTO> getComments(@PathVariable Long id) {
         return requestService.getComments(id);
     }
+
+    // --- Attachments ---
+
+    @PostMapping("/{id}/attachments")
+    public ResponseEntity<com.itsm.request.dto.AttachmentDTO> uploadAttachment(
+            @PathVariable Long id,
+            @RequestParam("file") org.springframework.web.multipart.MultipartFile file) throws java.io.IOException {
+        
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        // 10MB limit enforcement
+        if (file.getSize() > 10 * 1024 * 1024) {
+             throw new com.itsm.request.exception.BusinessException("File size exceeds 10MB limit", HttpStatus.BAD_REQUEST);
+        }
+
+        com.itsm.request.dto.AttachmentDTO dto = requestService.addAttachment(
+                id, 
+                file.getOriginalFilename(), 
+                file.getContentType(), 
+                file.getSize(), 
+                file.getBytes()
+        );
+        
+        return ResponseEntity.status(HttpStatus.CREATED).body(dto);
+    }
+
+    @GetMapping("/{id}/attachments")
+    public List<com.itsm.request.dto.AttachmentDTO> getAttachments(@PathVariable Long id) {
+        return requestService.getAttachments(id);
+    }
+
+    @GetMapping("/attachments/{attachmentId}/download")
+    public ResponseEntity<org.springframework.core.io.Resource> downloadAttachment(@PathVariable Long attachmentId) {
+        com.itsm.request.domain.Attachment attachment = requestService.getAttachment(attachmentId);
+        
+        return ResponseEntity.ok()
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + attachment.getFileName() + "\"")
+                .contentType(org.springframework.http.MediaType.parseMediaType(attachment.getFileType()))
+                .contentLength(attachment.getFileSize())
+                .body(new org.springframework.core.io.ByteArrayResource(attachment.getFileData()));
+    }
 }

@@ -4,7 +4,7 @@ import type { EventItem } from '../../api/apiEvent';
 import { apiCommonCode } from '../../api/apiCommonCode';
 import type { CommonCode } from '../../api/apiCommonCode';
 import EventDetail from './EventDetail';
-import '../../features/request/Request.css';
+import './Event.css';
 
 const EventManagement: React.FC = () => {
     const [events, setEvents] = useState<EventItem[]>([]);

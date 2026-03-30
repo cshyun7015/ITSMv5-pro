@@ -29,4 +29,5 @@ public class RequestDTO {
     private LocalDateTime slaTargetAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private java.util.List<AttachmentDTO> attachments;
 }
