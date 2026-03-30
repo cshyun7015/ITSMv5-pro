@@ -1,7 +1,7 @@
-import React, { useState, useRef } from 'react';
-import { X, Send, Paperclip, AlertCircle, File, Trash2, UploadCloud, Plus } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, Send, Plus, AlertCircle } from 'lucide-react';
 import requestApi from './api/requestApi';
-import { cn } from './components/Badge';
+import RequestAttachments from './components/RequestAttachments';
 
 interface RequestFormProps {
   onClose: () => void;
@@ -20,7 +20,6 @@ const RequestForm: React.FC<RequestFormProps> = ({ onClose }) => {
   });
   const [files, setFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,17 +44,6 @@ const RequestForm: React.FC<RequestFormProps> = ({ onClose }) => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const newFiles = Array.from(e.target.files);
-      setFiles(prev => [...prev, ...newFiles]);
-    }
-  };
-
-  const removeFile = (idx: number) => {
-    setFiles(prev => prev.filter((_, i) => i !== idx));
   };
 
   return (
@@ -106,46 +94,15 @@ const RequestForm: React.FC<RequestFormProps> = ({ onClose }) => {
                 />
               </div>
 
-              {/* Upload Zone */}
+              {/* Upload Zone & File List Component */}
               <div>
                 <label className="tw-text-[14px] tw-font-bold tw-text-slate-500 tw-mb-2 tw-block">Attachments (Max 10MB per file)</label>
-                <div 
-                  onClick={() => fileInputRef.current?.click()}
-                  className="tw-border-2 tw-border-dashed tw-border-slate-800 tw-rounded-xl tw-p-6 tw-flex tw-flex-col tw-items-center tw-justify-center tw-bg-obsidian-light hover:tw-border-brand-500 hover:tw-bg-brand-500/5 tw-cursor-pointer tw-transition-all Group"
-                >
-                  <UploadCloud size={32} className="tw-text-slate-500 group-hover:tw-text-brand-500 tw-mb-2" />
-                  <p className="tw-text-sm tw-text-slate-400">Click or Drag & Drop to upload files</p>
-                  <p className="tw-text-[10px] tw-text-slate-600 tw-mt-1">Supported formats: PDF, DOCX, PNG, JPG, ZIP</p>
-                  <input 
-                    type="file" 
-                    multiple 
-                    className="tw-hidden" 
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                  />
-                </div>
-                
-                {/* File List */}
-                {files.length > 0 && (
-                  <div className="tw-mt-4 tw-space-y-2">
-                    {files.map((file, idx) => (
-                      <div key={idx} className="tw-flex tw-items-center tw-justify-between tw-bg-slate-800/20 tw-p-2 tw-px-3 tw-rounded-lg tw-border tw-border-slate-800/50">
-                        <div className="tw-flex tw-items-center tw-gap-3">
-                          <File size={14} className="tw-text-brand-400" />
-                          <span className="tw-text-xs tw-text-slate-300 tw-truncate tw-max-w-[200px]">{file.name}</span>
-                          <span className="tw-text-[10px] tw-text-slate-600">{(file.size / 1024).toFixed(1)} KB</span>
-                        </div>
-                        <button 
-                          type="button"
-                          onClick={() => removeFile(idx)}
-                          className="tw-p-1.5 tw-text-slate-500 hover:tw-text-red-500 tw-rounded-md hover:tw-bg-red-500/10 tw-transition-all"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <RequestAttachments 
+                   pendingFiles={files}
+                   onUpload={(file) => setFiles(prev => [...prev, file])}
+                   onRemovePending={(idx) => setFiles(prev => prev.filter((_, i) => i !== idx))}
+                   canEdit={true}
+                />
               </div>
             </div>
 

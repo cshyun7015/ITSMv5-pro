@@ -19,6 +19,7 @@
 
   .tw-input {
     @apply tw-bg-obsidian tw-border tw-border-slate-800 tw-text-slate-200 tw-rounded-lg tw-px-3 tw-py-2 focus:tw-border-brand-500 focus:tw-ring-1 focus:tw-ring-brand-500 tw-outline-none tw-transition-all;
+    color-scheme: dark;
   }
   
   .tw-label {

@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Calendar } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import requestApi from './api/requestApi';
 import type { RequestDTO } from './api/requestApi';
-import Badge from './components/Badge';
 import RequestDetail from './RequestDetail';
 import RequestForm from './RequestForm';
+import RequestSearch from './RequestSearch';
+import RequestTable from './RequestTable';
 import './styles/request-tailwind.css';
 
 const RequestList: React.FC = () => {
@@ -12,18 +13,37 @@ const RequestList: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedRequestId, setSelectedRequestId] = useState<number | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [filters, setFilters] = useState({
-    fromDate: '',
-    toDate: '',
-    title: '',
-    requesterId: ''
+  
+  const [totalPages, setTotalPages] = useState(0);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [sortConfig, setSortConfig] = useState({ field: 'createdAt', order: 'desc' as 'asc' | 'desc' });
+
+  // Initialize with last 30 days
+  const [filters, setFilters] = useState(() => {
+    const today = new Date();
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setDate(today.getDate() - 30);
+    
+    return {
+      fromDate: oneMonthAgo.toISOString().split('T')[0],
+      toDate: today.toISOString().split('T')[0],
+      title: '',
+      requesterId: ''
+    };
   });
 
   const fetchRequests = async () => {
     try {
       setLoading(true);
-      const res = await requestApi.getRequests(filters);
+      const params = {
+        ...filters,
+        page: currentPage,
+        size: 10,
+        sort: `${sortConfig.field},${sortConfig.order}`
+      };
+      const res = await requestApi.getRequests(params);
       setRequests(res.data.content || []);
+      setTotalPages(res.data.totalPages || 0);
     } catch (err) {
       console.error('Failed to fetch requests', err);
     } finally {
@@ -33,10 +53,14 @@ const RequestList: React.FC = () => {
 
   useEffect(() => {
     fetchRequests();
-  }, [filters]);
+  }, [filters.fromDate, filters.toDate, filters.requesterId, currentPage, sortConfig]);
 
-  const handleRowClick = (id: number) => {
-    setSelectedRequestId(id);
+  const handleSort = (field: string) => {
+    setSortConfig(prev => ({
+      field,
+      order: prev.field === field && prev.order === 'desc' ? 'asc' : 'desc'
+    }));
+    setCurrentPage(0); // Reset to first page on sort
   };
 
   return (
@@ -49,118 +73,39 @@ const RequestList: React.FC = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
             </svg>
           </div>
-          <h1 className="tw-text-2xl tw-font-bold tw-text-white">ServiceDesk Pro <span className="tw-text-slate-500 tw-font-normal tw-text-lg">Request Management</span></h1>
+          <h1 className="tw-text-2xl tw-font-bold tw-text-white">요청 목록<span className="tw-text-slate-500 tw-font-normal tw-text-lg"></span></h1>
         </div>
         <button 
           onClick={() => setIsCreateModalOpen(true)}
           className="tw-btn-primary"
         >
           <Plus size={18} />
-          New Request
+          신규 요청
         </button>
       </div>
 
-      {/* Filter Bar */}
-      <div className="tw-card tw-p-4 tw-flex tw-flex-wrap tw-items-end tw-gap-4">
-        <div className="tw-flex-1 tw-min-w-[200px]">
-          <label className="tw-label">Requested Date (From)</label>
-          <div className="tw-relative">
-            <input 
-              type="date"
-              className="tw-input tw-w-full tw-pl-10"
-              value={filters.fromDate}
-              onChange={(e) => setFilters(f => ({ ...f, fromDate: e.target.value }))}
-            />
-            <Calendar className="tw-absolute tw-left-3 tw-top-2.5 tw-text-slate-500" size={16} />
-          </div>
-        </div>
-        <div className="tw-flex-1 tw-min-w-[200px]">
-          <label className="tw-label">Requested Date (To)</label>
-          <div className="tw-relative">
-            <input 
-              type="date"
-              className="tw-input tw-w-full tw-pl-10"
-              value={filters.toDate}
-              onChange={(e) => setFilters(f => ({ ...f, toDate: e.target.value }))}
-            />
-            <Calendar className="tw-absolute tw-left-3 tw-top-2.5 tw-text-slate-500" size={16} />
-          </div>
-        </div>
-        <div className="tw-flex-[2] tw-min-w-[300px]">
-          <label className="tw-label">Search Title / Description</label>
-          <div className="tw-relative">
-            <input 
-              type="text"
-              placeholder="Case-insensitive keyword search..."
-              className="tw-input tw-w-full tw-pl-10"
-              value={filters.title}
-              onChange={(e) => setFilters(f => ({ ...f, title: e.target.value }))}
-            />
-            <Search className="tw-absolute tw-left-3 tw-top-2.5 tw-text-slate-500" size={16} />
-          </div>
-        </div>
-        <button 
-          onClick={() => fetchRequests()}
-          className="tw-bg-slate-800 hover:tw-bg-slate-700 tw-text-white tw-px-6 tw-py-2 tw-rounded-lg tw-font-medium tw-transition-all"
-        >
-          Search
-        </button>
-      </div>
+      {/* Filter Bar Component */}
+      <RequestSearch 
+        filters={filters} 
+        onFilterChange={(newFilters) => {
+           setFilters(newFilters);
+           setCurrentPage(0);
+        }} 
+        onSearch={fetchRequests} 
+      />
 
-      {/* Table Section */}
-      <div className="tw-card tw-flex-1 tw-relative tw-min-h-[500px]">
-        {loading && (
-          <div className="tw-absolute tw-inset-0 tw-bg-obsidian/50 tw-backdrop-blur-sm tw-z-10 tw-flex tw-items-center tw-justify-center">
-            <div className="tw-animate-spin tw-rounded-full tw-h-12 tw-w-12 tw-border-b-2 tw-border-brand-500"></div>
-          </div>
-        )}
-        <div className="tw-overflow-x-auto">
-          <table className="tw-w-full tw-text-left">
-            <thead>
-              <tr className="tw-bg-slate-800/50 tw-border-b tw-border-slate-800">
-                <th className="tw-p-4 tw-text-xs tw-font-bold tw-text-slate-400 tw-uppercase">NO</th>
-                <th className="tw-p-4 tw-text-xs tw-font-bold tw-text-slate-400 tw-uppercase">Service Request No</th>
-                <th className="tw-p-4 tw-text-xs tw-font-bold tw-text-slate-400 tw-uppercase">Company</th>
-                <th className="tw-p-4 tw-text-xs tw-font-bold tw-text-slate-400 tw-uppercase">Title</th>
-                <th className="tw-p-4 tw-text-xs tw-font-bold tw-text-slate-400 tw-uppercase">Status</th>
-                <th className="tw-p-4 tw-text-xs tw-font-bold tw-text-slate-400 tw-uppercase">Priority</th>
-                <th className="tw-p-4 tw-text-xs tw-font-bold tw-text-slate-400 tw-uppercase">Req Date</th>
-                <th className="tw-p-4 tw-text-xs tw-font-bold tw-text-slate-400 tw-uppercase">Requester</th>
-                <th className="tw-p-4 tw-text-xs tw-font-bold tw-text-slate-400 tw-uppercase">Assignee</th>
-              </tr>
-            </thead>
-            <tbody>
-              {requests.map((req, idx) => (
-                <tr 
-                  key={req.id} 
-                  onClick={() => handleRowClick(req.id!)}
-                  className="tw-border-b tw-border-slate-800/50 hover:tw-bg-slate-800/20 tw-cursor-pointer tw-transition-colors"
-                >
-                  <td className="tw-p-4 tw-text-sm tw-text-slate-500">{idx + 1}</td>
-                  <td className="tw-p-4">
-                    <span className="tw-text-brand-400 tw-font-mono tw-text-sm hover:tw-underline">{req.reqNumber}</span>
-                  </td>
-                  <td className="tw-p-4 tw-text-sm tw-text-slate-400">{req.companyId}</td>
-                  <td className="tw-p-4 tw-text-sm tw-text-white tw-max-w-xs tw-truncate">{req.title}</td>
-                  <td className="tw-p-4">
-                    <Badge label={req.status || 'OPEN'} type="status" />
-                  </td>
-                  <td className="tw-p-4">
-                    <Badge label={req.priority || 'P3'} type="priority" />
-                  </td>
-                  <td className="tw-p-4 tw-text-sm tw-text-slate-400">
-                    {req.createdAt?.split('T')[0]}
-                  </td>
-                  <td className="tw-p-4 tw-text-sm tw-text-slate-400">{req.requesterId}</td>
-                  <td className="tw-p-4 tw-text-sm tw-text-slate-500">
-                    {req.assigneeId || 'Unassigned'}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {/* Table Section Component */}
+      <RequestTable 
+        requests={requests} 
+        loading={loading} 
+        onRowClick={setSelectedRequestId}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        sortField={sortConfig.field}
+        sortOrder={sortConfig.order}
+        onSort={handleSort}
+      />
 
       {/* Detail Modal */}
       {selectedRequestId && (
