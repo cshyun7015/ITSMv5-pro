@@ -121,14 +121,13 @@ const RequestDetail: React.FC<Props> = ({ requestId, onClose, onUpdated }) => {
                         <div className="id-strip"><span className="req-id-text">{request.reqNumber || `#${request.id}`}</span></div>
                         <h2 className="header-title" style={{ margin: 0 }}>{request.title}</h2>
                     </div>
-                    <div className="header-actions" style={{ display: 'flex', gap: '12px' }}>
-                        <button className="btn-premium-secondary" onClick={onClose} style={{ width: '120px' }}>목록</button>
+                    <div className="header-actions">
+                        <button className="btn-premium-secondary btn-header" onClick={onClose}>목록</button>
                         {isAdmin && !['CLOSED', 'CANCELLED'].includes(request.status) && (
                             <button 
-                                className="btn-premium" 
+                                className="btn-premium btn-header" 
                                 onClick={isEditing ? handleSave : handleEditToggle}
                                 disabled={isSaving}
-                                style={{ width: '120px' }}
                             >
                                 {isSaving ? '저장...' : (isEditing ? '저장' : '수정')}
                             </button>

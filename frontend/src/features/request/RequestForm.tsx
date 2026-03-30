@@ -88,16 +88,15 @@ const RequestForm: React.FC<Props> = ({ onClose, onSuccess }) => {
                     <div>
                         <h2 style={{ fontSize: '28px', fontWeight: 950, letterSpacing: '-1px' }}>신규 요청 매니페스트 작성</h2>
                     </div>
-                    <div style={{ display: 'flex', gap: '16px' }}>
-                        <button type="button" className="btn-premium-secondary" onClick={onClose} style={{ padding: '0 24px' }}>목록으로</button>
+                    <div className="header-actions">
+                        <button type="button" className="btn-premium-secondary btn-md" onClick={onClose}>목록</button>
                         <button 
                             type="submit" 
                             form="request-manifest-form"
-                            className="btn-premium" 
+                            className="btn-premium btn-header" 
                             disabled={isSubmitting}
-                            style={{ padding: '0 40px' }}
                         >
-                            {isSubmitting ? 'ENGINEERING...' : '요청 배포'}
+                            {isSubmitting ? 'ENGINEERING...' : '등록'}
                         </button>
                     </div>
                 </header>
