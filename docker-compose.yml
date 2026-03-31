@@ -183,6 +183,36 @@ services:
     networks:
       - itsm-network
 
+  # E2E Test: Dedicated Playwright container
+  itsm-test-e2e:
+    build:
+      context: ./e2e
+      dockerfile: Dockerfile.e2e
+    container_name: itsm-test-e2e
+    environment:
+      - BASE_URL=http://portal-ui:80
+      - DB_HOST=itsm-db
+      - DB_PORT=3306
+      - DB_USER=root
+      - DB_PASSWORD=itsmpass
+      - TZ=Asia/Seoul
+    depends_on:
+      portal-ui:
+        condition: service_started
+      itsm-db:
+        condition: service_healthy
+    networks:
+      - itsm-network
+    volumes:
+      - ./e2e/specs:/app/specs
+      - ./e2e/pages:/app/pages
+      - ./e2e/utils:/app/utils
+      - ./e2e/fixtures:/app/fixtures
+      - ./e2e/playwright.config.ts:/app/playwright.config.ts
+      - ./e2e/playwright-report:/app/playwright-report
+      - ./e2e/test-results:/app/test-results
+    # Use 'docker-compose run itsm-test-e2e' to execute tests manually
+
 networks:
   itsm-network:
     driver: bridge

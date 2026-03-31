@@ -64,9 +64,9 @@ public class RequestServiceImpl implements RequestService {
         Specification<Request> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             
-            // Company Isolation (unless MSP)
-            if (!"MSP".equals(companyId)) {
-                predicates.add(cb.equal(root.get("companyId"), companyId));
+            // Company Isolation (unless MSP operator)
+            if (companyId != null && !"MSP".equalsIgnoreCase(companyId.trim())) {
+                predicates.add(cb.equal(root.get("companyId"), companyId.trim()));
             }
             
             if (fromDate != null && !fromDate.isEmpty()) {
@@ -81,7 +81,6 @@ public class RequestServiceImpl implements RequestService {
             if (requesterId != null && !requesterId.isEmpty()) {
                 predicates.add(cb.equal(root.get("requesterId"), requesterId));
             }
-            
             return cb.and(predicates.toArray(new Predicate[0]));
         };
         

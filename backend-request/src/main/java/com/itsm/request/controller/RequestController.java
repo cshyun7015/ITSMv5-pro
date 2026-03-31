@@ -28,7 +28,7 @@ public class RequestController {
 
     @GetMapping
     public Page<RequestDTO> getRequests(
-            @RequestHeader("X-Company-ID") String companyId,
+            @RequestHeader(value = "X-Company-ID", required = false) String companyId,
             @RequestParam(required = false) String fromDate,
             @RequestParam(required = false) String toDate,
             @RequestParam(required = false) String title,

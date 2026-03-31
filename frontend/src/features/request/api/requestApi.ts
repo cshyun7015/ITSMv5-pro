@@ -1,6 +1,4 @@
-import axios from 'axios';
-
-const API_BASE_URL = '/api/v1/request';
+import apiClient from '../../../api/apiClient';
 
 export interface RequestDTO {
   id?: number;
@@ -49,53 +47,47 @@ export interface RequestCommentDTO {
   createdAt?: string;
 }
 
-const getCompanyId = () => {
-  // Logic to get company ID from session/token
-  return 'COMP-ALPHA'; // Mock for now
-};
+const API_PATH = '/request';
 
 const requestApi = {
   getRequests: (params: any) => {
-    return axios.get(API_BASE_URL, {
-      params,
-      headers: { 'X-Company-ID': getCompanyId() }
-    });
+    return apiClient.get(API_PATH, { params });
   },
 
   getRequest: (id: number) => {
-    return axios.get(`${API_BASE_URL}/${id}`);
+    return apiClient.get(`${API_PATH}/${id}`);
   },
 
   createRequest: (data: RequestDTO) => {
-    return axios.post(API_BASE_URL, data);
+    return apiClient.post(API_PATH, data);
   },
 
   updateRequest: (id: number, data: RequestDTO) => {
-    return axios.put(`${API_BASE_URL}/${id}`, data);
+    return apiClient.put(`${API_PATH}/${id}`, data);
   },
 
   deleteRequest: (id: number) => {
-    return axios.delete(`${API_BASE_URL}/${id}`);
+    return apiClient.delete(`${API_PATH}/${id}`);
   },
 
   addComment: (id: number, data: RequestCommentDTO) => {
-    return axios.post(`${API_BASE_URL}/${id}/comments`, data);
+    return apiClient.post(`${API_PATH}/${id}/comments`, data);
   },
 
   getComments: (id: number) => {
-    return axios.get(`${API_BASE_URL}/${id}/comments`);
+    return apiClient.get(`${API_PATH}/${id}/comments`);
   },
 
   uploadAttachment: (id: number, file: File) => {
     const formData = new FormData();
     formData.append('file', file);
-    return axios.post(`${API_BASE_URL}/${id}/attachments`, formData, {
+    return apiClient.post(`${API_PATH}/${id}/attachments`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
   },
 
   downloadAttachment: (attachmentId: number) => {
-    return axios.get(`${API_BASE_URL}/attachments/${attachmentId}/download`, {
+    return apiClient.get(`${API_PATH}/attachments/${attachmentId}/download`, {
       responseType: 'blob'
     });
   }

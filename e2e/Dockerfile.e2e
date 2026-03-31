@@ -1,0 +1,23 @@
+# Use the official Playwright image
+FROM mcr.microsoft.com/playwright:v1.58.2-jammy
+
+# Set working directory
+WORKDIR /app
+
+# Copy package.json and install dependencies
+COPY package.json package-lock.json* ./
+RUN npm install
+
+# Copy source code
+COPY . .
+
+# Environment Variables (Defaults, can be overridden)
+ENV BASE_URL=http://portal-ui:80
+ENV DB_HOST=itsm-db
+ENV DB_PORT=3306
+ENV DB_USER=root
+ENV DB_PASSWORD=itsmpass
+
+# Run playwright tests by default
+# Using --workers=1 for stability in container environment
+CMD ["npx", "playwright", "test", "--workers=1"]
