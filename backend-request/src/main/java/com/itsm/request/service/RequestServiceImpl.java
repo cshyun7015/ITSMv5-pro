@@ -47,8 +47,12 @@ public class RequestServiceImpl implements RequestService {
                 .srCategoryCode(dto.getSrCategoryCode())
                 .srImpactCode(dto.getSrImpactCode())
                 .srUrgencyCode(dto.getSrUrgencyCode())
+                .srSourceCode(dto.getSrSourceCode() != null ? dto.getSrSourceCode() : "PORTAL")
                 .requesterId(dto.getRequesterId())
+                .serviceId(dto.getServiceId())
+                .ciId(dto.getCiId())
                 .slaTargetAt(dto.getSlaTargetAt() != null ? dto.getSlaTargetAt() : LocalDateTime.now().plusHours(4))
+                .expectedAt(dto.getExpectedAt())
                 .build();
 
         return convertToDTO(requestRepository.save(request));
@@ -111,20 +115,67 @@ public class RequestServiceImpl implements RequestService {
         Request request = requestRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("Request not found: " + id, HttpStatus.NOT_FOUND));
         
-        request.setTitle(dto.getTitle());
-        request.setDescription(dto.getDescription());
-        request.setStatus(dto.getStatus());
+        String oldStatus = request.getStatus();
+        String newStatus = dto.getStatus();
         
-        // Priority can be re-calculated if impact/urgency changed
-        request.setSrImpactCode(dto.getSrImpactCode());
-        request.setSrUrgencyCode(dto.getSrUrgencyCode());
-        request.setPriority(calculatePriority(dto.getSrImpactCode(), dto.getSrUrgencyCode()));
+        // 1. Full Lock for CLOSED / CANCELLED
+        if ("CLOSED".equals(oldStatus) || "CANCELLED".equals(oldStatus)) {
+            throw new BusinessException("Modified restricted for closed or cancelled requests.", HttpStatus.FORBIDDEN);
+        }
+
+        // 2. Mandatory Check for RESOLVED transition
+        if ("RESOLVED".equals(newStatus)) {
+            if (dto.getSrResolutionCode() == null || dto.getSrResolutionCode().trim().isEmpty() ||
+                dto.getResolutionText() == null || dto.getResolutionText().trim().isEmpty()) {
+                throw new BusinessException("Resolution code and text are required for 'RESOLVED' status.", HttpStatus.BAD_REQUEST);
+            }
+        }
+
+        // 3. Status Lifecycle & Reopen Logic
+        if (newStatus != null && !newStatus.equals(oldStatus)) {
+            request.setStatus(newStatus);
+            
+            if ("RESOLVED".equals(newStatus) && request.getResolvedAt() == null) {
+                request.setResolvedAt(LocalDateTime.now());
+            } else if ("CLOSED".equals(newStatus) && request.getClosedAt() == null) {
+                request.setClosedAt(LocalDateTime.now());
+            }
+            
+            // Reopen Logic: If moving from RESOLVED/CLOSED back to other status
+            if (("RESOLVED".equals(oldStatus) || "CLOSED".equals(oldStatus)) && 
+                !"RESOLVED".equals(newStatus) && !"CLOSED".equals(newStatus)) {
+                request.setReopenCount(request.getReopenCount() + 1);
+            }
+        }
         
-        request.setSrTypeCode(dto.getSrTypeCode());
-        request.setSrCategoryCode(dto.getSrCategoryCode());
-        request.setSrResolutionCode(dto.getSrResolutionCode());
-        request.setResolutionText(dto.getResolutionText());
-        request.setAssigneeId(dto.getAssigneeId());
+        // 4. Field Control based on RESOLVED status (Typo exception)
+        if ("RESOLVED".equals(oldStatus)) {
+             // Only allow title, description, and resolution info updates
+             request.setTitle(dto.getTitle());
+             request.setDescription(dto.getDescription());
+             request.setSrResolutionCode(dto.getSrResolutionCode());
+             request.setResolutionText(dto.getResolutionText());
+             // Other fields are NOT updated here in RESOLVED state
+        } else {
+             // Normal Update Flow
+             request.setTitle(dto.getTitle());
+             request.setDescription(dto.getDescription());
+             
+             // Priority can be re-calculated if impact/urgency changed
+             request.setSrImpactCode(dto.getSrImpactCode());
+             request.setSrUrgencyCode(dto.getSrUrgencyCode());
+             request.setPriority(calculatePriority(dto.getSrImpactCode(), dto.getSrUrgencyCode()));
+             
+             request.setSrTypeCode(dto.getSrTypeCode());
+             request.setSrCategoryCode(dto.getSrCategoryCode());
+             request.setSrSourceCode(dto.getSrSourceCode());
+             request.setSrResolutionCode(dto.getSrResolutionCode());
+             request.setResolutionText(dto.getResolutionText());
+             request.setAssigneeId(dto.getAssigneeId());
+             request.setServiceId(dto.getServiceId());
+             request.setCiId(dto.getCiId());
+             request.setExpectedAt(dto.getExpectedAt());
+        }
         
         return convertToDTO(requestRepository.save(request));
     }
@@ -239,12 +290,18 @@ public class RequestServiceImpl implements RequestService {
                 .srCategoryCode(req.getSrCategoryCode())
                 .srImpactCode(req.getSrImpactCode())
                 .srUrgencyCode(req.getSrUrgencyCode())
+                .srSourceCode(req.getSrSourceCode())
                 .srResolutionCode(req.getSrResolutionCode())
                 .resolutionText(req.getResolutionText())
                 .requesterId(req.getRequesterId())
                 .assigneeId(req.getAssigneeId())
                 .serviceId(req.getServiceId())
+                .ciId(req.getCiId())
                 .slaTargetAt(req.getSlaTargetAt())
+                .resolvedAt(req.getResolvedAt())
+                .closedAt(req.getClosedAt())
+                .reopenCount(req.getReopenCount())
+                .expectedAt(req.getExpectedAt())
                 .createdAt(req.getCreatedAt())
                 .updatedAt(req.getUpdatedAt())
                 .attachments(req.getAttachments() != null ? req.getAttachments().stream()

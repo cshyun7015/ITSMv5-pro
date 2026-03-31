@@ -36,10 +36,10 @@ const RequestAttachments: React.FC<RequestAttachmentsProps> = ({
       <div className="tw-flex tw-items-center tw-justify-between tw-mb-4">
         <div className="tw-flex tw-items-center tw-gap-2 tw-text-brand-400">
           <Paperclip size={18} />
-          <h3 className="tw-text-sm tw-font-bold tw-uppercase tw-tracking-widest">Attachments</h3>
+          <h3 className="tw-text-sm tw-font-bold tw-uppercase tw-tracking-widest">첨부 파일</h3>
         </div>
         <span className="tw-text-xs tw-text-slate-500">
-          {attachments.length + pendingFiles.length} Files
+          {attachments.length + pendingFiles.length}개의 파일
         </span>
       </div>
 
@@ -49,7 +49,7 @@ const RequestAttachments: React.FC<RequestAttachmentsProps> = ({
           className="tw-mb-4 tw-border-2 tw-border-dashed tw-border-slate-800 tw-rounded-xl tw-p-4 tw-flex tw-flex-col tw-items-center tw-justify-center tw-bg-obsidian-light hover:tw-border-brand-500 hover:tw-bg-brand-500/5 tw-cursor-pointer tw-transition-all group"
         >
           <UploadCloud size={24} className="tw-text-slate-500 group-hover:tw-text-brand-500 tw-mb-1" />
-          <p className="tw-text-xs tw-text-slate-400">Click to upload files (Max 10MB)</p>
+          <p className="tw-text-xs tw-text-slate-400">클릭하여 파일 업로드 (최대 10MB)</p>
           <input 
             type="file" 
             multiple 
@@ -119,7 +119,7 @@ const RequestAttachments: React.FC<RequestAttachmentsProps> = ({
 
         {attachments.length === 0 && pendingFiles.length === 0 && (
           <div className="tw-col-span-full tw-text-center tw-py-8 tw-text-slate-600 tw-text-sm">
-            No attachments found
+            첨부된 파일이 없습니다.
           </div>
         )}
       </div>

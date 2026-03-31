@@ -8,10 +8,10 @@ interface StatusStepperProps {
 }
 
 const statuses = [
-  { key: 'OPEN', label: 'Open', icon: AlertCircle },
-  { key: 'IN_PROGRESS', label: 'In Progress', icon: Clock },
-  { key: 'RESOLVED', label: 'Resolved', icon: CheckCircle2 },
-  { key: 'CLOSED', label: 'Closed', icon: Check },
+  { key: 'OPEN', label: '접수됨', icon: AlertCircle },
+  { key: 'IN_PROGRESS', label: '처리중', icon: Clock },
+  { key: 'RESOLVED', label: '해결됨', icon: CheckCircle2 },
+  { key: 'CLOSED', label: '완료됨', icon: Check },
 ];
 
 const StatusStepper: React.FC<StatusStepperProps> = ({ currentStatus, className }) => {

@@ -51,6 +51,9 @@ public class Request {
     @Column(name = "sr_urgency_code", length = 50)
     private String srUrgencyCode;
 
+    @Column(name = "sr_source_code", length = 50)
+    private String srSourceCode;
+
     @Column(name = "sr_resolution_code", length = 50)
     private String srResolutionCode;
 
@@ -66,8 +69,24 @@ public class Request {
     @Column(name = "service_id", length = 50)
     private String serviceId;
 
+    @Column(name = "ci_id", length = 100)
+    private String ciId;
+
     @Column(name = "sla_target_at")
     private LocalDateTime slaTargetAt;
+
+    @Column(name = "resolved_at", updatable = false)
+    private LocalDateTime resolvedAt;
+
+    @Column(name = "closed_at", updatable = false)
+    private LocalDateTime closedAt;
+
+    @Builder.Default
+    @Column(name = "reopen_count", updatable = false)
+    private Integer reopenCount = 0;
+
+    @Column(name = "expected_at")
+    private LocalDateTime expectedAt;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

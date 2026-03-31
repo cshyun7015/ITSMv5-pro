@@ -21,12 +21,18 @@ public class RequestDTO {
     private String srCategoryCode;
     private String srImpactCode;
     private String srUrgencyCode;
+    private String srSourceCode;
     private String srResolutionCode;
     private String resolutionText;
     private String requesterId;
     private String assigneeId;
     private String serviceId;
+    private String ciId;
     private LocalDateTime slaTargetAt;
+    private LocalDateTime resolvedAt;
+    private LocalDateTime closedAt;
+    private Integer reopenCount;
+    private LocalDateTime expectedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private java.util.List<AttachmentDTO> attachments;
