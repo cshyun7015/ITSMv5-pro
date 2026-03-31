@@ -25,7 +25,7 @@ public class JwtTokenProvider {
         return Keys.hmacShaKeyFor(jwtSecret.getBytes());
     }
 
-    public String generateToken(String userId, String name, String role, String companyId) {
+    public String generateToken(String userId, String name, String role, String companyId, String companyName) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpiration);
 
@@ -33,9 +33,10 @@ public class JwtTokenProvider {
                 .setClaims(Map.of(
                         "name", name,
                         "role", role,
-                        "companyId", companyId
+                        "companyId", companyId,
+                        "companyName", companyName != null ? companyName : ""
                 ))
-                .setSubject(userId) // Subject must be set AFTER claims to avoid being overwritten
+                .setSubject(userId)
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)

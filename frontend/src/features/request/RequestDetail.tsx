@@ -50,6 +50,12 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => 
   const [isDeleting, setIsDeleting] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
+  // Requester Search States
+  const [requesterSearch, setRequesterSearch] = useState('');
+  const [requesterResults, setRequesterResults] = useState<UserDTO[]>([]);
+  const [isSearchingRequesters, setIsSearchingRequesters] = useState(false);
+  const [showRequesterDropdown, setShowRequesterDropdown] = useState(false);
+
   const isAdminOrOperator = user?.role === 'ROLE_ADMIN' || user?.role === 'ROLE_OPERATOR';
 
   const fetchDetail = async () => {
@@ -134,6 +140,35 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => 
       setIsConfirmOpen(false);
     }
   };
+
+  useEffect(() => {
+    if (!isEditing) {
+      setRequesterSearch('');
+      setRequesterResults([]);
+      setShowRequesterDropdown(false);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      if (requesterSearch.trim().length >= 2) {
+        setIsSearchingRequesters(true);
+        try {
+          const res = await apiUser.list({ name: requesterSearch, size: 20 });
+          setRequesterResults(res.content);
+          setShowRequesterDropdown(true);
+        } catch (err) {
+          console.error("Search failed", err);
+        } finally {
+          setIsSearchingRequesters(false);
+        }
+      } else {
+        setRequesterResults([]);
+        setShowRequesterDropdown(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [requesterSearch, isEditing]);
 
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
@@ -336,7 +371,47 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => 
                 <div className="tw-space-y-5">
                   <div className="tw-flex tw-justify-between tw-items-center tw-gap-4">
                     <span className={LABEL_CLASS}>신청자</span>
-                    <span className={VALUE_CLASS}>{request.requesterId}</span>
+                    {isEditing ? (
+                      <div className="tw-relative tw-w-full">
+                         <input 
+                          type="text"
+                          className="tw-input tw-py-2 tw-text-sm tw-w-full"
+                          placeholder="이름으로 검색..."
+                          value={requesterSearch || editedData.requesterId || ''}
+                          onChange={(e) => {
+                            setRequesterSearch(e.target.value);
+                            setEditedData(prev => ({ ...prev, requesterId: e.target.value }));
+                          }}
+                          onFocus={() => requesterSearch.length >= 2 && setShowRequesterDropdown(true)}
+                         />
+                         {showRequesterDropdown && requesterResults.length > 0 && (
+                           <div className="tw-absolute tw-z-[70] tw-top-full tw-left-0 tw-right-0 tw-mt-1 tw-bg-slate-900 tw-border tw-border-slate-800 tw-rounded-xl tw-shadow-2xl tw-max-h-60 tw-overflow-y-auto">
+                              {requesterResults.map(u => (
+                                <button
+                                  key={u.userId}
+                                  type="button"
+                                  className="tw-w-full tw-px-4 tw-py-2 tw-text-left hover:tw-bg-brand-600/20 tw-text-sm tw-text-slate-200 tw-transition-colors tw-flex tw-flex-col"
+                                  onClick={() => {
+                                    setEditedData(prev => ({ ...prev, requesterId: u.userId }));
+                                    setRequesterSearch(`${u.name} (${u.userId})`);
+                                    setShowRequesterDropdown(false);
+                                  }}
+                                >
+                                  <span className="tw-font-bold">{u.name}</span>
+                                  <span className="tw-text-xs tw-text-slate-500">{u.userId} / {u.companyId}</span>
+                                </button>
+                              ))}
+                           </div>
+                         )}
+                         {isSearchingRequesters && (
+                           <div className="tw-absolute tw-right-3 tw-top-2.5">
+                             <div className="tw-animate-spin tw-rounded-full tw-h-4 tw-w-4 tw-border-b-2 tw-border-brand-500"></div>
+                           </div>
+                         )}
+                      </div>
+                    ) : (
+                      <span className={VALUE_CLASS}>{request.requesterId}</span>
+                    )}
                   </div>
                   <div className="tw-flex tw-justify-between tw-items-center tw-gap-4">
                     <span className={LABEL_CLASS}>담당자</span>

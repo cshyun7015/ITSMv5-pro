@@ -1,5 +1,7 @@
 package com.itsm.system.service.auth;
 
+import com.itsm.system.domain.company.Company;
+import com.itsm.system.domain.company.CompanyRepository;
 import com.itsm.system.domain.user.User;
 import com.itsm.system.domain.user.UserRepository;
 import com.itsm.system.dto.auth.LoginRequest;
@@ -20,6 +22,7 @@ public class AuthService {
 
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
+    private final CompanyRepository companyRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider tokenProvider;
 
@@ -31,11 +34,16 @@ public class AuthService {
         User user = userRepository.findByUserId(request.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        String companyName = companyRepository.findByCompanyId(user.getCompanyId())
+                .map(Company::getName)
+                .orElse("");
+
         return AuthResponse.builder()
                 .userId(user.getUserId())
                 .name(user.getName())
                 .role(user.getRole())
                 .companyId(user.getCompanyId())
+                .companyName(companyName)
                 .build();
     }
 
@@ -57,11 +65,16 @@ public class AuthService {
 
         userRepository.save(user);
 
+        String companyName = companyRepository.findByCompanyId(user.getCompanyId())
+                .map(Company::getName)
+                .orElse("");
+
         return AuthResponse.builder()
                 .userId(user.getUserId())
                 .name(user.getName())
                 .role(user.getRole())
                 .companyId(user.getCompanyId())
+                .companyName(companyName)
                 .build();
     }
 
@@ -70,7 +83,8 @@ public class AuthService {
                 response.getUserId(),
                 response.getName(),
                 response.getRole(),
-                response.getCompanyId()
+                response.getCompanyId(),
+                response.getCompanyName()
         );
     }
 }

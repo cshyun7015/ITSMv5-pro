@@ -18,6 +18,7 @@ export interface AuthUser {
   name: string;
   role: string;
   companyId: string;
+  companyName: string;
 }
 
 const apiAuth = {

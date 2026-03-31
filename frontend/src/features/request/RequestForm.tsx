@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { X, Send, Plus, AlertCircle, Calendar, Hash } from 'lucide-react';
+import { X, Send, Plus, AlertCircle, Calendar, Hash, User } from 'lucide-react';
 import requestApi from './api/requestApi';
 import { apiCommonCode, type CommonCode } from '../../api/apiCommonCode';
 import RequestAttachments from './components/RequestAttachments';
+import { useAuth } from '../auth/AuthProvider';
 
 interface RequestFormProps {
   onClose: () => void;
 }
 
+const LABEL_CLASS = "tw-text-[12px] tw-font-bold tw-text-slate-500 tw-uppercase tw-tracking-wider tw-whitespace-nowrap tw-shrink-0 tw-w-32";
+
 const RequestForm: React.FC<RequestFormProps> = ({ onClose }) => {
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -18,8 +22,8 @@ const RequestForm: React.FC<RequestFormProps> = ({ onClose }) => {
     srUrgencyCode: '',
     ciId: '',
     expectedAt: '',
-    companyId: 'COMP-ALPHA', // Mock
-    requesterId: 'admin_user', // Mock
+    companyId: user?.companyId || '',
+    requesterId: user?.userId || '',
     srSourceCode: 'PORTAL'
   });
 
@@ -61,7 +65,9 @@ const RequestForm: React.FC<RequestFormProps> = ({ onClose }) => {
           srTypeCode: types.data[0]?.codeId || '',
           srCategoryCode: categories.data[0]?.codeId || '',
           srImpactCode: impacts.data[0]?.codeId || '',
-          srUrgencyCode: urgencies.data[0]?.codeId || ''
+          srUrgencyCode: urgencies.data[0]?.codeId || '',
+          companyId: user?.companyId || '',
+          requesterId: user?.userId || ''
         }));
       } catch (err) {
         console.error('Failed to fetch common codes', err);
@@ -69,7 +75,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onClose }) => {
     };
 
     fetchCodes();
-  }, []);
+  }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -181,28 +187,28 @@ const RequestForm: React.FC<RequestFormProps> = ({ onClose }) => {
                   {codes.categories.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
                 </select>
               </div>
-               <div className="tw-grid tw-grid-cols-2 tw-gap-4">
-                <div>
-                  <label className="tw-text-[13px] tw-font-bold tw-text-slate-500 tw-mb-2 tw-block tw-uppercase tw-tracking-wider">영향도</label>
-                  <select 
-                    className="tw-input tw-w-full tw-bg-obsidian"
-                    value={formData.srImpactCode}
-                    onChange={e => setFormData(f => ({ ...f, srImpactCode: e.target.value }))}
-                  >
-                    {codes.impacts.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
-                  </select>
+                <div className="tw-grid tw-grid-cols-2 tw-gap-4">
+                 <div className="tw-flex tw-items-center tw-gap-4">
+                   <label className={LABEL_CLASS}>영향도</label>
+                   <select 
+                     className="tw-input tw-w-full tw-bg-obsidian"
+                     value={formData.srImpactCode}
+                     onChange={e => setFormData(f => ({ ...f, srImpactCode: e.target.value }))}
+                   >
+                     {codes.impacts.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
+                   </select>
+                 </div>
+                 <div className="tw-flex tw-items-center tw-gap-4">
+                   <label className={LABEL_CLASS}>긴급도</label>
+                   <select 
+                     className="tw-input tw-w-full tw-bg-obsidian"
+                     value={formData.srUrgencyCode}
+                     onChange={e => setFormData(f => ({ ...f, srUrgencyCode: e.target.value }))}
+                   >
+                     {codes.urgencies.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
+                   </select>
+                 </div>
                 </div>
-                <div>
-                  <label className="tw-text-[13px] tw-font-bold tw-text-slate-500 tw-mb-2 tw-block tw-uppercase tw-tracking-wider">긴급도</label>
-                  <select 
-                    className="tw-input tw-w-full tw-bg-obsidian"
-                    value={formData.srUrgencyCode}
-                    onChange={e => setFormData(f => ({ ...f, srUrgencyCode: e.target.value }))}
-                  >
-                    {codes.urgencies.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
-                  </select>
-                </div>
-              </div>
 
                <div className="tw-pt-6 tw-mt-2 tw-border-t tw-border-slate-800 tw-space-y-6">
                 <div>
@@ -232,6 +238,23 @@ const RequestForm: React.FC<RequestFormProps> = ({ onClose }) => {
                   </div>
                 </div>
               </div>
+
+               <div className="tw-bg-obsidian tw-p-6 tw-rounded-2xl tw-border tw-border-slate-800">
+                 <div className="tw-flex tw-items-center tw-gap-2 tw-text-brand-400 tw-mb-6">
+                    <User size={18} />
+                    <h3 className="tw-text-xs tw-font-bold tw-uppercase tw-tracking-widest">신청자 정보</h3>
+                 </div>
+                 <div className="tw-space-y-4">
+                    <div className="tw-flex tw-items-center tw-justify-between tw-gap-4">
+                      <span className={LABEL_CLASS}>회사명</span>
+                      <span className="tw-text-sm tw-text-slate-200 tw-font-medium">{user?.companyName || '-'}</span>
+                    </div>
+                    <div className="tw-flex tw-items-center tw-justify-between tw-gap-4">
+                      <span className={LABEL_CLASS}>신청자</span>
+                      <span className="tw-text-sm tw-text-slate-200 tw-font-medium">{user?.name} ({user?.userId})</span>
+                    </div>
+                 </div>
+               </div>
 
                <div className="tw-mt-4 tw-p-5 tw-bg-brand-500/5 tw-border tw-border-brand-500/10 tw-rounded-2xl">
                 <div className="tw-flex tw-items-center tw-gap-2 tw-text-brand-500 tw-mb-2">

@@ -155,6 +155,7 @@ public class RequestServiceImpl implements RequestService {
              request.setDescription(dto.getDescription());
              request.setSrResolutionCode(dto.getSrResolutionCode());
              request.setResolutionText(dto.getResolutionText());
+             request.setRequesterId(dto.getRequesterId());
              // Other fields are NOT updated here in RESOLVED state
         } else {
              // Normal Update Flow
@@ -175,6 +176,7 @@ public class RequestServiceImpl implements RequestService {
              request.setServiceId(dto.getServiceId());
              request.setCiId(dto.getCiId());
              request.setExpectedAt(dto.getExpectedAt());
+             request.setRequesterId(dto.getRequesterId());
         }
         
         return convertToDTO(requestRepository.save(request));
