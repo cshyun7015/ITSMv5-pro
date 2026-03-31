@@ -1,0 +1,58 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: docker
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 15s
+    relabel_configs:
+      - source_labels: ['__meta_docker_container_name']
+        regex: '/(.*)'
+        target_label: 'container'
+    pipeline_stages:
+      - docker: {}
+      # 1. [Warning], [ERROR] 형태의 로그 레벨을 정규식으로 추출합니다.
+      - regex:
+          # 로그 중간에 있는 [Warning] 또는 [ERROR]를 찾아 'extracted_level' 변수에 담습니다.
+          expression: '.*\[(?P<extracted_level>(?i)Warning|ERROR|Note|Info)\].*'
+      
+      # 2. 추출된 값을 기반으로 level 라벨을 임시로 생성합니다.
+      - labels:
+          level: extracted_level
+
+      # 3. 추출된 값이 'Warning'일 경우 표준 'WARN'으로 변환 (정규화)
+      - template:
+          source: level
+          template: '{{ if eq .Value "Warning" }}WARN{{ else }}{{ .Value }}{{ end }}'
+      - labels:
+          level:
+      - match:
+          selector: '{container!=""} |~ "(?i)error"'
+          stages:
+            - labels:
+                level: ERROR
+      - match:
+          selector: '{container!=""} |~ "(?i)warn"'
+          stages:
+            - labels:
+                level: WARN
+      - match:
+          selector: '{level=""}'
+          stages:
+            - static_labels:
+                level: INFO
+      - regex:
+          # 로그 라인에서 404 또는 500이라는 숫자를 찾아 'error_code' 그룹으로 캡처
+          # (?P<name>regex) 형식을 사용합니다.
+          expression: '.*(?P<error_code>404|500|502|503|504).*'
+      - labels:
+          # 위에서 캡처한 error_code를 그라파나 라벨로 등록
+          error_code:
