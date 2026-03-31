@@ -1,0 +1,36 @@
+# ./infra/tempo/tempo-config.yaml
+
+# 1. 서버 기본 설정
+server:
+  http_listen_port: 3200
+  grpc_listen_port: 9095
+
+# 2. 모든 모듈(ingester, distributor 등)을 단일 모드로 실행하기 위한 공통 설정
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        http:
+        grpc:
+
+# 3. 데이터 보관 및 쓰기 설정 (구조 최적화)
+ingester:
+  lifecycler:
+    ring:
+      kvstore:
+        store: inmemory
+      replication_factor: 1
+
+# 4. 저장소 설정 (이 부분이 가장 중요합니다)
+storage:
+  trace:
+    backend: local
+    wal:
+      path: /var/tempo/wal
+    local:
+      path: /var/tempo/traces
+
+# 5. 최신 버전에서 요구할 수 있는 부가 설정 (선택 사항이지만 안전을 위해 추가)
+compactor:
+  compaction:
+    block_retention: 1h

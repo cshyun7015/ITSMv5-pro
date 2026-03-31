@@ -1,0 +1,36 @@
+# ./infra/otel/otel-collector-config.yaml
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+        cors:
+          # portal-ui가 실행되는 주소를 허용합니다.
+          allowed_origins:
+            - http://localhost:3000
+            - http://localhost:8000
+          allowed_headers:
+            - "*"
+
+processors:
+  batch:
+
+exporters:
+  otlp/tempo:
+    endpoint: tempo:4317
+    tls:
+      insecure: true
+  # 'logging' 대신 'debug'를 사용해야 합니다 (2026년 최신 표준)
+  debug:
+    verbosity: normal # 혹은 상세한 로그를 원하면 'detailed'
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      # 익스포터 리스트에서도 'logging'을 'debug'로 수정
+      exporters: [otlp/tempo, debug]

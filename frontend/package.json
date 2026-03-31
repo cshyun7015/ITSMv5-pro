@@ -21,7 +21,15 @@
     "tailwind-merge": "^2.6.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
-    "recharts": "^2.15.0"
+    "recharts": "^2.15.0",
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/sdk-trace-web": "^1.26.0", 
+    "@opentelemetry/exporter-trace-otlp-http": "^0.53.0", 
+    "@opentelemetry/instrumentation-fetch": "^0.53.0",
+    "@opentelemetry/instrumentation-xml-http-request": "^0.53.0",
+    "@opentelemetry/resources": "^1.26.0",
+    "@opentelemetry/semantic-conventions": "^1.26.0",
+    "@opentelemetry/context-zone": "^1.26.0"
   },
   "devDependencies": {
     "tailwindcss": "^3.4.1",

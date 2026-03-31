@@ -1,5 +1,5 @@
 services:
-  # Database: Unified MariaDB with logical schema separation
+  # Database
   itsm-db:
     image: mariadb:10.11
     container_name: itsm-db
@@ -20,10 +20,9 @@ services:
     networks:
       - itsm-network
 
-
-  # API Gateway: Nginx for routing and basic security
+  # API Gateway: OTel 모듈이 포함된 Nginx 이미지 사용 권장
   api-gateway:
-    image: nginx:alpine
+    image: nginxinc/nginx-unprivileged:otel # 실제 운영시에는 OTel 모듈이 포함된 커스텀 이미지나 nginxinc/nginx-unprivileged:otel 권장
     container_name: api-gateway
     ports:
       - "8000:80"
@@ -34,11 +33,12 @@ services:
     depends_on:
       itsm-db:
         condition: service_healthy
-
+      otel-collector:
+        condition: service_started
     networks:
       - itsm-network
 
-  # Frontend: Portal UI (Vite/React)
+  # Frontend
   portal-ui:
     build:
       context: ./frontend
@@ -52,15 +52,11 @@ services:
     depends_on:
       api-gateway:
         condition: service_started
-      itsm-db:
-        condition: service_healthy
     networks:
       - itsm-network
 
-
-
-  # Backend: Request Management Service
-  request-service:
+  # Backend Services (Common Configuration 적용)
+  request-service: &backend-template
     build:
       context: ./backend-request
       dockerfile: Dockerfile
@@ -70,36 +66,41 @@ services:
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=itsmpass
       - TZ=Asia/Seoul
+      # OTel 설정 추가
+      - JAVA_TOOL_OPTIONS=-javaagent:/app/opentelemetry-javaagent.jar
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
+      - OTEL_SERVICE_NAME=request-service
+      - OTEL_LOGS_EXPORTER=none
+      - OTEL_METRICS_EXPORTER=none # 트레이싱에 집중하기 위해 메트릭은 일단 제외
     depends_on:
       itsm-db:
         condition: service_healthy
-
+      otel-collector:
+        condition: service_started
     networks:
       - itsm-network
 
-  # Backend: System Administration Service
   system-service:
+    <<: *backend-template
     build:
       context: ./backend-system
-      dockerfile: Dockerfile
     container_name: system-service
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mariadb://itsm-db:3306/system_mgmt
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=itsmpass
       - TZ=Asia/Seoul
-    depends_on:
-      itsm-db:
-        condition: service_healthy
+      - JAVA_TOOL_OPTIONS=-javaagent:/app/opentelemetry-javaagent.jar
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
+      - OTEL_LOGS_EXPORTER=none
+      - OTEL_SERVICE_NAME=system-service
 
-    networks:
-      - itsm-network
-
-  # Backend: Dashboard Service (Aggregator)
   dashboard-service:
+    <<: *backend-template
     build:
       context: ./backend-dashboard
-      dockerfile: Dockerfile
     container_name: dashboard-service
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mariadb://itsm-db:3306/system_mgmt
@@ -108,99 +109,79 @@ services:
       - SYSTEM_SERVICE_URL=http://system-service:8080
       - REQUEST_SERVICE_URL=http://request-service:8080
       - TZ=Asia/Seoul
-    depends_on:
-      itsm-db:
-        condition: service_healthy
-      system-service:
-        condition: service_started
-      request-service:
-        condition: service_started
-    networks:
-      - itsm-network
+      - JAVA_TOOL_OPTIONS=-javaagent:/app/opentelemetry-javaagent.jar
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
+      - OTEL_LOGS_EXPORTER=none
+      - OTEL_SERVICE_NAME=dashboard-service
 
-  # Backend: Event Management Service
   event-service:
+    <<: *backend-template
     build:
       context: ./backend-event
-      dockerfile: Dockerfile
     container_name: event-service
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mariadb://itsm-db:3306/event_mgmt
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=itsmpass
       - TZ=Asia/Seoul
-    depends_on:
-      itsm-db:
-        condition: service_healthy
-    networks:
-      - itsm-network
+      - JAVA_TOOL_OPTIONS=-javaagent:/app/opentelemetry-javaagent.jar
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
+      - OTEL_LOGS_EXPORTER=none
+      - OTEL_SERVICE_NAME=event-service
 
-  # E2E Test: Dedicated Playwright container
-  itsm-test-e2e:
-    image: mcr.microsoft.com/playwright:v1.45.0-noble
-    container_name: itsm-test-e2e
-    working_dir: /app
+  # --- Observability Stack ---
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib
+    container_name: otel-collector
+    command: ["--config=/etc/otel-collector-config.yaml"]
     volumes:
-      - ./frontend:/app
-    environment:
-      - BASE_URL=http://portal-ui:80
-      - TZ=Asia/Seoul
-    depends_on:
-      portal-ui:
-        condition: service_started
+      - ./infra/otel/otel-collector-config.yaml:/etc/otel-collector-config.yaml
     networks:
       - itsm-network
-    #command: >
-    #  sh -c "npm install && npx playwright test"
-    entrypoint: ["npx", "playwright", "test"]
 
-  # Observability: Prometheus for metrics collection
-  # prometheus:
-  #   image: prom/prometheus:latest
-  #   container_name: prometheus
-  #   volumes:
-  #     - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-  #   ports:
-  #     - "9090:9090"
-  #   networks:
-  #     - itsm-network
+  tempo:
+    image: grafana/tempo:2.4.1
+    container_name: tempo
+    command: [ "-config.file=/etc/tempo.yaml" ]
+    volumes:
+      - ./infra/tempo/tempo-config.yaml:/etc/tempo.yaml
+      # 데이터를 저장할 빈 폴더를 연결 (권한 문제 방지)
+      - ./infra/tempo/data:/var/tempo
+    networks:
+      - itsm-network
 
-  # Observability: Grafana for metrics visualization
-  # grafana:
-  #   image: grafana/grafana:latest
-  #   container_name: grafana
-  #   volumes:
-  #     - ./infra/grafana/provisioning:/etc/grafana/provisioning
-  #   environment:
-  #     - GF_AUTH_ANONYMOUS_ENABLED=true
-  #     - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
-  #     - TZ=Asia/Seoul
-  #   ports:
-  #     - "3001:3000"
-  #   networks:
-  #     - itsm-network
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - itsm-network
 
-  # Exporter for API Gateway Traffic Monitoring
-  # nginx-gateway-exporter:
-  #   image: nginx/nginx-prometheus-exporter:latest
-  #   container_name: nginx-gateway-exporter
-  #   command: -nginx.scrape-uri=http://api-gateway:80/nginx_status
-  #   depends_on:
-  #     - api-gateway
-  #   networks:
-  #     - itsm-network
-
-  # Exporter for Portal UI Traffic Monitoring
-  # nginx-frontend-exporter:
-  #   image: nginx/nginx-prometheus-exporter:latest
-  #   container_name: nginx-frontend-exporter
-  #   command: -nginx.scrape-uri=http://portal-ui:80/nginx_status
-  #   depends_on:
-  #     - portal-ui
-  #   networks:
-  #     - itsm-network
-
-
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - TZ=Asia/Seoul
+    ports:
+      - "3001:3000"
+    volumes:
+      # 1. 데이터 소스 자동 로드 설정 (프로비저닝)
+      - ./infra/grafana/provisioning/datasources/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+      # 2. 대시보드, 유저 설정 등 전체 데이터 영구 저장 (볼륨)
+      - grafana-storage:/var/lib/grafana
+    depends_on:
+      - tempo
+      - prometheus
+    networks:
+      - itsm-network
 
 networks:
   itsm-network:
@@ -208,3 +189,4 @@ networks:
 
 volumes:
   itsm-db-data:
+  grafana-storage:

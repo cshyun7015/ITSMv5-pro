@@ -1,0 +1,9 @@
+apiVersion: 1
+
+datasources:
+  - name: Tempo
+    type: tempo
+    access: proxy
+    url: http://tempo:3200  # Tempo 컨테이너 서비스 이름과 포트
+    isDefault: true
+    editable: true          # UI에서 수정 가능 여부

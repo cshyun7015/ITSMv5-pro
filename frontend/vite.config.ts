@@ -6,6 +6,15 @@ import react from '@vitejs/plugin-react'
 // @ts-expect-error - Vite and Vitest types mismatch due to multiple versions in the tree
 export default defineConfig({
   plugins: [react()],
+  optimizeDeps: {
+    // Vite가 해당 패키지들을 미리 번들링하여 브라우저 호환성을 확보하도록 강제합니다.
+    include: [
+      '@opentelemetry/api',
+      '@opentelemetry/sdk-trace-web',
+      '@opentelemetry/resources',
+      '@opentelemetry/semantic-conventions'
+    ]
+  },
   server: {
     proxy: {
       '/api': {
