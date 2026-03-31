@@ -19,7 +19,13 @@ export interface RequestDTO {
   requesterId: string;
   assigneeId?: string;
   serviceId?: string;
+  ciId?: string;
   slaTargetAt?: string;
+  expectedAt?: string;
+  srSourceCode?: string;
+  resolvedAt?: string;
+  closedAt?: string;
+  reopenCount?: number;
   createdAt?: string;
   updatedAt?: string;
   attachments?: AttachmentDTO[];

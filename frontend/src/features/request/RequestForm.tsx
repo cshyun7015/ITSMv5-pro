@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { X, Send, Plus, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Send, Plus, AlertCircle, Calendar, Hash } from 'lucide-react';
 import requestApi from './api/requestApi';
+import { apiCommonCode, type CommonCode } from '../../api/apiCommonCode';
 import RequestAttachments from './components/RequestAttachments';
 
 interface RequestFormProps {
@@ -11,15 +12,64 @@ const RequestForm: React.FC<RequestFormProps> = ({ onClose }) => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    srTypeCode: 'INCIDENT',
-    srCategoryCode: 'HARDWARE',
-    srImpactCode: 'LOW',
-    srUrgencyCode: 'LOW',
+    srTypeCode: '',
+    srCategoryCode: '',
+    srImpactCode: '',
+    srUrgencyCode: '',
+    ciId: '',
+    expectedAt: '',
     companyId: 'COMP-ALPHA', // Mock
-    requesterId: 'admin_user' // Mock
+    requesterId: 'admin_user', // Mock
+    srSourceCode: 'PORTAL'
   });
+
+  const [codes, setCodes] = useState<{
+    types: CommonCode[];
+    categories: CommonCode[];
+    impacts: CommonCode[];
+    urgencies: CommonCode[];
+  }>({
+    types: [],
+    categories: [],
+    impacts: [],
+    urgencies: []
+  });
+
   const [files, setFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchCodes = async () => {
+      try {
+        const [types, categories, impacts, urgencies] = await Promise.all([
+          apiCommonCode.getCodesByGroup('SR_TYPE'),
+          apiCommonCode.getCodesByGroup('SR_CATEGORY'),
+          apiCommonCode.getCodesByGroup('SR_IMPACT'),
+          apiCommonCode.getCodesByGroup('SR_URGENCY')
+        ]);
+
+        setCodes({
+          types: types.data,
+          categories: categories.data,
+          impacts: impacts.data,
+          urgencies: urgencies.data
+        });
+
+        // Set defaults
+        setFormData(prev => ({
+          ...prev,
+          srTypeCode: types.data[0]?.codeId || '',
+          srCategoryCode: categories.data[0]?.codeId || '',
+          srImpactCode: impacts.data[0]?.codeId || '',
+          srUrgencyCode: urgencies.data[0]?.codeId || ''
+        }));
+      } catch (err) {
+        console.error('Failed to fetch common codes', err);
+      }
+    };
+
+    fetchCodes();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,11 +77,15 @@ const RequestForm: React.FC<RequestFormProps> = ({ onClose }) => {
 
     try {
       setLoading(true);
-      // 1. Create Request
-      const res = await requestApi.createRequest(formData);
+      // Format date for backend LocalDateTime (ISO-8601)
+      const submissionData = {
+        ...formData,
+        expectedAt: formData.expectedAt ? `${formData.expectedAt}T23:59:59` : undefined
+      };
+
+      const res = await requestApi.createRequest(submissionData as any);
       const requestId = res.data.id;
 
-      // 2. Upload Files if any
       if (files.length > 0 && requestId) {
         for (const file of files) {
           await requestApi.uploadAttachment(requestId, file);
@@ -48,10 +102,10 @@ const RequestForm: React.FC<RequestFormProps> = ({ onClose }) => {
 
   return (
     <div className="tw-fixed tw-inset-0 tw-z-50 tw-flex tw-items-center tw-justify-center tw-p-4 tw-bg-obsidian/80 tw-backdrop-blur-md">
-      <div className="tw-bg-obsidian tw-border tw-border-slate-800 tw-rounded-2xl tw-w-full tw-max-w-4xl tw-h-[67%] tw-max-h-[90vh] tw-overflow-hidden tw-flex tw-flex-col tw-shadow-2xl tw-animate-slide-up">
+      <div className="tw-bg-obsidian tw-border tw-border-slate-800 tw-rounded-2xl tw-w-full tw-max-w-5xl tw-h-fit tw-max-h-[90vh] tw-overflow-hidden tw-flex tw-flex-col tw-shadow-2xl tw-animate-slide-up">
         
         {/* Modal Header */}
-        <div className="tw-p-4 tw-border-b tw-border-slate-800 tw-flex tw-items-center tw-justify-between tw-bg-slate-800/30">
+        <div className="tw-p-6 tw-border-b tw-border-slate-800 tw-flex tw-items-center tw-justify-between tw-bg-slate-800/30">
           <div className="tw-flex tw-items-center tw-gap-3">
              <div className="tw-bg-brand-600/20 tw-p-2 tw-rounded-lg">
                 <Plus size={20} className="tw-text-brand-500" />
@@ -68,35 +122,34 @@ const RequestForm: React.FC<RequestFormProps> = ({ onClose }) => {
 
         {/* Modal Body */}
         <form onSubmit={handleSubmit} className="tw-flex-1 tw-overflow-y-auto tw-p-8 tw-custom-scrollbar">
-          <div className="tw-grid tw-grid-cols-12 tw-gap-8">
+          <div className="tw-grid tw-grid-cols-12 tw-gap-10">
             
             {/* Left: General Info (7 cols) */}
-            <div className="tw-col-span-12 lg:tw-col-span-7 tw-flex tw-flex-col tw-gap-6">
+            <div className="tw-col-span-12 lg:tw-col-span-7 tw-flex tw-flex-col tw-gap-8">
                <div>
-                <label className="tw-text-[14px] tw-font-bold tw-text-slate-500 tw-mb-2 tw-block">요청 제목</label>
+                <label className="tw-text-[13px] tw-font-bold tw-text-slate-500 tw-mb-2 tw-block tw-uppercase tw-tracking-wider">요청 제목</label>
                 <input 
                   type="text"
                   placeholder="요청 내용의 요약을 입력하세요..."
-                  className="tw-input tw-w-full tw-text-lg"
+                  className="tw-input tw-w-full tw-text-lg tw-py-3"
                   value={formData.title}
                   onChange={e => setFormData(f => ({ ...f, title: e.target.value }))}
                   required
                 />
               </div>
                <div>
-                <label className="tw-text-[14px] tw-font-bold tw-text-slate-500 tw-mb-2 tw-block">상세 내용</label>
+                <label className="tw-text-[13px] tw-font-bold tw-text-slate-500 tw-mb-2 tw-block tw-uppercase tw-tracking-wider">상세 내용</label>
                 <textarea 
                   placeholder="처리자가 이해할 수 있도록 상세 내용을 입력해 주세요..."
-                  className="tw-input tw-w-full tw-min-h-[150px] tw-resize-none"
+                  className="tw-input tw-w-full tw-min-h-[200px] tw-resize-none tw-py-3"
                   value={formData.description}
                   onChange={e => setFormData(f => ({ ...f, description: e.target.value }))}
                   required
                 />
               </div>
 
-              {/* Upload Zone & File List Component */}
                <div>
-                <label className="tw-text-[14px] tw-font-bold tw-text-slate-500 tw-mb-2 tw-block">첨부 파일 (파일당 최대 10MB)</label>
+                <label className="tw-text-[13px] tw-font-bold tw-text-slate-500 tw-mb-2 tw-block tw-uppercase tw-tracking-wider">첨부 파일</label>
                 <RequestAttachments 
                    pendingFiles={files}
                    onUpload={(file) => setFiles(prev => [...prev, file])}
@@ -106,65 +159,86 @@ const RequestForm: React.FC<RequestFormProps> = ({ onClose }) => {
               </div>
             </div>
 
-            {/* Right: Categorization (5 cols) */}
-            <div className="tw-col-span-12 lg:tw-col-span-5 tw-bg-slate-800/20 tw-p-6 tw-rounded-xl tw-flex tw-flex-col tw-gap-6 tw-border tw-border-slate-800/50">
+            {/* Right: Categorization & Additional (5 cols) */}
+            <div className="tw-col-span-12 lg:tw-col-span-5 tw-bg-slate-900/40 tw-p-8 tw-rounded-2xl tw-flex tw-flex-col tw-gap-6 tw-border tw-border-slate-800">
                <div>
-                <label className="tw-text-[14px] tw-font-bold tw-text-slate-500 tw-mb-2 tw-block">요청 유형</label>
+                <label className="tw-text-[13px] tw-font-bold tw-text-slate-500 tw-mb-2 tw-block tw-uppercase tw-tracking-wider">요청 유형</label>
                 <select 
-                  className="tw-input tw-w-full"
+                  className="tw-input tw-w-full tw-bg-obsidian"
                   value={formData.srTypeCode}
                   onChange={e => setFormData(f => ({ ...f, srTypeCode: e.target.value }))}
                 >
-                  <option value="INCIDENT">장애</option>
-                  <option value="SERVICE_REQUEST">서비스 요청</option>
-                  <option value="CHANGE">변경 요청</option>
+                  {codes.types.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
                 </select>
               </div>
                <div>
-                <label className="tw-text-[14px] tw-font-bold tw-text-slate-500 tw-mb-2 tw-block">서비스 카테고리</label>
+                <label className="tw-text-[13px] tw-font-bold tw-text-slate-500 tw-mb-2 tw-block tw-uppercase tw-tracking-wider">서비스 카테고리</label>
                 <select 
-                  className="tw-input tw-w-full"
+                  className="tw-input tw-w-full tw-bg-obsidian"
                   value={formData.srCategoryCode}
                   onChange={e => setFormData(f => ({ ...f, srCategoryCode: e.target.value }))}
                 >
-                  <option value="HARDWARE">하드웨어</option>
-                  <option value="SOFTWARE">소프트웨어 / OS</option>
-                  <option value="NETWORK">네트워크 / 통신</option>
-                  <option value="ACCESS">계정 / 권한</option>
+                  {codes.categories.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
                 </select>
               </div>
-               <div className="tw-grid tw-grid-cols-2 tw-gap-4 tw-pt-4 tw-border-t tw-border-slate-800">
+               <div className="tw-grid tw-grid-cols-2 tw-gap-4">
                 <div>
-                  <label className="tw-text-[14px] tw-font-bold tw-text-slate-500 tw-mb-2 tw-block">영향도</label>
+                  <label className="tw-text-[13px] tw-font-bold tw-text-slate-500 tw-mb-2 tw-block tw-uppercase tw-tracking-wider">영향도</label>
                   <select 
-                    className="tw-input tw-w-full"
+                    className="tw-input tw-w-full tw-bg-obsidian"
                     value={formData.srImpactCode}
                     onChange={e => setFormData(f => ({ ...f, srImpactCode: e.target.value }))}
                   >
-                    <option value="LOW">낮음</option>
-                    <option value="MEDIUM">중간</option>
-                    <option value="HIGH">높음</option>
+                    {codes.impacts.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="tw-text-[14px] tw-font-bold tw-text-slate-500 tw-mb-2 tw-block">긴급도</label>
+                  <label className="tw-text-[13px] tw-font-bold tw-text-slate-500 tw-mb-2 tw-block tw-uppercase tw-tracking-wider">긴급도</label>
                   <select 
-                    className="tw-input tw-w-full"
+                    className="tw-input tw-w-full tw-bg-obsidian"
                     value={formData.srUrgencyCode}
                     onChange={e => setFormData(f => ({ ...f, srUrgencyCode: e.target.value }))}
                   >
-                    <option value="LOW">낮음</option>
-                    <option value="MEDIUM">중간</option>
-                    <option value="HIGH">높음</option>
+                    {codes.urgencies.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
                   </select>
                 </div>
               </div>
-               <div className="tw-mt-auto tw-p-4 tw-bg-brand-500/5 tw-border tw-border-brand-500/10 tw-rounded-lg">
-                <div className="tw-flex tw-items-center tw-gap-2 tw-text-brand-500 tw-mb-2">
-                  <AlertCircle size={14} />
-                  <span className="tw-text-[10px] tw-font-bold tw-uppercase tw-tracking-widest">SLA 안내</span>
+
+               <div className="tw-pt-6 tw-mt-2 tw-border-t tw-border-slate-800 tw-space-y-6">
+                <div>
+                  <label className="tw-text-[13px] tw-font-bold tw-text-slate-500 tw-mb-2 tw-block tw-uppercase tw-tracking-wider">구성 요소 (CI)</label>
+                  <div className="tw-relative">
+                    <Hash size={16} className="tw-absolute tw-left-3 tw-top-1/2 tw--translate-y-1/2 tw-text-slate-500" />
+                    <input 
+                      type="text"
+                      placeholder="시스템 또는 자산명 입력..."
+                      className="tw-input tw-w-full tw-pl-10"
+                      value={formData.ciId}
+                      onChange={e => setFormData(f => ({ ...f, ciId: e.target.value }))}
+                    />
+                  </div>
                 </div>
-                <p className="tw-text-xs tw-text-slate-400 tw-leading-relaxed">
+                <div>
+                  <label className="tw-text-[13px] tw-font-bold tw-text-slate-500 tw-mb-2 tw-block tw-uppercase tw-tracking-wider">희망 완료일</label>
+                  <div className="tw-relative">
+                    <Calendar size={16} className="tw-absolute tw-left-3 tw-top-1/2 tw--translate-y-1/2 tw-text-slate-500" />
+                    <input 
+                      type="date"
+                      className="tw-input tw-w-full tw-pl-10"
+                      value={formData.expectedAt}
+                      onChange={e => setFormData(f => ({ ...f, expectedAt: e.target.value }))}
+                      min={new Date().toISOString().split('T')[0]}
+                    />
+                  </div>
+                </div>
+              </div>
+
+               <div className="tw-mt-4 tw-p-5 tw-bg-brand-500/5 tw-border tw-border-brand-500/10 tw-rounded-2xl">
+                <div className="tw-flex tw-items-center tw-gap-2 tw-text-brand-500 tw-mb-2">
+                  <AlertCircle size={16} />
+                  <span className="tw-text-[11px] tw-font-bold tw-uppercase tw-tracking-widest">SLA 안내</span>
+                </div>
+                <p className="tw-text-[13px] tw-text-slate-400 tw-leading-relaxed">
                   선택한 조건에 따라 기본 SLA는 **4시간**으로 설정됩니다. 긴급도가 높은 건은 자동으로 에스컬레이션됩니다.
                 </p>
               </div>
@@ -173,22 +247,16 @@ const RequestForm: React.FC<RequestFormProps> = ({ onClose }) => {
         </form>
 
         {/* Modal Footer */}
-        <div className="tw-p-4 tw-border-t tw-border-slate-800 tw-flex tw-items-center tw-justify-end tw-gap-3 tw-bg-slate-800/30">
-          <button 
-            onClick={onClose}
-             className="tw-bg-slate-800 hover:tw-bg-slate-700 tw-text-slate-300 tw-px-6 tw-py-2 tw-rounded-lg tw-transition-all"
-          >
-            취소
-          </button>
+        <div className="tw-p-6 tw-border-t tw-border-slate-800 tw-flex tw-items-center tw-justify-end tw-bg-slate-800/30">
           <button 
             onClick={handleSubmit}
             disabled={loading}
-            className="tw-bg-brand-600 hover:tw-bg-brand-700 tw-text-white tw-px-8 tw-py-2 tw-rounded-lg tw-transition-all tw-flex tw-items-center tw-gap-2 tw-font-bold"
+            className="tw-bg-brand-600 hover:tw-bg-brand-700 tw-text-white tw-px-10 tw-py-3 tw-rounded-xl tw-transition-all tw-flex tw-items-center tw-gap-3 tw-font-bold tw-shadow-lg tw-shadow-brand-600/20 disabled:tw-opacity-50"
           >
              {loading ? (
-              <div className="tw-animate-spin tw-rounded-full tw-h-4 tw-w-4 tw-border-b-2 tw-border-white"></div>
+              <div className="tw-animate-spin tw-rounded-full tw-h-5 tw-w-5 tw-border-b-2 tw-border-white"></div>
             ) : (
-              <Send size={18} />
+              <Send size={20} />
             )}
             요청 등록
           </button>
