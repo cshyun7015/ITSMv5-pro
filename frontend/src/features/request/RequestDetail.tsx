@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { 
   X, Edit2, Shield, User, 
-  FileText, Check, Calendar, Hash, ShieldAlert, Info
+  FileText, Check, Calendar, Hash, ShieldAlert, Info, Trash2
 } from 'lucide-react';
 import requestApi from './api/requestApi';
 import apiUser, { type UserDTO } from '../../api/apiUser';
 import type { RequestDTO, RequestCommentDTO } from './api/requestApi';
 import { apiCommonCode, type CommonCode } from '../../api/apiCommonCode';
+import { useAuth } from '../auth/AuthProvider';
 import StatusStepper from './components/StatusStepper';
 import Badge from './components/Badge';
 import RequestAttachments from './components/RequestAttachments';
@@ -21,6 +22,7 @@ const LABEL_CLASS = "tw-text-[12px] tw-font-bold tw-text-slate-500 tw-uppercase 
 const VALUE_CLASS = "tw-text-sm tw-text-slate-200 tw-font-medium";
 
 const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => {
+  const { user } = useAuth();
   const [request, setRequest] = useState<RequestDTO | null>(null);
   const [comments, setComments] = useState<RequestCommentDTO[]>([]);
   const [newComment, setNewComment] = useState('');
@@ -44,6 +46,11 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => 
     resolutions: [],
     statuses: []
   });
+
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+
+  const isAdminOrOperator = user?.role === 'ROLE_ADMIN' || user?.role === 'ROLE_OPERATOR';
 
   const fetchDetail = async () => {
     try {
@@ -113,12 +120,27 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => 
     }
   };
 
+  const handleDelete = async () => {
+    try {
+      setIsDeleting(true);
+      await requestApi.deleteRequest(requestId);
+      alert('요청이 삭제되었습니다.');
+      onClose();
+    } catch (err) {
+      console.error('Delete request failed:', err);
+      alert('삭제 중 오류가 발생했습니다.');
+    } finally {
+      setIsDeleting(false);
+      setIsConfirmOpen(false);
+    }
+  };
+
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
     try {
       setCommentLoading(true);
       await requestApi.addComment(requestId, {
-        authorId: 'admin_user', // Mock
+        authorId: user?.userId || 'admin_user',
         content: newComment,
         isInternal: false
       });
@@ -151,7 +173,7 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => 
 
   const isClosed = request.status === 'CLOSED' || request.status === 'CANCELLED';
   const isResolved = request.status === 'RESOLVED';
-  const canEdit = !isClosed;
+  const canEdit = !isClosed && isAdminOrOperator;
   const isClassificationLocked = isResolved || isClosed;
 
   const formatDate = (dateStr?: string) => {
@@ -183,12 +205,26 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => 
                 ) : request.title}
              </h2>
           </div>
-          <button 
-            onClick={onClose}
-            className="tw-p-2 tw-rounded-lg hover:tw-bg-slate-700 tw-text-slate-400 tw-transition-colors tw-ml-4"
-          >
-            <X size={24} />
-          </button>
+          <div className="tw-flex tw-items-center tw-gap-2 tw-ml-4">
+            {isAdminOrOperator && (
+              <button 
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setIsConfirmOpen(true); }}
+                className="tw-p-2 tw-rounded-lg hover:tw-bg-red-500/10 tw-text-red-500 tw-transition-colors"
+                title="삭제"
+                disabled={isDeleting}
+              >
+                <Trash2 size={24} />
+              </button>
+            )}
+            <button 
+              onClick={onClose}
+              className="tw-p-2 tw-rounded-lg hover:tw-bg-slate-700 tw-text-slate-400 tw-transition-colors"
+              title="닫기"
+            >
+              <X size={24} />
+            </button>
+          </div>
         </div>
 
         {/* Modal Body */}
@@ -281,9 +317,7 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => 
               />
             </div>
 
-            {/* Right: Sidebar (4 cols) */}
             <div className="tw-col-span-12 lg:tw-col-span-4 tw-flex tw-flex-col tw-gap-8">
-              
               {request.reopenCount && request.reopenCount > 0 ? (
                 <div className="tw-bg-amber-500/10 tw-border tw-border-amber-500/20 tw-p-4 tw-rounded-xl tw-flex tw-items-center tw-gap-3">
                   <ShieldAlert className="tw-text-amber-500" size={20} />
@@ -486,6 +520,35 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => 
             )
           )}
         </div>
+
+        {/* 삭제 확인 커스텀 레이어 */}
+        {isConfirmOpen && (
+          <div className="tw-absolute tw-inset-0 tw-z-[60] tw-bg-black/60 tw-backdrop-blur-sm tw-flex tw-items-center tw-justify-center">
+            <div className="tw-bg-slate-900 tw-border tw-border-slate-800 tw-p-8 tw-rounded-2xl tw-w-full tw-max-w-md tw-shadow-2xl tw-text-center tw-animate-scale-in">
+              <div className="tw-w-16 tw-h-16 tw-bg-red-500/10 tw-rounded-full tw-flex tw-items-center tw-justify-center tw-mx-auto tw-mb-6">
+                <Trash2 className="tw-text-red-500" size={32} />
+              </div>
+              <h3 className="tw-text-xl tw-font-bold tw-text-white tw-mb-2">정말 삭제하시겠습니까?</h3>
+              <p className="tw-text-slate-400 tw-text-sm tw-mb-8">삭제된 요청 데이터는 복구할 수 없습니다.<br/>신중하게 결정해 주세요.</p>
+              <div className="tw-flex tw-gap-3">
+                <button 
+                  onClick={() => setIsConfirmOpen(false)}
+                  className="tw-flex-1 tw-py-3 tw-bg-slate-800 hover:tw-bg-slate-700 tw-text-slate-300 tw-rounded-xl tw-transition-all"
+                  disabled={isDeleting}
+                >
+                  취소
+                </button>
+                <button 
+                  onClick={handleDelete}
+                  className="tw-flex-1 tw-py-3 tw-bg-red-600 hover:tw-bg-red-700 tw-text-white tw-rounded-xl tw-font-bold tw-transition-all tw-shadow-lg tw-shadow-red-600/20"
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? '삭제 중...' : '영구 삭제'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
