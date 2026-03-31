@@ -1,0 +1,19 @@
+services:
+  k6:
+    image: grafana/k6:latest
+    container_name: itsm-perf-k6
+    volumes:
+      - ./perf:/perf
+    working_dir: /perf
+    environment:
+      - BASE_URL=http://api-gateway:80
+      - TZ=Asia/Seoul
+      - K6_PROMETHEUS_RW_SERVER_URL=http://prometheus:9090/api/v1/write
+    networks:
+      - itsm-network
+    command: run --out experimental-prometheus-rw=http://prometheus:9090/api/v1/write /perf/scripts/request-lifecycle.js
+
+networks:
+  itsm-network:
+    external: true
+    name: itsmv5-pro_itsm-network

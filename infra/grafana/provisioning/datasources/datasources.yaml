@@ -7,3 +7,15 @@ datasources:
     url: http://tempo:3200  # Tempo 컨테이너 서비스 이름과 포트
     isDefault: true
     editable: true          # UI에서 수정 가능 여부
+  # 1. Prometheus 설정
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090 # Docker 서비스 이름 사용
+    isDefault: false
+    jsonData:
+      httpMethod: POST
+      # Prometheus와 Tempo를 연결하는 설정 (Trace ID 클릭 시 이동)
+      exemplarTraceIdDestinations:
+        - name: trace_id
+          datasourceUid: tempo

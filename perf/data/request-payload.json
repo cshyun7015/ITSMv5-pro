@@ -1,0 +1,10 @@
+{
+  "title": "Performance Test Request",
+  "description": "This is a request created by k6 performance test for lifecycle validation.",
+  "priority": "P2",
+  "srTypeCode": "SR",
+  "srCategoryCode": "APP_SUPPORT",
+  "srImpactCode": "MEDIUM",
+  "srUrgencyCode": "MEDIUM",
+  "status": "OPENED"
+}
