@@ -19,7 +19,8 @@
 전체 라이프 사이클 시나리오를 실행하려면 다음 명령어를 사용하세요:
 
 ```bash
-docker-compose -f perf/docker-compose.perf.yml run --rm k6
+docker-compose -f perf/docker-compose.perf.yml run --rm k6 (X)
+docker-compose --project-directory . -f perf/docker-compose.perf.yml run --rm k6 (O)
 ```
 
 ### 3. 환경 변수 커스터마이징
