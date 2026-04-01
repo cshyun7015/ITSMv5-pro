@@ -7,6 +7,12 @@ positions:
 
 clients:
   - url: http://loki:3100/loki/api/v1/push
+    batchwait: 1s       # 로그를 모아서 보낼 최대 대기 시간
+    batchsize: 1048576  # 최대 1MB 단위로 묶어서 전송 (M4 성능 최적화)
+    backoff_config:     # 전송 실패 시 재시도 전략
+      min_period: 100ms
+      max_period: 10s
+      max_retries: 10
 
 scrape_configs:
   - job_name: docker
@@ -17,42 +23,75 @@ scrape_configs:
       - source_labels: ['__meta_docker_container_name']
         regex: '/(.*)'
         target_label: 'container'
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
+        target_label: 'service'
+    
     pipeline_stages:
       - docker: {}
-      # 1. [Warning], [ERROR] 형태의 로그 레벨을 정규식으로 추출합니다.
-      - regex:
-          # 로그 중간에 있는 [Warning] 또는 [ERROR]를 찾아 'extracted_level' 변수에 담습니다.
-          expression: '.*\[(?P<extracted_level>(?i)Warning|ERROR|Note|Info)\].*'
       
-      # 2. 추출된 값을 기반으로 level 라벨을 임시로 생성합니다.
-      - labels:
-          level: extracted_level
+      # 1. itsm-db 로그를 JSON으로 변환 (텍스트 -> JSON)
+      - match:
+          selector: '{service="itsm-db"}'
+          stages:
+            - regex:
+                expression: "^(?P<db_time>\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2})\\s+(?P<db_thread>\\d+)\\s+\\[(?P<db_level>\\w+)\\]\\s+(?P<db_msg>.*)$"
+            - template:
+                source: json_msg
+                template: '{"time":"{{.db_time}}", "service":"itsm-db", "level":"{{.db_level}}", "thread":"{{.db_thread}}", "message":"{{.db_msg}}"}'
+            - output:
+                source: json_msg
 
-      # 3. 추출된 값이 'Warning'일 경우 표준 'WARN'으로 변환 (정규화)
-      - template:
-          source: level
-          template: '{{ if eq .Value "Warning" }}WARN{{ else }}{{ .Value }}{{ end }}'
+      # 2. JSON 형식이 아닌 로그( { 로 시작하지 않는 로그)는 수집하지 않고 버림
+      - drop:
+          expression: "^[^{]"
+
+      # 3. JSON Parsing (Primary for modern logs)
+      - json:
+          expressions:
+            level: level
+            status: status
+            method: request_method
+            uri: request_uri
+            message: message
+            trace_id: trace_id
+            span_id: span_id
+
+      # 2. Level Normalization & Extraction (Fallback for Regex)
       - labels:
           level:
       - match:
-          selector: '{container!=""} |~ "(?i)error"'
+          selector: '{level=""}'
           stages:
+            - regex:
+                expression: '.*\[(?P<extracted_level>(?i)Warning|ERROR|Note|Info)\].*'
             - labels:
-                level: ERROR
+                level: extracted_level
+            - template:
+                source: level
+                template: '{{ if eq .Value "Warning" }}WARN{{ else if eq .Value "Note" }}INFO{{ else if eq .Value "Info" }}INFO{{ else }}{{ .Value }}{{ end }}'
+            - labels:
+                level:
+
+      # 3. HTTP status labeling for Nginx (if parsed via JSON)
+      - labels:
+          status:
+          method:
+
+      # 4. Filter itsm-db logs (Drop INFO and below)
       - match:
-          selector: '{container!=""} |~ "(?i)warn"'
+          selector: '{service="itsm-db"}'
           stages:
+            - regex:
+                expression: '.*\[(?P<db_level>\w+)\].*'
             - labels:
-                level: WARN
+                db_level:
+            - match:
+                selector: '{db_level="Note"}'
+                action: drop
+
+      # 5. Fallback for unlabeled INFO
       - match:
           selector: '{level=""}'
           stages:
             - static_labels:
                 level: INFO
-      - regex:
-          # 로그 라인에서 404 또는 500이라는 숫자를 찾아 'error_code' 그룹으로 캡처
-          # (?P<name>regex) 형식을 사용합니다.
-          expression: '.*(?P<error_code>404|500|502|503|504).*'
-      - labels:
-          # 위에서 캡처한 error_code를 그라파나 라벨로 등록
-          error_code:
