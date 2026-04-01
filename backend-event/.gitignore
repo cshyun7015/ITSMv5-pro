@@ -1,33 +1,48 @@
-# --- OS 전용 파일 ---
-.DS_Store           # macOS
-Thumbs.db           # Windows
-desktop.ini         # Windows
+# IDE Settings
+.idea/
+.eclipse/
+.vscode/
+*.iml
+.classpath
+.project
+.settings/
 
-# --- 빌드 및 배포 결과물 ---
-node_modules/       # Node.js 패키지
-dist/               # 빌드 결과물
-build/              # 빌드 결과물
-out/                # 컴파일 출력물
-*.exe
-*.dll
-*.so
+# Build Artifacts
+target/
+build/
+out/
+
+# Maven
+.mvn/
+# Gradle
 .gradle/
+**/build/
+**/target/
 
-# --- 로그 및 임시 파일 ---
+# Dependency Directories
+bower_components/
+node_modules/
+
+# Environment and Log Files
+.env
+application.properties.example
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-tmp/
-temp/
+logs/
+*.txt
 
-# --- 환경 설정 및 비밀번호 (중요!) ---
-.env                # 환경 변수 파일
-.env.local
-*.pem               # 인증키
-*.key
+# System Files
+.DS_Store
+Thumbs.db
 
-# --- IDE(에디터) 설정 ---
-.vscode/            # VS Code 설정
-.idea/              # IntelliJ, WebStorm 등
-*.swp               # Vim 임시 파일
+# Testing
+test-reports/
+coverage/
+
+# Temporary Files
+*.swp
+*.tmp
+*~
+.#*
+
+# Backup Files
+*.bak
