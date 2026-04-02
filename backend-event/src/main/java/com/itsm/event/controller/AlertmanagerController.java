@@ -48,7 +48,22 @@ public class AlertmanagerController {
             List<Map<String, Object>> alerts = (List<Map<String, Object>>) alertsObj;
             for (Map<String, Object> alert : alerts) {
                 try {
+                    String status = (String) alert.get("status");
+                    
+                    // Robust fingerprint extraction: Check top-level then labels
+                    String fingerprint = (String) alert.get("fingerprint");
                     Map<String, String> labels = (Map<String, String>) alert.get("labels");
+                    
+                    if (fingerprint == null && labels != null) {
+                        fingerprint = labels.get("fingerprint");
+                    }
+
+                    if ("resolved".equalsIgnoreCase(status)) {
+                        eventService.resolveEventByFingerprint(fingerprint);
+                        log.info("Successfully resolved event with fingerprint: {}", fingerprint);
+                        continue;
+                    }
+
                     Map<String, String> annotations = (Map<String, String>) alert.get("annotations");
 
                     // 1. Severity Mapping (Standardizing to CRITICAL, MAJOR, MINOR)
@@ -77,6 +92,7 @@ public class AlertmanagerController {
                             .message(fullMessage)
                             .eventDetails(eventDetails)
                             .statusCode("NEW") // Internal code for 'Open'
+                            .fingerprint(fingerprint)
                             .build();
 
                     eventService.createEvent(dto);

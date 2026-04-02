@@ -119,6 +119,19 @@ public class EventService {
         eventRepository.deleteById(id);
     }
 
+    @Transactional
+    public void resolveEventByFingerprint(String fingerprint) {
+        if (fingerprint == null || fingerprint.isEmpty()) return;
+
+        // Find the latest active event with this fingerprint
+        java.util.List<String> activeStatuses = java.util.Arrays.asList("NEW", "ACKNOWLEDGED");
+        eventRepository.findFirstByFingerprintAndStatusCodeInOrderByCreatedAtDesc(fingerprint, activeStatuses)
+                .ifPresent(event -> {
+                    event.setStatusCode("RESOLVED");
+                    eventRepository.save(event);
+                });
+    }
+
     private synchronized String generateEventNumber() {
         YearMonth currentYearMonth = YearMonth.now();
         LocalDateTime startOfMonth = currentYearMonth.atDay(1).atStartOfDay();

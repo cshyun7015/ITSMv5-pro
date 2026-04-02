@@ -81,15 +81,19 @@ CREATE TABLE IF NOT EXISTS events (
     event_number VARCHAR(50) NOT NULL UNIQUE,
     company_id VARCHAR(50) NOT NULL,
     source_code VARCHAR(50) NOT NULL,
+    category_code VARCHAR(50), -- ITIL Category (Informational, Warning, Exception)
     node VARCHAR(200),
     severity_code VARCHAR(50) NOT NULL,
     message TEXT NOT NULL,
+    event_details LONGTEXT, -- Raw payload / specific change details
     status_code VARCHAR(50) DEFAULT 'NEW',
+    fingerprint VARCHAR(100), -- Unique identifier from Grafana/Alertmanager
     related_request_id VARCHAR(50),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_evt_company (company_id),
-    INDEX idx_evt_status (status_code)
+    INDEX idx_evt_status (status_code),
+    INDEX idx_evt_fingerprint (fingerprint)
 );
 
 USE system_mgmt;

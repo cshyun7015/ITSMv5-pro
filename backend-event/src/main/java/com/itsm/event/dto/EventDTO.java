@@ -23,6 +23,7 @@ public class EventDTO {
     private String message;
     private String eventDetails;
     private String statusCode;
+    private String fingerprint;
     private String relatedRequestId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -39,6 +40,7 @@ public class EventDTO {
                 .message(entity.getMessage())
                 .eventDetails(entity.getEventDetails())
                 .statusCode(entity.getStatusCode())
+                .fingerprint(entity.getFingerprint())
                 .relatedRequestId(entity.getRelatedRequestId())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
@@ -57,6 +59,7 @@ public class EventDTO {
                 .message(this.message)
                 .eventDetails(this.eventDetails)
                 .statusCode(this.statusCode != null ? this.statusCode : "NEW")
+                .fingerprint(this.fingerprint)
                 .relatedRequestId(this.relatedRequestId)
                 .build();
     }

@@ -49,6 +49,9 @@ public class Event {
     @Column(name = "status_code")
     private String statusCode;
 
+    @Column(name = "fingerprint")
+    private String fingerprint;
+
     @Column(name = "related_request_id")
     private String relatedRequestId;
 
