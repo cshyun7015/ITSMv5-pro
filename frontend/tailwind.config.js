@@ -4,6 +4,7 @@ export default {
   content: [
     "./src/features/request/**/*.{js,jsx,ts,tsx}",
     "./src/features/request/components/**/*.{js,jsx,ts,tsx}",
+    "./src/features/event/**/*.{js,jsx,ts,tsx}",
   ],
   important: true,
   theme: {
@@ -30,6 +31,8 @@ export default {
       animation: {
         'fade-in': 'fadeIn 0.3s ease-out',
         'slide-up': 'slideUp 0.4s ease-out',
+        'ping-slow': 'ping 3s cubic-bezier(0, 0, 0.2, 1) infinite',
+        'glow': 'glow 2s ease-in-out infinite alternate',
       },
       keyframes: {
         fadeIn: {
@@ -39,6 +42,10 @@ export default {
         slideUp: {
           '0%': { transform: 'translateY(10px)', opacity: '0' },
           '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
+        glow: {
+          '0%': { boxShadow: '0 0 5px rgba(255, 255, 255, 0.1)' },
+          '100%': { boxShadow: '0 0 20px rgba(255, 255, 255, 0.4)' },
         }
       }
     },

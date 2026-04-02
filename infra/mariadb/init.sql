@@ -256,3 +256,17 @@ INSERT INTO common_codes (group_id, code_id, code_name, sort_order, is_active) V
 ('EV_SEVERITY', 'CRITICAL', '심각', 30, 1),
 ('EV_SEVERITY', 'ERROR', '에러', 40, 1);
 
+
+-- Seed Data: Sample Events
+USE event_mgmt;
+INSERT INTO events (event_number, company_id, source_code, category_code, node, severity_code, message, event_details, status_code) VALUES 
+('EVT-2026-0001', 'MSP', 'DATADOG', 'EXCP', 'order-service-01', 'CRITICAL', 'JVM Garbage Collection duration exceeded 5s', '{"heap_usage": "98%", "gc_type": "G1"}', 'NEW'),
+('EVT-2026-0002', 'MSP', 'ZABBIX', 'WARN', 'payment-api-02', 'WARNING', 'API endpoint /v1/pay responding with 500ms latency', '{"p99": "512ms", "threshold": "200ms"}', 'NEW'),
+('EVT-2026-0003', 'MSP', 'PRM_GRF', 'INFO', 'system-monitor', 'INFO', 'Disk space usage on /var/log reached 75%', '{"mount": "/var/log", "used": "75%"}', 'ACKNOWLEDGED'),
+('EVT-2026-0004', 'MSP', 'DATADOG', 'EXCP', 'mariadb-primary', 'CRITICAL', 'Database connection pool exhausted (Max 100)', '{"connections": 100, "waiting_threads": 45}', 'NEW'),
+('EVT-2026-0005', 'MSP', 'AWS_CW', 'WARN', 'nginx-gateway', 'WARNING', 'High number of 502 Bad Gateway errors detected', '{"count_502": 150, "period": "1m"}', 'NEW'),
+('EVT-2026-0006', 'MSP', 'PRM_GRF', 'INFO', 'auth-service', 'INFO', 'Security patch v2.4.1 applied successfully', '{"version": "2.4.1", "status": "success"}', 'RESOLVED'),
+('EVT-2026-0007', 'MSP', 'ZABBIX', 'EXCP', 'storage-s3-proxy', 'CRITICAL', 'S3 bucket connection timeout observed from application', '{"error": "Timeout", "retry_count": 3}', 'NEW'),
+('EVT-2026-0008', 'MSP', 'DATADOG', 'WARN', 'redis-cache-cluster', 'WARNING', 'Cache eviction rate increased by 200%', '{"evictions_per_sec": 450}', 'NEW'),
+('EVT-2026-0009', 'MSP', 'PRM_GRF', 'INFO', 'inventory-batch', 'INFO', 'Daily inventory sync completed with 2 non-critical errors', '{"processed": 15000, "errors": 2}', 'NEW'),
+('EVT-2026-0010', 'MSP', 'AWS_CW', 'EXCP', 'security-scanner', 'CRITICAL', 'Multiple unauthorized login attempts detected from IP 192.168.1.100', '{"attempts": 50, "source_ip": "192.168.1.100"}', 'NEW');

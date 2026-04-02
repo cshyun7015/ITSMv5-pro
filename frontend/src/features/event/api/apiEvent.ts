@@ -1,14 +1,17 @@
-import apiClient from './apiClient';
+import apiClient from '../../../api/apiClient';
 
 export interface EventItem {
     id: number;
     eventNumber: string;
     companyId: string;
     sourceCode: string;
+    categoryCode?: string;
     node: string;
     severityCode: string;
     message: string;
+    eventDetails?: string; // Raw JSON payload
     statusCode: string;
+    fingerprint?: string;
     relatedRequestId?: string;
     createdAt?: string;
     updatedAt?: string;
