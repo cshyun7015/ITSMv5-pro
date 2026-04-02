@@ -1,0 +1,96 @@
+apiVersion: 1
+groups:
+  - orgId: 1
+    name: ITSM-Infrastructure-Rules
+    folder: Infrastructure
+    interval: 1m
+    rules:
+      # [Exception] 서비스 다운 감지
+      - uid: critical-service-down
+        title: "[Exception] Service Down"
+        condition: A
+        data:
+          - refId: A
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: Prometheus
+            model:
+              expr: "up == 0"
+        for: 1m
+        annotations:
+          summary: "Service {{ $labels.job }} is DOWN"
+          description: "Instance {{ $labels.instance }} has been unreachable for more than 1 minute."
+        labels:
+          severity: critical
+
+      # [Exception] 5xx 에러 급증
+      - uid: critical-5xx-errors
+        title: "[Exception] API 5xx Errors Detected"
+        condition: A
+        data:
+          - refId: A
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: Prometheus
+            model:
+              expr: "sum(rate(http_server_requests_seconds_count{status=~\"5..\"}[1m])) by (job, instance) > 0"
+        for: 1m
+        annotations:
+          summary: "High 5xx Error Rate on {{ $labels.job }}"
+          description: "Internal Server Errors are occurring on {{ $labels.instance }}."
+        labels:
+          severity: critical
+
+      # [Warning] CPU 사용율 80% 초과
+      - uid: warning-high-cpu
+        title: "[Warning] High CPU Usage"
+        condition: A
+        data:
+          - refId: A
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: Prometheus
+            model:
+              expr: "avg(system_cpu_usage) by (job, instance) > 0.8"
+        for: 5m
+        annotations:
+          summary: "High CPU usage on {{ $labels.job }}"
+          description: "CPU usage is above 80% on {{ $labels.instance }}."
+        labels:
+          severity: warning
+
+      # [Warning] DB 커넥션 70% 점유
+      - uid: warning-db-conn
+        title: "[Warning] High DB Connection Usage"
+        condition: A
+        data:
+          - refId: A
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: Prometheus
+            model:
+              expr: "(sum(hikaricp_connections_active) by (job, instance) / sum(hikaricp_connections_max) by (job, instance)) > 0.7"
+        for: 5m
+        annotations:
+          summary: "High DB connection usage on {{ $labels.job }}"
+          description: "DB connection pool is more than 70% full."
+        labels:
+          severity: warning
+
+  - orgId: 1
+    name: ITSM-Operational-Info
+    folder: Information
+    interval: 5m
+    rules:
+      # [Info] 신규 테넌트/사용자 활동 감지 (Loki 기반)
+      - uid: info-tenant-activity
+        title: "[Info] New Tenant/Activity Logs"
+        condition: A
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: Loki
+            model:
+              expr: "count_over_time({service=~\"system-.*\"} |= \"created\" [10m]) > 0"
+        for: 0m
+        annotations:
+          summary: "New administrative activity detected"
+          description: "System logs indicate a new resource or tenant was created."
+        labels:
+          severity: info

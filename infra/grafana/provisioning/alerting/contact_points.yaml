@@ -1,0 +1,28 @@
+apiVersion: 1
+contactPoints:
+  - orgId: 1
+    name: ITSM-Event-Service
+    receivers:
+      - uid: itsm-event-webhook
+        type: webhook
+        disableResolveMessage: false
+        settings:
+          url: http://event-service:8080/api/v1/event/webhook/grafana
+          httpMethod: POST
+
+  - orgId: 1
+    name: Discard-Info
+    receivers:
+      - uid: discard-info-receiver
+        type: email # or any type, just without valid config or simply use to sink logs
+        settings:
+          addresses: "dev-null@itsm.local" # Dummy address
+
+policies:
+  - orgId: 1
+    receiver: ITSM-Event-Service
+    group_by: [alertname, severity]
+    routes:
+      - receiver: Discard-Info
+        object_matchers:
+          - [severity, =, info]
