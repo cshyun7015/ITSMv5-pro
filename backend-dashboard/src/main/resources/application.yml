@@ -5,13 +5,14 @@ spring:
     open-in-view: false
     hibernate:
       ddl-auto: none # Aggregator doesn't manage schema
-    show-sql: true
+    show-sql: false
 
 logging:
   level:
     org.springframework.security: DEBUG
     com.itsm.dashboard: TRACE
     com.itsm.dashboard.security: TRACE
+    org.hibernate.SQL: DEBUG
 
 jwt:
   secret: ${JWT_SECRET:ITSMLongSecretKeyForSecurityPurposes1234567890!}

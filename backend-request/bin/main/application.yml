@@ -5,10 +5,10 @@ spring:
     open-in-view: false
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
 
 server:
   port: 8080
@@ -21,3 +21,6 @@ management:
   metrics:
     tags:
       application: ${spring.application.name:itsm-request}
+logging:
+  level:
+    org.hibernate.SQL: DEBUG

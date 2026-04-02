@@ -42,9 +42,9 @@ scrape_configs:
             - output:
                 source: json_msg
 
-      # 2. JSON 형식이 아닌 로그( { 로 시작하지 않는 로그)는 수집하지 않고 버림
-      - drop:
-          expression: "^[^{]"
+      # 2. JSON 형식이 아니더라도 폐기하지 않고 수집 (디버깅을 위해 모든 로그 허용)
+      # - drop:
+      #     expression: "^[^{]"
 
       # 3. JSON Parsing (Primary for modern logs)
       - json:
