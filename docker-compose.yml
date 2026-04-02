@@ -217,6 +217,40 @@ services:
     networks:
       - itsm-network
 
+  # --- Infrastructure Exporters ---
+  nginx-gateway-exporter:
+    image: nginx/nginx-prometheus-exporter:latest
+    container_name: nginx-gateway-exporter
+    command:
+      - -nginx.scrape-uri=http://api-gateway:80/nginx_status
+    depends_on:
+      - api-gateway
+    networks:
+      - itsm-network
+
+  nginx-frontend-exporter:
+    image: nginx/nginx-prometheus-exporter:latest
+    container_name: nginx-frontend-exporter
+    command:
+      - -nginx.scrape-uri=http://portal-ui:80/nginx_status
+    depends_on:
+      - portal-ui
+    networks:
+      - itsm-network
+
+  mysqld-exporter:
+    image: prom/mysqld-exporter:latest
+    container_name: mysqld-exporter
+    volumes:
+      - ./infra/mariadb/.my.cnf:/etc/.my.cnf:ro
+    command:
+      - --config.my-cnf=/etc/.my.cnf
+    depends_on:
+      itsm-db:
+        condition: service_healthy
+    networks:
+      - itsm-network
+
   # E2E Test: Dedicated Playwright container
   itsm-test-e2e:
     build:

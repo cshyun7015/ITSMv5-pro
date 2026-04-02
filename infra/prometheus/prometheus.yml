@@ -30,3 +30,7 @@ scrape_configs:
   - job_name: 'itsm-frontend'
     static_configs:
       - targets: ['nginx-frontend-exporter:9113']
+
+  - job_name: 'itsm-db'
+    static_configs:
+      - targets: ['mysqld-exporter:9104']

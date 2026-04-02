@@ -7,6 +7,7 @@ positions:
 
 clients:
   - url: http://loki:3100/loki/api/v1/push
+    tenant_id: itsm-tenant
     batchwait: 1s       # 로그를 모아서 보낼 최대 대기 시간
     batchsize: 1048576  # 최대 1MB 단위로 묶어서 전송 (M4 성능 최적화)
     backoff_config:     # 전송 실패 시 재시도 전략
