@@ -35,7 +35,7 @@ public class EventService {
         if (dto.getStatusCode() == null) {
             dto.setStatusCode("NEW");
         }
-        Event entity = EventDTO.toEntity(dto);
+        Event entity = dto.toEntity();
         Event saved = eventRepository.save(entity);
         return EventDTO.fromEntity(saved);
     }
@@ -61,9 +61,11 @@ public class EventService {
                 .orElseThrow(() -> new RuntimeException("Event not found"));
         
         event.setSourceCode(dto.getSourceCode() != null ? dto.getSourceCode() : event.getSourceCode());
+        event.setCategoryCode(dto.getCategoryCode() != null ? dto.getCategoryCode() : event.getCategoryCode());
         event.setNode(dto.getNode() != null ? dto.getNode() : event.getNode());
         event.setSeverityCode(dto.getSeverityCode() != null ? dto.getSeverityCode() : event.getSeverityCode());
         event.setMessage(dto.getMessage() != null ? dto.getMessage() : event.getMessage());
+        event.setEventDetails(dto.getEventDetails() != null ? dto.getEventDetails() : event.getEventDetails());
         event.setStatusCode(dto.getStatusCode() != null ? dto.getStatusCode() : event.getStatusCode());
         event.setRelatedRequestId(dto.getRelatedRequestId() != null ? dto.getRelatedRequestId() : event.getRelatedRequestId());
 
@@ -95,8 +97,9 @@ public class EventService {
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestPayload, headers);
 
         try {
-            ResponseEntity<Map> response = restTemplate.postForEntity(
-                    "http://request-service:8080/api/v1/request", entity, Map.class);
+            @SuppressWarnings("unchecked")
+            ResponseEntity<Map<String, Object>> response = restTemplate.postForEntity(
+                    "http://request-service:8080/api/v1/request", entity, (Class<Map<String, Object>>) (Class<?>) Map.class);
             
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 String reqNumber = (String) response.getBody().get("reqNumber");

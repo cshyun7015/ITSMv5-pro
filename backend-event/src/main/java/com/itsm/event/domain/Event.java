@@ -31,6 +31,9 @@ public class Event {
     @Column(name = "source_code", nullable = false)
     private String sourceCode;
 
+    @Column(name = "category_code")
+    private String categoryCode;
+
     @Column(name = "node")
     private String node;
 
@@ -39,6 +42,9 @@ public class Event {
 
     @Column(name = "message", nullable = false, columnDefinition = "TEXT")
     private String message;
+
+    @Column(name = "event_details", columnDefinition = "LONGTEXT")
+    private String eventDetails;
 
     @Column(name = "status_code")
     private String statusCode;

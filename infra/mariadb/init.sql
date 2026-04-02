@@ -178,18 +178,19 @@ INSERT INTO code_groups (group_id, name, description, is_system) VALUES
 ('SR_SOURCE', '접수 경로', '요청 유입 경로', 1),
 ('EV_STATUS', '이벤트 상태', '이벤트 처리 상태', 1),
 ('EV_SOURCE', '이벤트 발생처', '이벤트 발생 시스템', 1),
-('EV_SEVERITY', '이벤트 심각도', '이벤트 심각도', 1);
+('EV_SEVERITY', '이벤트 심각도', '이벤트 심각도', 1),
+('EV_CATEGORY', '이벤트 유형', '이벤트 분류 유형 (ITIL)', 1);
 
 -- Seed Data: Common Codes
 INSERT INTO common_codes (group_id, code_id, code_name, sort_order, is_active) VALUES 
 -- Status
-('SR_STATUS', 'OPEN', '접수됨', 10, 1),
-('SR_STATUS', 'ASSIGNED', '배정됨', 20, 1),
-('SR_STATUS', 'IN_PROGRESS', '처리중', 30, 1),
+('SR_STATUS', 'OPEN', 'Open', 10, 1),
+('SR_STATUS', 'ASSIGNED', 'Assigned', 20, 1),
+('SR_STATUS', 'IN_PROGRESS', 'In-progress', 30, 1),
 ('SR_STATUS', 'PENDING', '보류됨', 40, 1),
-('SR_STATUS', 'RESOLVED', '해결됨', 50, 1),
-('SR_STATUS', 'CLOSED', '완료됨', 60, 1),
-('SR_STATUS', 'CANCELLED', '취소됨', 70, 1),
+('SR_STATUS', 'RESOLVED', 'Resolved', 50, 1),
+('SR_STATUS', 'CLOSED', 'Closed', 60, 1),
+('SR_STATUS', 'CANCELLED', 'Cancelled', 70, 1),
 
 -- Priority
 ('SR_PRIORITY', 'P1', 'Critical (P1)', 10, 1),

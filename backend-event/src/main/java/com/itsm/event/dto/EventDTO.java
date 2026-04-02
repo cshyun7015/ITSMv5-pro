@@ -17,9 +17,11 @@ public class EventDTO {
     private String eventNumber;
     private String companyId;
     private String sourceCode;
+    private String categoryCode;
     private String node;
     private String severityCode;
     private String message;
+    private String eventDetails;
     private String statusCode;
     private String relatedRequestId;
     private LocalDateTime createdAt;
@@ -31,9 +33,11 @@ public class EventDTO {
                 .eventNumber(entity.getEventNumber())
                 .companyId(entity.getCompanyId())
                 .sourceCode(entity.getSourceCode())
+                .categoryCode(entity.getCategoryCode())
                 .node(entity.getNode())
                 .severityCode(entity.getSeverityCode())
                 .message(entity.getMessage())
+                .eventDetails(entity.getEventDetails())
                 .statusCode(entity.getStatusCode())
                 .relatedRequestId(entity.getRelatedRequestId())
                 .createdAt(entity.getCreatedAt())
@@ -41,17 +45,19 @@ public class EventDTO {
                 .build();
     }
 
-    public static Event toEntity(EventDTO dto) {
+    public Event toEntity() {
         return Event.builder()
-                .id(dto.getId())
-                .eventNumber(dto.getEventNumber())
-                .companyId(dto.getCompanyId())
-                .sourceCode(dto.getSourceCode())
-                .node(dto.getNode())
-                .severityCode(dto.getSeverityCode())
-                .message(dto.getMessage())
-                .statusCode(dto.getStatusCode())
-                .relatedRequestId(dto.getRelatedRequestId())
+                .id(this.id)
+                .eventNumber(this.eventNumber)
+                .companyId(this.companyId)
+                .sourceCode(this.sourceCode)
+                .categoryCode(this.categoryCode)
+                .node(this.node)
+                .severityCode(this.severityCode)
+                .message(this.message)
+                .eventDetails(this.eventDetails)
+                .statusCode(this.statusCode != null ? this.statusCode : "NEW")
+                .relatedRequestId(this.relatedRequestId)
                 .build();
     }
 }

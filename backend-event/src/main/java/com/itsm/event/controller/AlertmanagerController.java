@@ -39,6 +39,8 @@ public class AlertmanagerController {
         return ResponseEntity.status(HttpStatus.ACCEPTED).build();
     }
 
+    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+
     @SuppressWarnings("unchecked")
     private void processAlerts(Map<String, Object> payload, String source) {
         Object alertsObj = payload.get("alerts");
@@ -49,29 +51,53 @@ public class AlertmanagerController {
                     Map<String, String> labels = (Map<String, String>) alert.get("labels");
                     Map<String, String> annotations = (Map<String, String>) alert.get("annotations");
 
-                    String severity = labels.getOrDefault("severity", "WARNING").toUpperCase();
+                    // 1. Severity Mapping (Standardizing to CRITICAL, MAJOR, MINOR)
+                    String rawSeverity = labels.getOrDefault("severity", "WARNING").toUpperCase();
+                    String severityCode = mapToSeverityCode(rawSeverity);
+
+                    // 2. Category Mapping (ITIL: INFO, WARN, EXCP)
+                    String categoryCode = mapToCategoryCode(rawSeverity);
+
                     String node = labels.getOrDefault("instance", "system");
                     String alertName = labels.getOrDefault("alertname", "Monitoring Alert");
                     String summary = annotations != null ? annotations.getOrDefault("summary", "") : "";
                     String description = annotations != null ? annotations.getOrDefault("description", "") : "";
 
-                    String fullMessage = String.format("[%s] %s: %s %s", alertName, summary, description, source).trim();
+                    String fullMessage = String.format("[%s] %s %s", alertName, summary, description).trim();
+
+                    // 3. Store full payload as details
+                    String eventDetails = objectMapper.writeValueAsString(alert);
 
                     EventDTO dto = EventDTO.builder()
-                            .companyId("MSP") // Setting default for now
+                            .companyId("MSP") 
                             .sourceCode(source)
+                            .categoryCode(categoryCode)
                             .node(node)
-                            .severityCode(severity)
+                            .severityCode(severityCode)
                             .message(fullMessage)
-                            .statusCode("NEW")
+                            .eventDetails(eventDetails)
+                            .statusCode("NEW") // Internal code for 'Open'
                             .build();
 
                     eventService.createEvent(dto);
-                    log.debug("Successfully converted alert to ITSM event: {}", alertName);
+                    log.debug("Converted alert to ITIL event: {} (Severity: {}, Category: {})", alertName, severityCode, categoryCode);
                 } catch (Exception e) {
                     log.error("Failed to parse alert block: {}", e.getMessage());
                 }
             }
         }
+    }
+
+    private String mapToSeverityCode(String raw) {
+        if (raw.contains("CRITICAL")) return "CRITICAL";
+        if (raw.contains("ERROR")) return "CRITICAL";
+        if (raw.contains("WARNING")) return "MAJOR";
+        return "MINOR";
+    }
+
+    private String mapToCategoryCode(String severity) {
+        if (severity.contains("CRITICAL")) return "EXCP"; // Exception
+        if (severity.contains("WARNING")) return "WARN"; // Warning
+        return "INFO"; // Informational
     }
 }
