@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import CompanyList from './features/company/CompanyList';
-import UserList from './features/user/UserList';
+import CustomerGovernanceHub from './features/organization/customercompany/CustomerGovernanceHub';
+import OperatorGovernanceHub from './features/organization/operatorcompany/OperatorGovernanceHub';
 import CodeManagement from './features/code/CodeManagement';
 import RequestList from './features/request/RequestList';
 import EventManagement from './features/event/EventManagement';
@@ -65,16 +65,16 @@ function AppContent() {
           {isAdmin && (
             <>
               <div 
-                className={`nav-item ${currentView === 'companies' ? 'active' : ''}`}
-                onClick={() => setCurrentView('companies')}
+                className={`nav-item ${currentView === 'customer_mgmt' ? 'active' : ''}`}
+                onClick={() => setCurrentView('customer_mgmt')}
               >
-                고객사 관리
+                고객사/사용자 관리
               </div>
               <div 
-                className={`nav-item ${currentView === 'users' ? 'active' : ''}`}
-                onClick={() => setCurrentView('users')}
+                className={`nav-item ${currentView === 'operator_mgmt' ? 'active' : ''}`}
+                onClick={() => setCurrentView('operator_mgmt')}
               >
-                사용자 관리
+                운영사/운영자 관리
               </div>
               <div 
                 className={`nav-item ${currentView === 'codes' ? 'active' : ''}`}
@@ -102,17 +102,14 @@ function AppContent() {
       </aside>
 
       <main className="main-content">
-        {currentView !== 'requests' && currentView !== 'events' && currentView !== 'dashboard' && currentView !== 'companies' && currentView !== 'users' && currentView !== 'codes' && (
+        {currentView !== 'requests' && currentView !== 'events' && currentView !== 'dashboard' && 
+         currentView !== 'customer_mgmt' && currentView !== 'operator_mgmt' && currentView !== 'codes' && (
           <header className="page-header">
             <h1 className="text-gradient">
-              {currentView === 'companies' ? '고객사 관리' : 
-               currentView === 'users' ? '사용자 관리' : 
-               currentView === 'codes' ? '공통 코드 관리' : '시스템 대시보드'}
+              {currentView === 'codes' ? '공통 코드 관리' : '시스템 대시보드'}
             </h1>
             <div className="breadcrumbs">
               시스템 관리 &gt; {
-                currentView === 'companies' ? '고객사 관리' : 
-                currentView === 'users' ? '사용자 관리' : 
                 currentView === 'codes' ? '공통 코드 관리' : '대시보드'
               }
             </div>
@@ -120,8 +117,8 @@ function AppContent() {
         )}
         
         <div className="content-body">
-          {currentView === 'companies' ? <CompanyList /> : 
-           currentView === 'users' ? <UserList /> : 
+          {currentView === 'customer_mgmt' ? <CustomerGovernanceHub /> : 
+            currentView === 'operator_mgmt' ? <OperatorGovernanceHub /> : 
             currentView === 'codes' ? <CodeManagement /> : 
             currentView === 'requests' ? <RequestList /> : 
             currentView === 'events' ? <EventManagement /> : (

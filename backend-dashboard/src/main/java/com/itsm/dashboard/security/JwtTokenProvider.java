@@ -21,6 +21,7 @@ public class JwtTokenProvider {
     }
 
     public String resolveToken(HttpServletRequest request) {
+        // Method 1: Standard HttpServletRequest.getCookies()
         if (request.getCookies() != null) {
             for (Cookie cookie : request.getCookies()) {
                 if ("ITSMSession".equals(cookie.getName())) {
@@ -28,6 +29,19 @@ public class JwtTokenProvider {
                 }
             }
         }
+        
+        // Method 2: Manual header parsing (Fallback for some proxy configurations)
+        String cookieHeader = request.getHeader("Cookie");
+        if (cookieHeader != null && cookieHeader.contains("ITSMSession=")) {
+            String[] cookies = cookieHeader.split(";");
+            for (String cookie : cookies) {
+                String trimmed = cookie.trim();
+                if (trimmed.startsWith("ITSMSession=")) {
+                    return trimmed.substring("ITSMSession=".length());
+                }
+            }
+        }
+        
         return null;
     }
 

@@ -12,6 +12,7 @@ spring:
 
 server:
   port: 8080
+  max-http-header-size: 64KB # 8KB(기본값)에서 64KB로 확장
 
 management:
   endpoints:

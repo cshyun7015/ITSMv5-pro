@@ -1,7 +1,9 @@
 package com.itsm.system.security;
 
-import com.itsm.system.domain.user.User;
-import com.itsm.system.domain.user.UserRepository;
+import com.itsm.system.domain.organization.customer.CustomerUser;
+import com.itsm.system.domain.organization.operator.Operator;
+import com.itsm.system.repository.organization.customer.CustomerUserRepository;
+import com.itsm.system.repository.organization.operator.OperatorRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -15,17 +17,32 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
 
-    private final UserRepository userRepository;
+    private final OperatorRepository operatorRepository;
+    private final CustomerUserRepository customerUserRepository;
 
     @Override
     public UserDetails loadUserByUsername(String userId) throws UsernameNotFoundException {
-        User user = userRepository.findByUserId(userId)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with id: " + userId));
+        // 1. Try finding in operators (Priority)
+        return operatorRepository.findByUserId(userId)
+                .map(this::createSpringUser)
+                .orElseGet(() -> customerUserRepository.findByUserId(userId)
+                        .map(this::createSpringUser)
+                        .orElseThrow(() -> new UsernameNotFoundException("User not found with id: " + userId)));
+    }
 
+    private org.springframework.security.core.userdetails.User createSpringUser(Operator operator) {
         return new org.springframework.security.core.userdetails.User(
-                user.getUserId(),
-                user.getPassword(),
-                List.of(new SimpleGrantedAuthority(user.getRole()))
+                operator.getUserId(),
+                operator.getPassword(),
+                List.of(new SimpleGrantedAuthority(operator.getRole()))
+        );
+    }
+
+    private org.springframework.security.core.userdetails.User createSpringUser(CustomerUser customerUser) {
+        return new org.springframework.security.core.userdetails.User(
+                customerUser.getUserId(),
+                customerUser.getPassword(),
+                List.of(new SimpleGrantedAuthority(customerUser.getRole()))
         );
     }
 }
