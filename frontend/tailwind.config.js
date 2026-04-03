@@ -7,6 +7,7 @@ export default {
     "./src/features/event/**/*.{js,jsx,ts,tsx}",
     "./src/features/organization/**/*.{js,jsx,ts,tsx}",
     "./src/features/code/**/*.{js,jsx,ts,tsx}",
+    "./src/features/incident/**/*.{js,jsx,ts,tsx}",
   ],
   important: true,
   theme: {

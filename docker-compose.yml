@@ -142,6 +142,25 @@ services:
       api-gateway:
         condition: service_started
 
+  incident-service:
+    <<: *backend-template
+    build:
+      context: ./backend-incident
+    container_name: incident-service
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://itsm-db:3306/incident_mgmt?createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=itsmpass
+      - TZ=Asia/Seoul
+      - JAVA_TOOL_OPTIONS=-javaagent:/app/opentelemetry-javaagent.jar
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
+      - OTEL_LOGS_EXPORTER=none
+      - OTEL_SERVICE_NAME=incident-service
+    depends_on:
+      api-gateway:
+        condition: service_started
+
   # --- Observability Stack ---
 
   otel-collector:

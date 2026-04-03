@@ -5,6 +5,7 @@ import CodeManagement from './features/code/CodeManagement';
 import RequestList from './features/request/RequestList';
 import EventManagement from './features/event/EventManagement';
 import Dashboard from './features/dashboard/Dashboard';
+import IncidentManagement from './features/incident/IncidentManagement';
 import { AuthProvider, useAuth } from './features/auth/AuthProvider';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import './App.css';
@@ -56,6 +57,12 @@ function AppContent() {
             이벤트 관리
           </div>
           <div 
+            className={`nav-item ${currentView === 'incidents' ? 'active' : ''}`}
+            onClick={() => setCurrentView('incidents')}
+          >
+            인시던트 관리
+          </div>
+          <div 
             className={`nav-item ${currentView === 'requests' ? 'active' : ''}`}
             onClick={() => setCurrentView('requests')}
           >
@@ -103,7 +110,7 @@ function AppContent() {
 
       <main className="main-content">
         {currentView !== 'requests' && currentView !== 'events' && currentView !== 'dashboard' && 
-         currentView !== 'customer_mgmt' && currentView !== 'operator_mgmt' && currentView !== 'codes' && (
+         currentView !== 'customer_mgmt' && currentView !== 'operator_mgmt' && currentView !== 'codes' && currentView !== 'incidents' && (
           <header className="page-header">
             <h1 className="text-gradient">
               {currentView === 'codes' ? '공통 코드 관리' : '시스템 대시보드'}
@@ -121,7 +128,8 @@ function AppContent() {
             currentView === 'operator_mgmt' ? <OperatorGovernanceHub /> : 
             currentView === 'codes' ? <CodeManagement /> : 
             currentView === 'requests' ? <RequestList /> : 
-            currentView === 'events' ? <EventManagement /> : (
+            currentView === 'events' ? <EventManagement /> : 
+            currentView === 'incidents' ? <IncidentManagement /> : (
               <Dashboard />
             )}
         </div>

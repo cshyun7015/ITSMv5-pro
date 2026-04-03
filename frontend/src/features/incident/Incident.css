@@ -1,0 +1,112 @@
+/* 
+  Incident Management Scoped Styles 
+  All rules are prefixed with .inc-scoped to prevent global leakage.
+*/
+
+.inc-scoped {
+  --inc-primary: #3b82f6;
+  --inc-accent: #10b981;
+  --inc-danger: #f43f5e;
+  --inc-warning: #f59e0b;
+  --inc-glass-bg: rgba(15, 23, 42, 0.7);
+  --inc-glass-border: rgba(255, 255, 255, 0.08);
+}
+
+.inc-scoped .inc-root {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  animation: incFadeIn 0.5s ease-out;
+}
+
+@keyframes incFadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Bento Cards */
+.inc-scoped .inc-card {
+  background: rgba(30, 41, 59, 0.4);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--inc-glass-border);
+  border-radius: 24px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.inc-scoped .inc-card:hover {
+  background: rgba(51, 65, 85, 0.5);
+  border-color: rgba(59, 130, 246, 0.3);
+  transform: translateY(-4px);
+}
+
+/* Neon P1 Effect */
+.inc-scoped .inc-p1-pulse {
+  border: 1px solid rgba(244, 63, 94, 0.6) !important;
+  box-shadow: 0 0 20px rgba(244, 63, 94, 0.2);
+  animation: incP1Pulse 2s infinite;
+}
+
+@keyframes incP1Pulse {
+  0%, 100% { box-shadow: 0 0 15px rgba(244, 63, 94, 0.2); }
+  50% { box-shadow: 0 0 30px rgba(244, 63, 94, 0.4), inset 0 0 10px rgba(244, 63, 94, 0.1); }
+}
+
+/* SLA Scoped Visuals */
+.inc-scoped .inc-sla-track {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.inc-scoped .inc-sla-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--inc-accent), var(--inc-primary));
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
+}
+
+.inc-scoped .inc-sla-bar.urgent {
+  background: linear-gradient(90deg, var(--inc-warning), var(--inc-danger));
+}
+
+/* Timeline Activity */
+.inc-scoped .inc-timeline-item {
+  position: relative;
+  padding-left: 28px;
+  padding-bottom: 24px;
+}
+
+.inc-scoped .inc-timeline-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.inc-scoped .inc-timeline-dot {
+  position: absolute;
+  left: -4px;
+  top: 6px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--inc-primary);
+  box-shadow: 0 0 8px var(--inc-primary);
+}
+
+/* Status Badges */
+.inc-scoped .inc-badge {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.inc-scoped .inc-p1 { background: var(--inc-danger); color: white; }
+.inc-scoped .inc-new { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+.inc-scoped .inc-resolved { background: rgba(16, 185, 129, 0.2); color: #34d399; }
