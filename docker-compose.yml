@@ -78,6 +78,8 @@ services:
         condition: service_healthy
       otel-collector:
         condition: service_started
+      api-gateway:
+        condition: service_started
     networks:
       - itsm-network
 
@@ -96,6 +98,9 @@ services:
       - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
       - OTEL_LOGS_EXPORTER=none
       - OTEL_SERVICE_NAME=system-service
+    depends_on:
+      api-gateway:
+        condition: service_started
 
   dashboard-service:
     <<: *backend-template
@@ -114,6 +119,9 @@ services:
       - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
       - OTEL_LOGS_EXPORTER=none
       - OTEL_SERVICE_NAME=dashboard-service
+    depends_on:
+      api-gateway:
+        condition: service_started
 
   event-service:
     <<: *backend-template
@@ -130,6 +138,9 @@ services:
       - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
       - OTEL_LOGS_EXPORTER=none
       - OTEL_SERVICE_NAME=event-service
+    depends_on:
+      api-gateway:
+        condition: service_started
 
   # --- Observability Stack ---
 
