@@ -1,5 +1,7 @@
 package com.itsm.dashboard.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.itsm.dashboard.dto.DashboardSummaryDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -12,19 +14,25 @@ import java.util.Map;
 public class DashboardService {
 
     private final ExternalApiService apiService;
+    private final ObjectMapper objectMapper; // final로 선언하면 스프링이 주입해줍니다.
 
     public Mono<DashboardSummaryDTO> getSummary(String role, String companyId, String fromDate, String toDate, String token) {
         boolean isAdmin = role.equals("ROLE_ADMIN") || role.equals("ROLE_OPERATOR");
         
         // If companyId is provided (even for Admin), system stats should reflect that company
-        Mono<Map> systemStats = apiService.getSystemStats(companyId, token);
+        Mono<Map<String, Object>> systemStats = apiService.getSystemStats(companyId, token);
         
-        Mono<Map> requestStats = apiService.getRequestStats(companyId, fromDate, toDate, token);
+        Mono<Map<String, Object>> requestStats = apiService.getRequestStats(companyId, fromDate, toDate, token);
 
         return Mono.zip(systemStats, requestStats)
                 .map(tuple -> {
-                    Map sys = tuple.getT1();
-                    Map req = tuple.getT2();
+                    Map<String, Object> sys = tuple.getT1();
+                    Map<String, Object> req = tuple.getT2();
+
+                    Map<String, Long> statusMap = objectMapper.convertValue(
+                        req.get("statusDistribution"), 
+                        new TypeReference<>() {}
+                    );
                     
                     return DashboardSummaryDTO.builder()
                             .companyCount(asLong(sys.get("companyCount")))
@@ -34,7 +42,7 @@ public class DashboardService {
                             .inProgressRequests(asLong(req.get("inProgressRequests")))
                             .createdToday(asLong(req.get("createdToday")))
                             .closedToday(asLong(req.get("closedToday")))
-                            .statusDistribution(asLongMap((Map<String, Object>) req.get("statusDistribution")))
+                            .statusDistribution(statusMap)
                             .build();
                 });
     }

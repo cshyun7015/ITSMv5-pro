@@ -6,7 +6,10 @@ plugins {
 
 group = 'com.itsm'
 version = '0.0.1-SNAPSHOT'
-sourceCompatibility = '17'
+
+java {
+    sourceCompatibility = '17' // Java 17 사용 시
+}
 
 repositories {
     mavenCentral()

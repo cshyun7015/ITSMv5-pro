@@ -1,0 +1,14 @@
+{
+  "name": "Node.js Dev Container",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:20-bookworm",
+  "customizations": {
+    "vscode": {
+      "extensions": ["dbaeumer.vscode-eslint"]
+    }
+  },
+  // 컨테이너 접속 시 자동으로 패키지 설치
+  "postCreateCommand": "npm install",
+  
+  // 컨테이너 열릴 때마다 서버 자동 실행 (선택 사항)
+  "postStartCommand": "npm run dev"
+}

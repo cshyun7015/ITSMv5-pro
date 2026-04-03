@@ -4,7 +4,6 @@ import com.itsm.system.domain.organization.customer.CustomerCompany;
 import com.itsm.system.domain.organization.customer.CustomerTeam;
 import com.itsm.system.domain.organization.customer.CustomerUser;
 import com.itsm.system.domain.organization.operator.Operator;
-import com.itsm.system.domain.organization.operator.OperatorCompany;
 import com.itsm.system.repository.organization.customer.CustomerCompanyRepository;
 import com.itsm.system.repository.organization.customer.CustomerTeamRepository;
 import com.itsm.system.repository.organization.customer.CustomerUserRepository;
