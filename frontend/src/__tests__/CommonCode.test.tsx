@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import CodeManagement from '../features/code/CodeManagement';
-import { apiCommonCode } from '../api/apiCommonCode';
+import { apiCommonCode } from '../features/code/api/apiCommonCode';
 
 // Mock apiCommonCode
 vi.mock('../api/apiCommonCode', () => ({

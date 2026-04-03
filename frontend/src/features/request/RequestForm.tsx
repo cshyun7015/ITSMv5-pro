@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Send, Plus, AlertCircle, Calendar, Hash, User } from 'lucide-react';
 import requestApi from './api/requestApi';
-import { apiCommonCode, type CommonCode } from '../../api/apiCommonCode';
+import { apiCommonCode, type CommonCode } from '../code/api/apiCommonCode';
 import RequestAttachments from './components/RequestAttachments';
 import { useAuth } from '../auth/AuthProvider';
 

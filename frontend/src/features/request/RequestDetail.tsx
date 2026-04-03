@@ -6,7 +6,7 @@ import {
 import requestApi from './api/requestApi';
 import apiUser, { type UserDTO } from '../../api/apiUser';
 import type { RequestDTO, RequestCommentDTO } from './api/requestApi';
-import { apiCommonCode, type CommonCode } from '../../api/apiCommonCode';
+import { apiCommonCode, type CommonCode } from '../code/api/apiCommonCode';
 import { useAuth } from '../auth/AuthProvider';
 import StatusStepper from './components/StatusStepper';
 import Badge from './components/Badge';

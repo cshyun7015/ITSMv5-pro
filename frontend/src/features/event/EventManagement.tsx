@@ -3,8 +3,8 @@ import { RefreshCw, Search, Filter, AlertTriangle, Bell, Settings, Database, Ser
 import { AreaChart, Area, ResponsiveContainer } from 'recharts';
 import apiEvent from './api/apiEvent';
 import type { EventItem } from './api/apiEvent';
-import { apiCommonCode } from '../../api/apiCommonCode';
-import type { CommonCode } from '../../api/apiCommonCode';
+import { apiCommonCode } from '../code/api/apiCommonCode';
+import type { CommonCode } from '../code/api/apiCommonCode';
 import EventDetailDrawer from './EventDetailDrawer';
 import './Event.css';
 

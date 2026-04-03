@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Save, Database, Settings } from 'lucide-react';
-import { apiCommonCode } from '../../api/apiCommonCode';
-import type { CommonCode } from '../../api/apiCommonCode';
+import { apiCommonCode } from './api/apiCommonCode';
+import type { CommonCode } from './api/apiCommonCode';
 
 interface Props {
     isOpen: boolean;
@@ -82,8 +82,8 @@ const CodeModal: React.FC<Props> = ({ isOpen, onClose, onSaved, groupId, initial
                             <Database size={24} />
                         </div>
                         <div>
-                            <span className="tw-text-[10px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest">Library Member of {groupId}</span>
-                            <h2 className="tw-text-xl tw-font-black tw-text-white">{initialData ? '코드 상세 정보 수정' : '신규 코드 항목 등록'}</h2>
+                            <span className="tw-text-xs tw-font-semibold tw-text-slate-400 tw-uppercase tw-tracking-widest">{groupId} 그룹의 하위 코드</span>
+                            <h2 className="tw-text-xl tw-font-bold tw-text-white">{initialData ? '코드 상세 정보 수정' : '신규 코드 항목 등록'}</h2>
                         </div>
                     </div>
                     <button className="tw-p-3 hover:tw-bg-white/5 tw-rounded-2xl tw-text-slate-500 hover:tw-text-white tw-transition-all" onClick={onClose}>
@@ -94,48 +94,48 @@ const CodeModal: React.FC<Props> = ({ isOpen, onClose, onSaved, groupId, initial
                 <form onSubmit={handleSubmit} className="tw-p-10 tw-grid tw-gap-8">
                     <div className="tw-grid tw-grid-cols-2 tw-gap-6">
                         <div className="tw-grid tw-gap-2">
-                            <label className="tw-text-xs tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest tw-px-1">Code Identifier</label>
+                            <label className="tw-text-xs tw-font-semibold tw-text-slate-400 tw-uppercase tw-tracking-widest tw-px-1">코드 식별자</label>
                             <input 
                                 type="text"
                                 value={formData.codeId}
                                 onChange={e => setFormData({...formData, codeId: e.target.value.toUpperCase().replace(/\s/g, '_')})}
                                 disabled={!!initialData}
-                                placeholder="Unique Sub-ID"
-                                className="tw-w-full tw-bg-white/[0.03] tw-border tw-border-white/5 tw-p-5 tw-rounded-2xl tw-text-slate-100 tw-font-mono tw-text-sm focus:tw-bg-white/[0.05] focus:tw-border-slate-500 tw-transition-all outline-none"
+                                placeholder="고유 하위 ID"
+                                className="tw-w-full tw-bg-white/[0.03] tw-border tw-border-white/5 tw-px-4 tw-py-3 tw-rounded-xl tw-text-slate-100 tw-font-mono tw-text-sm focus:tw-bg-white/[0.05] focus:tw-border-slate-500 tw-transition-all outline-none"
                                 required
                             />
                         </div>
                         <div className="tw-grid tw-gap-2">
-                            <label className="tw-text-xs tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest tw-px-1">Visual Order Index</label>
+                            <label className="tw-text-xs tw-font-semibold tw-text-slate-400 tw-uppercase tw-tracking-widest tw-px-1">정렬 순서</label>
                             <input 
                                 type="number"
                                 value={formData.sortOrder}
                                 onChange={e => setFormData({...formData, sortOrder: parseInt(e.target.value) || 0})}
-                                className="tw-w-full tw-bg-white/[0.03] tw-border tw-border-white/5 tw-p-5 tw-rounded-2xl tw-text-slate-100 tw-text-sm focus:tw-bg-white/[0.05] focus:tw-border-slate-500 tw-transition-all outline-none"
+                                className="tw-w-full tw-bg-white/[0.03] tw-border tw-border-white/5 tw-px-4 tw-py-3 tw-rounded-xl tw-text-slate-100 tw-text-sm focus:tw-bg-white/[0.05] focus:tw-border-slate-500 tw-transition-all outline-none"
                                 required
                             />
                         </div>
                     </div>
 
                     <div className="tw-grid tw-gap-2">
-                        <label className="tw-text-xs tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest tw-px-1">Display Label</label>
+                        <label className="tw-text-xs tw-font-semibold tw-text-slate-400 tw-uppercase tw-tracking-widest tw-px-1">표시 이름</label>
                         <input 
                             type="text"
                             value={formData.codeName}
                             onChange={e => setFormData({...formData, codeName: e.target.value})}
-                            placeholder="Human readable display name"
-                            className="tw-w-full tw-bg-white/[0.03] tw-border tw-border-white/5 tw-p-5 tw-rounded-2xl tw-text-slate-100 tw-text-sm focus:tw-bg-white/[0.05] focus:tw-border-slate-500 tw-transition-all outline-none"
+                            placeholder="화면 표시 이름"
+                            className="tw-w-full tw-bg-white/[0.03] tw-border tw-border-white/5 tw-px-4 tw-py-3 tw-rounded-xl tw-text-slate-100 tw-text-sm focus:tw-bg-white/[0.05] focus:tw-border-slate-500 tw-transition-all outline-none"
                             required
                         />
                     </div>
 
                     <div className="tw-grid tw-gap-2">
-                        <label className="tw-text-xs tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest tw-px-1">Semantic Attribute</label>
+                        <label className="tw-text-xs tw-font-semibold tw-text-slate-400 tw-uppercase tw-tracking-widest tw-px-1">상세 설명</label>
                         <textarea 
                             value={formData.description}
                             onChange={e => setFormData({...formData, description: e.target.value})}
-                            placeholder="Define the scope and meaning of this code item"
-                            className="tw-w-full tw-bg-white/[0.03] tw-border tw-border-white/10 tw-p-5 tw-rounded-2xl tw-text-slate-300 tw-text-sm tw-h-24 tw-resize-none focus:tw-bg-white/[0.05] focus:tw-border-slate-500 tw-transition-all outline-none"
+                            placeholder="코드 항목의 용도와 의미를 입력하세요."
+                            className="tw-w-full tw-bg-white/[0.03] tw-border tw-border-white/10 tw-px-4 tw-py-3 tw-rounded-xl tw-text-slate-300 tw-text-sm tw-h-24 tw-resize-none focus:tw-bg-white/[0.05] focus:tw-border-slate-500 tw-transition-all outline-none"
                         />
                     </div>
 
@@ -149,7 +149,7 @@ const CodeModal: React.FC<Props> = ({ isOpen, onClose, onSaved, groupId, initial
                         />
                         <div className="tw-flex tw-items-center tw-gap-3">
                             <Settings size={18} className="tw-text-slate-500" />
-                            <label htmlFor="isActiveCode" className="tw-text-xs tw-font-bold tw-text-slate-400 tw-cursor-pointer">
+                            <label htmlFor="isActiveCode" className="tw-text-xs tw-font-semibold tw-text-slate-400 tw-cursor-pointer">
                                 시스템 활성화 상태 (Active / Inactive)
                             </label>
                         </div>
@@ -158,17 +158,17 @@ const CodeModal: React.FC<Props> = ({ isOpen, onClose, onSaved, groupId, initial
                     <div className="tw-pt-6 tw-flex tw-gap-4">
                         <button 
                             type="button" 
-                            className="tw-flex-1 tw-py-5 tw-bg-white/5 hover:tw-bg-white/10 tw-text-slate-400 hover:tw-text-white tw-rounded-3xl tw-text-xs tw-font-black tw-uppercase tw-tracking-widest tw-transition-all"
+                            className="tw-flex-1 tw-py-4 tw-bg-white/5 hover:tw-bg-white/10 tw-text-slate-300 hover:tw-text-white tw-rounded-2xl tw-text-sm tw-font-bold tw-transition-all"
                             onClick={onClose}
                         >
-                            Abort Configuration
+                            취소
                         </button>
                         <button 
                             type="submit" 
-                            className="tw-flex-1 tw-py-5 tw-bg-slate-100 hover:tw-bg-white tw-text-slate-900 tw-rounded-3xl tw-text-xs tw-font-black tw-uppercase tw-tracking-widest tw-transition-all tw-flex tw-items-center tw-justify-center tw-gap-2"
+                            className="tw-flex-1 tw-py-4 tw-bg-slate-100 hover:tw-bg-white tw-text-slate-900 tw-rounded-2xl tw-text-sm tw-font-bold tw-transition-all tw-flex tw-items-center tw-justify-center tw-gap-2"
                             disabled={isSaving}
                         >
-                            <Save size={16} /> {isSaving ? 'Synchronizing...' : (initialData ? 'Commit Delta' : 'Push to Registry')}
+                            <Save size={16} /> {isSaving ? '동기화 중...' : (initialData ? '변경 사항 저장' : '신규 등록')}
                         </button>
                     </div>
                 </form>

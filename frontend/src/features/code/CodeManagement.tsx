@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-    Plus, Edit2, Trash2, Shield, Database, List, 
+    Plus, Edit2, Trash2, Database,  
     ChevronRight, Search, LayoutGrid, ArrowLeft 
 } from 'lucide-react';
-import { apiCommonCode } from '../../api/apiCommonCode';
-import type { CodeGroup, CommonCode } from '../../api/apiCommonCode';
+import { apiCommonCode } from './api/apiCommonCode';
+import type { CodeGroup, CommonCode } from './api/apiCommonCode';
 import CodeGroupModal from './CodeGroupModal';
 import CodeModal from './CodeModal';
 
@@ -104,8 +104,8 @@ const CodeManagement: React.FC = () => {
                 <div className="tw-flex tw-justify-between tw-items-center">
                     <div className="tw-flex tw-items-center tw-gap-8">
                         <div>
-                            <h1 className="tw-text-2xl tw-font-black tw-text-white tw-tracking-tight">시스템 마스터 거버넌스</h1>
-                            <p className="tw-text-slate-500 tw-text-[10px] tw-font-bold tw-uppercase tw-tracking-widest tw-mt-1">System Metadata & Registry Architecture</p>
+                            <h1 className="tw-text-2xl tw-font-black tw-text-white tw-tracking-tight">코드그룹/코드</h1>
+                            <p className="tw-text-slate-400 tw-text-xs tw-font-semibold tw-uppercase tw-tracking-widest tw-mt-1">시스템 공통 코드 관리</p>
                         </div>
                         
                         <div className="tw-w-px tw-h-12 tw-bg-white/10" />
@@ -118,7 +118,7 @@ const CodeManagement: React.FC = () => {
                                     level === 'group' ? 'tw-bg-slate-800 tw-text-white tw-shadow-lg' : 'tw-text-slate-500 hover:tw-text-slate-300'
                                 }`}
                             >
-                                <LayoutGrid size={16} /> 코드 그룹 뱅크
+                                <LayoutGrid size={16} /> 코드 그룹
                             </button>
                             
                             {level === 'code' && selectedGroup && (
@@ -137,7 +137,7 @@ const CodeManagement: React.FC = () => {
                             <Search className="tw-absolute tw-left-4 tw-top-1/2 tw-translate-y-[-50%] tw-text-slate-600" size={16} />
                             <input 
                                 type="text"
-                                placeholder={level === 'group' ? "Search groups..." : "Search items in this vault..."}
+                                placeholder={level === 'group' ? "그룹 검색..." : "코드 검색..."}
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="tw-bg-black/20 tw-border tw-border-white/5 tw-pl-12 tw-pr-6 tw-py-3 tw-rounded-[18px] tw-text-sm tw-text-white tw-w-80 focus:tw-border-slate-500 tw-transition-all outline-none tw-placeholder-slate-700"
@@ -149,7 +149,7 @@ const CodeManagement: React.FC = () => {
                                 className="tw-bg-slate-50 hover:tw-bg-white tw-text-slate-900 tw-px-6 tw-py-3.5 tw-rounded-2xl tw-text-xs tw-font-black tw-flex tw-items-center tw-gap-2 tw-transition-all tw-shadow-xl"
                                 onClick={() => { setEditingGroup(undefined); setIsGroupModalOpen(true); }}
                             >
-                                <Plus size={18} /> 신규 그룹 등록
+                                <Plus size={18} /> 코드 그룹 등록
                             </button>
                         ) : (
                             <button 
@@ -172,11 +172,11 @@ const CodeManagement: React.FC = () => {
                     exit={{ opacity: 0, y: -20 }}
                     transition={{ duration: 0.3 }}
                 >
-                    <div className="tw-bg-slate-900/40 tw-border tw-border-white/5 tw-rounded-[48px] tw-overflow-hidden tw-backdrop-blur-3xl tw-shadow-2xl">
+                    <div className="tw-bg-slate-900/40 tw-border tw-border-white/5 tw-rounded-none tw-overflow-hidden tw-backdrop-blur-3xl tw-shadow-2xl">
                         {loading ? (
-                            <div className="tw-p-40 tw-text-center">
+                            <div className="tw-py-24 tw-px-8 tw-text-center">
                                 <div className="tw-inline-block tw-animate-spin tw-w-12 tw-h-12 tw-border-4 tw-border-white/5 tw-border-t-slate-500 tw-rounded-full tw-mb-6" />
-                                <h3 className="tw-text-xs tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-[0.5em]">Synchronizing Master Data...</h3>
+                                <h3 className="tw-text-xs tw-font-semibold tw-text-slate-400 tw-uppercase tw-tracking-[0.5em]">데이터 동기화 중...</h3>
                             </div>
                         ) : (
                             <div className="tw-overflow-x-auto">
@@ -185,20 +185,19 @@ const CodeManagement: React.FC = () => {
                                         <tr className="tw-bg-white/[0.02]">
                                             {level === 'group' ? (
                                                 <>
-                                                    <th className="tw-p-8 tw-text-[11px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest tw-border-b tw-border-white/5">Vault ID</th>
-                                                    <th className="tw-p-8 tw-text-[11px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest tw-border-b tw-border-white/5">Metadata Name</th>
-                                                    <th className="tw-p-8 tw-text-[11px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest tw-border-b tw-border-white/5">Description Architecture</th>
-                                                    <th className="tw-p-8 tw-text-[11px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest tw-border-b tw-border-white/5">Protocol</th>
-                                                    <th className="tw-p-8 tw-text-[11px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest tw-border-b tw-border-white/5 tw-text-right">Administration</th>
+                                                    <th className="tw-px-6 tw-py-4 tw-text-xs tw-font-semibold tw-text-slate-400 tw-uppercase tw-tracking-widest tw-border-b tw-border-white/5 tw-text-center">코드그룹 ID</th>
+                                                    <th className="tw-px-6 tw-py-4 tw-text-xs tw-font-semibold tw-text-slate-400 tw-uppercase tw-tracking-widest tw-border-b tw-border-white/5 tw-text-center">코드그룹 명</th>
+                                                    <th className="tw-px-6 tw-py-4 tw-text-xs tw-font-semibold tw-text-slate-400 tw-uppercase tw-tracking-widest tw-border-b tw-border-white/5 tw-text-center">설명</th>
+                                                    <th className="tw-px-6 tw-py-4 tw-text-xs tw-font-semibold tw-text-slate-400 tw-uppercase tw-tracking-widest tw-border-b tw-border-white/5 tw-text-center">Action</th>
                                                 </>
                                             ) : (
                                                 <>
-                                                    <th className="tw-p-8 tw-text-[11px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest tw-border-b tw-border-white/5">Order</th>
-                                                    <th className="tw-p-8 tw-text-[11px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest tw-border-b tw-border-white/5">Code Identifier</th>
-                                                    <th className="tw-p-8 tw-text-[11px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest tw-border-b tw-border-white/5">Display Name</th>
-                                                    <th className="tw-p-8 tw-text-[11px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest tw-border-b tw-border-white/5">Description</th>
-                                                    <th className="tw-p-8 tw-text-[11px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest tw-border-b tw-border-white/5">Operational Status</th>
-                                                    <th className="tw-p-8 tw-text-[11px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest tw-border-b tw-border-white/5 tw-text-right">Actions</th>
+                                                    <th className="tw-px-6 tw-py-4 tw-text-xs tw-font-semibold tw-text-slate-400 tw-uppercase tw-tracking-widest tw-border-b tw-border-white/5 tw-text-center">순서</th>
+                                                    <th className="tw-px-6 tw-py-4 tw-text-xs tw-font-semibold tw-text-slate-400 tw-uppercase tw-tracking-widest tw-border-b tw-border-white/5 tw-text-center">코드 ID</th>
+                                                    <th className="tw-px-6 tw-py-4 tw-text-xs tw-font-semibold tw-text-slate-400 tw-uppercase tw-tracking-widest tw-border-b tw-border-white/5 tw-text-center">코드 명</th>
+                                                    <th className="tw-px-6 tw-py-4 tw-text-xs tw-font-semibold tw-text-slate-400 tw-uppercase tw-tracking-widest tw-border-b tw-border-white/5 tw-text-center">설명</th>
+                                                    <th className="tw-px-6 tw-py-4 tw-text-xs tw-font-semibold tw-text-slate-400 tw-uppercase tw-tracking-widest tw-border-b tw-border-white/5 tw-text-center">상태</th>
+                                                    <th className="tw-px-6 tw-py-4 tw-text-xs tw-font-semibold tw-text-slate-400 tw-uppercase tw-tracking-widest tw-border-b tw-border-white/5 tw-text-center">Action</th>
                                                 </>
                                             )}
                                         </tr>
@@ -207,44 +206,31 @@ const CodeManagement: React.FC = () => {
                                         {level === 'group' ? (
                                             filteredGroups.map((g) => (
                                                 <tr key={g.groupId} className="group hover:tw-bg-white/[0.02] tw-transition-all">
-                                                    <td className="tw-p-8">
-                                                        <span className={`tw-px-3 tw-py-1.5 tw-rounded-lg tw-text-[10px] tw-font-black tw-border tw-border-white/5 ${
-                                                            g.isSystem ? 'tw-bg-slate-500 tw-text-white' : 'tw-bg-slate-800 tw-text-slate-400'
-                                                        }`}>
+                                                    <td className="tw-px-6 tw-py-4">
+                                                        <span className="tw-text-xs tw-font-bold tw-font-mono tw-text-slate-500">
                                                             {g.groupId}
                                                         </span>
                                                     </td>
-                                                    <td className="tw-p-8">
+                                                    <td className="tw-px-6 tw-py-4">
                                                         <div className="tw-flex tw-items-center tw-gap-3">
                                                             <div className="tw-w-2 tw-h-2 tw-rounded-full tw-bg-indigo-500 tw-shadow-[0_0_10px_rgba(99,102,241,0.5)]" />
-                                                            <span className="tw-text-base tw-font-black tw-text-white group-hover:tw-text-indigo-400 tw-transition-colors">{g.name}</span>
+                                                            <span className="tw-text-sm tw-font-bold tw-text-white group-hover:tw-text-indigo-400 tw-transition-colors">{g.name}</span>
                                                         </div>
                                                     </td>
-                                                    <td className="tw-p-8 tw-text-sm tw-text-slate-500 tw-font-medium">{g.description || 'No system description set'}</td>
-                                                    <td className="tw-p-8">
-                                                        {g.isSystem ? (
-                                                            <span className="tw-flex tw-items-center tw-gap-2 tw-text-xs tw-font-black tw-text-slate-600">
-                                                                <Shield size={14} /> SYSTEM LOCKED
-                                                            </span>
-                                                        ) : (
-                                                            <span className="tw-flex tw-items-center tw-gap-2 tw-text-xs tw-font-black tw-text-emerald-500/50">
-                                                                <Edit2 size={14} /> USER DEFINED
-                                                            </span>
-                                                        )}
-                                                    </td>
-                                                    <td className="tw-p-8">
+                                                    <td className="tw-px-6 tw-py-4 tw-text-sm tw-text-slate-400">{g.description || '설명이 없습니다.'}</td>
+                                                    <td className="tw-px-6 tw-py-4">
                                                         <div className="tw-flex tw-justify-end tw-items-center tw-gap-4">
-                                                            <button 
-                                                                className="tw-flex tw-items-center tw-gap-2 tw-bg-white/5 hover:tw-bg-white/10 tw-text-white tw-px-5 tw-py-2.5 tw-rounded-xl tw-text-xs tw-font-black tw-transition-all"
-                                                                onClick={() => handleEnterGroup(g)}
-                                                            >
-                                                                Explore Codes <ChevronRight size={14} />
-                                                            </button>
                                                             <button 
                                                                 className="tw-p-2.5 tw-bg-white/5 hover:tw-bg-white/10 tw-text-slate-400 hover:tw-text-white tw-rounded-xl tw-transition-all"
                                                                 onClick={() => { setEditingGroup(g); setIsGroupModalOpen(true); }}
                                                             >
                                                                 <Edit2 size={16} />
+                                                            </button>
+                                                            <button 
+                                                                className="tw-flex tw-items-center tw-gap-2 tw-bg-white/5 hover:tw-bg-white/10 tw-text-white tw-px-5 tw-py-2.5 tw-rounded-xl tw-text-xs tw-font-semibold tw-transition-all"
+                                                                onClick={() => handleEnterGroup(g)}
+                                                            >
+                                                                코드 보기 <ChevronRight size={14} />
                                                             </button>
                                                             {!g.isSystem && (
                                                                 <button 
@@ -261,22 +247,22 @@ const CodeManagement: React.FC = () => {
                                         ) : (
                                             filteredCodes.map((c) => (
                                                 <tr key={c.id} className="hover:tw-bg-white/[0.01] tw-transition-all">
-                                                    <td className="tw-p-8 tw-text-xs tw-font-mono tw-text-slate-600">#{c.sortOrder.toString().padStart(2, '0')}</td>
-                                                    <td className="tw-p-8">
-                                                        <span className="tw-px-3 tw-py-1.5 tw-bg-slate-800 tw-border tw-border-white/5 tw-text-slate-400 tw-rounded-xl tw-text-[10px] tw-font-black">
+                                                    <td className="tw-px-6 tw-py-4 tw-text-xs tw-font-mono tw-text-slate-500">#{c.sortOrder.toString().padStart(2, '0')}</td>
+                                                    <td className="tw-px-6 tw-py-4">
+                                                        <span className="tw-text-xs tw-font-bold tw-font-mono tw-text-slate-500">
                                                             {c.codeId}
                                                         </span>
                                                     </td>
-                                                    <td className="tw-p-8 tw-text-sm tw-font-black tw-text-white">{c.codeName}</td>
-                                                    <td className="tw-p-8 tw-text-xs tw-text-slate-500 tw-max-w-md tw-truncate">{c.description || '-'}</td>
-                                                    <td className="tw-p-8">
-                                                        <span className={`tw-px-4 tw-py-1.5 tw-rounded-full tw-text-[10px] tw-font-black tw-tracking-[0.1em] ${
+                                                    <td className="tw-px-6 tw-py-4 tw-text-sm tw-font-bold tw-text-white">{c.codeName}</td>
+                                                    <td className="tw-px-6 tw-py-4 tw-text-sm tw-text-slate-400 tw-max-w-md tw-truncate">{c.description || '-'}</td>
+                                                    <td className="tw-px-6 tw-py-4">
+                                                        <span className={`tw-px-4 tw-py-1.5 tw-rounded-full tw-text-xs tw-font-semibold tw-tracking-[0.05em] ${
                                                             c.isActive ? 'tw-bg-emerald-500/10 tw-text-emerald-400' : 'tw-bg-slate-800 tw-text-slate-500'
                                                         }`}>
-                                                            {c.isActive ? '• OPERATIONAL' : '• OFFLINE'}
+                                                            {c.isActive ? '• 사용 중' : '• 미사용'}
                                                         </span>
                                                     </td>
-                                                    <td className="tw-p-8">
+                                                    <td className="tw-px-6 tw-py-4">
                                                         <div className="tw-flex tw-justify-end tw-gap-3">
                                                             <button 
                                                                 className="tw-p-2.5 tw-bg-slate-800 hover:tw-bg-slate-700 tw-rounded-xl tw-text-slate-400 hover:tw-text-white tw-transition-all tw-border tw-border-white/5"
@@ -296,12 +282,10 @@ const CodeManagement: React.FC = () => {
                                             ))
                                         )}
                                         {((level === 'group' && filteredGroups.length === 0) || (level === 'code' && filteredCodes.length === 0)) && (
-                                            <tr>
-                                                <td colSpan={6} className="tw-p-40 tw-text-center">
+                                                <td colSpan={6} className="tw-py-24 tw-px-8 tw-text-center">
                                                     <div className="tw-opacity-10 tw-mb-6 tw-flex tw-justify-center"><Database size={80} /></div>
-                                                    <h3 className="tw-text-xl tw-font-black tw-text-slate-700 tw-uppercase tw-tracking-[1em]">Vault Empty</h3>
+                                                    <h3 className="tw-text-lg tw-font-semibold tw-text-slate-500 tw-uppercase tw-tracking-[0.5em]">조회된 코드가 없습니다.</h3>
                                                 </td>
-                                            </tr>
                                         )}
                                     </tbody>
                                 </table>

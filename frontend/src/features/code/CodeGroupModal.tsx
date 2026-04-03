@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, X, Save, AlertTriangle } from 'lucide-react';
-import { apiCommonCode } from '../../api/apiCommonCode';
-import type { CodeGroup } from '../../api/apiCommonCode';
+import { apiCommonCode } from './api/apiCommonCode';
+import type { CodeGroup } from './api/apiCommonCode';
 
 interface Props {
     isOpen: boolean;
@@ -77,8 +77,8 @@ const CodeGroupModal: React.FC<Props> = ({ isOpen, onClose, onSaved, initialData
                             <Shield size={24} />
                         </div>
                         <div>
-                            <span className="tw-text-[10px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest">Master Metadata</span>
-                            <h2 className="tw-text-xl tw-font-black tw-text-white">{initialData ? '코드 그룹 정보 수정' : '신규 그룹 마스터 등록'}</h2>
+                            <span className="tw-text-xs tw-font-semibold tw-text-slate-400 tw-uppercase tw-tracking-widest">마스터 메타데이터</span>
+                            <h2 className="tw-text-xl tw-font-bold tw-text-white">{initialData ? '코드 그룹 정보 수정' : '신규 그룹 마스터 등록'}</h2>
                         </div>
                     </div>
                     <button className="tw-p-3 hover:tw-bg-white/5 tw-rounded-2xl tw-text-slate-500 hover:tw-text-white tw-transition-all" onClick={onClose}>
@@ -88,37 +88,37 @@ const CodeGroupModal: React.FC<Props> = ({ isOpen, onClose, onSaved, initialData
 
                 <form onSubmit={handleSubmit} className="tw-p-10 tw-grid tw-gap-8">
                     <div className="tw-grid tw-gap-2">
-                        <label className="tw-text-xs tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest tw-px-1">Identification ID</label>
+                        <label className="tw-text-xs tw-font-semibold tw-text-slate-400 tw-uppercase tw-tracking-widest tw-px-1">그룹 식별 ID</label>
                         <input 
                             type="text"
                             value={formData.groupId}
                             onChange={e => setFormData({...formData, groupId: e.target.value.toUpperCase()})}
                             disabled={!!initialData}
-                            placeholder="Unique Master ID (e.g., ERR_LEVEL)"
-                            className="tw-w-full tw-bg-white/[0.03] tw-border tw-border-white/5 tw-p-5 tw-rounded-2xl tw-text-slate-100 tw-font-mono tw-text-sm tw-placeholder-slate-700 focus:tw-bg-white/[0.05] focus:tw-border-slate-500 tw-transition-all outline-none"
+                            placeholder="고유 마스터 ID (예: ERR_LEVEL)"
+                            className="tw-w-full tw-bg-white/[0.03] tw-border tw-border-white/5 tw-px-4 tw-py-3 tw-rounded-xl tw-text-slate-100 tw-font-mono tw-text-sm tw-placeholder-slate-700 focus:tw-bg-white/[0.05] focus:tw-border-slate-500 tw-transition-all outline-none"
                             required
                         />
                     </div>
 
                     <div className="tw-grid tw-gap-2">
-                        <label className="tw-text-xs tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest tw-px-1">Visual Display Name</label>
+                        <label className="tw-text-xs tw-font-semibold tw-text-slate-400 tw-uppercase tw-tracking-widest tw-px-1">화면 표시 이름</label>
                         <input 
                             type="text"
                             value={formData.name}
                             onChange={e => setFormData({...formData, name: e.target.value})}
-                            placeholder="Display moniker to human operators"
-                            className="tw-w-full tw-bg-white/[0.03] tw-border tw-border-white/5 tw-p-5 tw-rounded-2xl tw-text-slate-100 tw-text-sm tw-placeholder-slate-700 focus:tw-bg-white/[0.05] focus:tw-border-slate-500 tw-transition-all outline-none"
+                            placeholder="운영자에게 표시될 이름"
+                            className="tw-w-full tw-bg-white/[0.03] tw-border tw-border-white/5 tw-px-4 tw-py-3 tw-rounded-xl tw-text-slate-100 tw-text-sm tw-placeholder-slate-700 focus:tw-bg-white/[0.05] focus:tw-border-slate-500 tw-transition-all outline-none"
                             required
                         />
                     </div>
 
                     <div className="tw-grid tw-gap-2">
-                        <label className="tw-text-xs tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest tw-px-1">Context Specification</label>
+                        <label className="tw-text-xs tw-font-semibold tw-text-slate-400 tw-uppercase tw-tracking-widest tw-px-1">상세 설명</label>
                         <textarea 
                             value={formData.description}
                             onChange={e => setFormData({...formData, description: e.target.value})}
-                            placeholder="Provide operational context for this metadata group"
-                            className="tw-w-full tw-bg-white/[0.03] tw-border tw-border-white/10 tw-p-5 tw-rounded-2xl tw-text-slate-300 tw-text-sm tw-h-32 tw-resize-none tw-placeholder-slate-700 focus:tw-bg-white/[0.05] focus:tw-border-slate-500 tw-transition-all outline-none"
+                            placeholder="코드 그룹에 대한 상세 설명을 입력하세요."
+                            className="tw-w-full tw-bg-white/[0.03] tw-border tw-border-white/10 tw-px-4 tw-py-3 tw-rounded-xl tw-text-slate-300 tw-text-sm tw-h-32 tw-resize-none tw-placeholder-slate-700 focus:tw-bg-white/[0.05] focus:tw-border-slate-500 tw-transition-all outline-none"
                         />
                     </div>
 
@@ -132,7 +132,7 @@ const CodeGroupModal: React.FC<Props> = ({ isOpen, onClose, onSaved, initialData
                         />
                         <div className="tw-flex tw-items-center tw-gap-3">
                             <AlertTriangle size={18} className="tw-text-amber-500/50" />
-                            <label htmlFor="isSystem" className="tw-text-xs tw-font-bold tw-text-slate-400 tw-cursor-pointer">
+                            <label htmlFor="isSystem" className="tw-text-xs tw-font-semibold tw-text-slate-400 tw-cursor-pointer">
                                 시스템 보호 모드 활성화 (삭제 제한)
                             </label>
                         </div>
@@ -141,17 +141,17 @@ const CodeGroupModal: React.FC<Props> = ({ isOpen, onClose, onSaved, initialData
                     <div className="tw-pt-6 tw-flex tw-gap-4">
                         <button 
                             type="button" 
-                            className="tw-flex-1 tw-py-5 tw-bg-white/5 hover:tw-bg-white/10 tw-text-slate-400 hover:tw-text-white tw-rounded-3xl tw-text-xs tw-font-black tw-uppercase tw-tracking-widest tw-transition-all"
+                            className="tw-flex-1 tw-py-4 tw-bg-white/5 hover:tw-bg-white/10 tw-text-slate-300 hover:tw-text-white tw-rounded-2xl tw-text-sm tw-font-bold tw-transition-all"
                             onClick={onClose}
                         >
-                            Cancel Abort
+                            취소
                         </button>
                         <button 
                             type="submit" 
-                            className="tw-flex-1 tw-py-5 tw-bg-slate-100 hover:tw-bg-white tw-text-slate-900 tw-rounded-3xl tw-text-xs tw-font-black tw-uppercase tw-tracking-widest tw-transition-all tw-flex tw-items-center tw-justify-center tw-gap-2"
+                            className="tw-flex-1 tw-py-4 tw-bg-slate-100 hover:tw-bg-white tw-text-slate-900 tw-rounded-2xl tw-text-sm tw-font-bold tw-transition-all tw-flex tw-items-center tw-justify-center tw-gap-2"
                             disabled={isSaving}
                         >
-                            <Save size={16} /> {isSaving ? 'Processing...' : (initialData ? 'Update Manifest' : 'Confirm Entry')}
+                            <Save size={16} /> {isSaving ? '처리 중...' : (initialData ? '정보 업데이트' : '신규 등록 확인')}
                         </button>
                     </div>
                 </form>
