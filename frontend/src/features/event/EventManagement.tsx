@@ -207,14 +207,14 @@ const EventManagement: React.FC = () => {
 
             {/* Content Section Area */}
             <div className="tw-space-y-6">
-                <div className="tw-flex tw-items-center tw-justify-between tw-sticky tw-top-[-32px] tw-z-[100] tw-py-4 tw-px-2 tw-bg-obsidian tw-bg-opacity-95 tw-backdrop-blur-2xl tw-border-b tw-border-white tw-border-opacity-10 tw-shadow-2xl">
+                <div className="tw-flex tw-flex-wrap tw-items-center tw-justify-between tw-sticky tw-top-[-32px] tw-z-[100] tw-py-4 tw-px-2 tw-bg-obsidian tw-bg-opacity-95 tw-backdrop-blur-2xl tw-border-b tw-border-white tw-border-opacity-10 tw-shadow-2xl tw-gap-y-4">
                     <div className="tw-flex tw-items-center tw-gap-4">
                         <div className="tw-relative">
                             <Search size={16} className="tw-absolute tw-left-3 tw-top-1/2 tw-transform -tw-translate-y-1/2 tw-text-muted" />
                             <input 
                                 type="text" 
-                                placeholder="Search events..." 
-                                className="tw-bg-white tw-bg-opacity-5 tw-border tw-border-white tw-border-opacity-10 tw-rounded-lg tw-pl-10 tw-pr-4 tw-py-2 tw-text-sm tw-w-64 focus:tw-outline-none focus:tw-border-brand-500 active:tw-bg-opacity-10 tw-transition-all"
+                                placeholder="Search..." 
+                                className="tw-bg-white tw-bg-opacity-5 tw-border tw-border-white tw-border-opacity-10 tw-rounded-lg tw-pl-10 tw-pr-4 tw-py-2 tw-text-sm tw-w-48 focus:tw-outline-none focus:tw-border-brand-500 active:tw-bg-opacity-10 tw-transition-all"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
