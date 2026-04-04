@@ -29,3 +29,5 @@ backend-system/bin/
 backend-dashboard/bin/
 backend-incident/.gradle/
 tmp/
+docker-compose.yml
+e2e/test-results/

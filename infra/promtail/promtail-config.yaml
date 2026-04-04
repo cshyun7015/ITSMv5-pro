@@ -26,6 +26,9 @@ scrape_configs:
         target_label: 'container'
       - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
         target_label: 'service'
+      # [추가 부분] Docker 레이블을 Loki 레이블로 변환
+      - source_labels: ['__meta_docker_container_label_companyId']
+        target_label: 'companyId'  # <-- 이제 Grafana에서 이 필드로 필터링 가능
     
     pipeline_stages:
       - docker: {}
