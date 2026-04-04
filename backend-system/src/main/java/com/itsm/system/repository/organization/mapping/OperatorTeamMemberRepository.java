@@ -12,6 +12,9 @@ public interface OperatorTeamMemberRepository extends JpaRepository<OperatorTeam
     List<OperatorTeamMember> findByOperatorId(Long operatorId);
     List<OperatorTeamMember> findByOperatorTeamId(Long operatorTeamId);
 
+    void deleteByOperatorId(Long operatorId);
+    void deleteByOperatorTeamId(Long operatorTeamId);
+
     @org.springframework.data.jpa.repository.Query("SELECT COUNT(tm) FROM OperatorTeamMember tm WHERE tm.operatorTeam.operatorCompany.id = :companyId")
     long countByCompanyId(Long companyId);
 }

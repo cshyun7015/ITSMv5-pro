@@ -7,7 +7,6 @@ import com.itsm.system.domain.organization.operator.Operator;
 import com.itsm.system.repository.organization.customer.CustomerCompanyRepository;
 import com.itsm.system.repository.organization.customer.CustomerTeamRepository;
 import com.itsm.system.repository.organization.customer.CustomerUserRepository;
-import com.itsm.system.repository.organization.operator.OperatorCompanyRepository;
 import com.itsm.system.repository.organization.operator.OperatorRepository;
 import com.itsm.system.dto.auth.LoginRequest;
 import com.itsm.system.dto.auth.SignupRequest;
@@ -16,7 +15,6 @@ import com.itsm.system.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,13 +27,12 @@ public class AuthService {
     private final OperatorRepository operatorRepository;
     private final CustomerUserRepository customerUserRepository;
     private final CustomerTeamRepository customerTeamRepository;
-    private final OperatorCompanyRepository operatorCompanyRepository;
     private final CustomerCompanyRepository customerCompanyRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider tokenProvider;
 
     public AuthResponse login(LoginRequest request) {
-        Authentication authentication = authenticationManager.authenticate(
+        authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getUserId(), request.getPassword())
         );
 

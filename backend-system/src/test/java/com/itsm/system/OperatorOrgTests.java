@@ -7,10 +7,10 @@ import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -72,8 +72,8 @@ public class OperatorOrgTests {
         assertThat(teamId).isNotNull();
 
         // 2. List Teams by Company
-        ResponseEntity<List> listResponse = restTemplate.getForEntity(
-                "/api/v1/organization/operators/companies/" + companyId + "/teams", List.class);
+        ResponseEntity<List<OperatorTeamDTO>> listResponse = restTemplate.exchange(
+                "/api/v1/organization/operators/companies/" + companyId + "/teams", HttpMethod.GET, null, new ParameterizedTypeReference<List<OperatorTeamDTO>>() {});
         assertThat(listResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(listResponse.getBody()).isNotEmpty();
     }
@@ -106,8 +106,8 @@ public class OperatorOrgTests {
                 .name("No Pass User")
                 .role("ROLE_OPER")
                 .build();
-        ResponseEntity<Map> failResponse = restTemplate.postForEntity(
-                "/api/v1/organization/operators/teams/" + teamId + "/operators", noPassDto, Map.class);
+        ResponseEntity<Object> failResponse = restTemplate.postForEntity(
+                "/api/v1/organization/operators/teams/" + teamId + "/operators", noPassDto, Object.class);
         assertThat(failResponse.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
 
         // 3. Validate role existence (Failure Test)
@@ -117,8 +117,8 @@ public class OperatorOrgTests {
                 .name("Fake Role User")
                 .role("ROLE_HACKER") // Invalid code
                 .build();
-        ResponseEntity<Map> roleFailResponse = restTemplate.postForEntity(
-                "/api/v1/organization/operators/teams/" + teamId + "/operators", invalidRoleDto, Map.class);
+        ResponseEntity<Object> roleFailResponse = restTemplate.postForEntity(
+                "/api/v1/organization/operators/teams/" + teamId + "/operators", invalidRoleDto, Object.class);
         assertThat(roleFailResponse.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
@@ -130,12 +130,12 @@ public class OperatorOrgTests {
         assertThat(teamId).isNotNull();
 
         // Verify operator is in the team list
-        ResponseEntity<List> teamOpsResponse = restTemplate.getForEntity(
-                "/api/v1/organization/operators/teams/" + teamId + "/operators", List.class);
+        ResponseEntity<List<OperatorDTO>> teamOpsResponse = restTemplate.exchange(
+                "/api/v1/organization/operators/teams/" + teamId + "/operators", HttpMethod.GET, null, new ParameterizedTypeReference<List<OperatorDTO>>() {});
         
         assertThat(teamOpsResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
-        List<Map<String, Object>> ops = (List<Map<String, Object>>) teamOpsResponse.getBody();
-        boolean found = ops.stream().anyMatch(o -> o.get("id").toString().equals(operatorId.toString()));
+        List<OperatorDTO> ops = teamOpsResponse.getBody();
+        boolean found = ops.stream().anyMatch(o -> o.getId().equals(operatorId));
         assertThat(found).isTrue();
     }
 }

@@ -7,6 +7,8 @@ import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -74,8 +76,8 @@ public class CustomerOrgTests {
         assertThat(teamId).isNotNull();
 
         // 2. List Teams
-        ResponseEntity<List> listResponse = restTemplate.getForEntity(
-                BASE_URL + "/companies/" + companyId + "/teams", List.class);
+        ResponseEntity<List<CustomerTeamDTO>> listResponse = restTemplate.exchange(
+                BASE_URL + "/companies/" + companyId + "/teams", HttpMethod.GET, null, new ParameterizedTypeReference<List<CustomerTeamDTO>>() {});
         assertThat(listResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(listResponse.getBody()).isNotEmpty();
     }

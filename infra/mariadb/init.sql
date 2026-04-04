@@ -1,20 +1,32 @@
--- Database Schema Initialization for ITSM v5 (Unified MariaDB)
--- Each service has its own logical schema (database) for isolation.
+-- =============================================================================
+-- Database Schema Initialization for ITSM v5 (Unified Version)
+-- Location: infra/mariadb/init.sql
+-- =============================================================================
 
--- Common / Shared Schema
+-- -----------------------------------------------------------------------------
+-- 1. Database & Privilege Setup
+-- -----------------------------------------------------------------------------
 CREATE DATABASE IF NOT EXISTS itsm_common;
 GRANT ALL PRIVILEGES ON itsm_common.* TO 'root'@'%';
 
--- Request Management Service Schema
 CREATE DATABASE IF NOT EXISTS request_mgmt;
 GRANT ALL PRIVILEGES ON request_mgmt.* TO 'root'@'%';
 
--- Incident Management Service Schema
 CREATE DATABASE IF NOT EXISTS incident_mgmt;
 GRANT ALL PRIVILEGES ON incident_mgmt.* TO 'root'@'%';
 
-USE request_mgmt;
+CREATE DATABASE IF NOT EXISTS event_mgmt;
+GRANT ALL PRIVILEGES ON event_mgmt.* TO 'root'@'%';
 
+CREATE DATABASE IF NOT EXISTS system_mgmt;
+GRANT ALL PRIVILEGES ON system_mgmt.* TO 'root'@'%';
+
+FLUSH PRIVILEGES;
+
+-- -----------------------------------------------------------------------------
+-- 2. Request Management Schema
+-- -----------------------------------------------------------------------------
+USE request_mgmt;
 
 CREATE TABLE IF NOT EXISTS requests (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -56,7 +68,6 @@ CREATE TABLE IF NOT EXISTS request_comments (
     CONSTRAINT fk_comment_request FOREIGN KEY (request_id) REFERENCES requests(id) ON DELETE CASCADE
 );
 
--- Storage for attachments (as BLOB in table)
 CREATE TABLE IF NOT EXISTS attachments (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     request_id BIGINT NOT NULL,
@@ -68,215 +79,9 @@ CREATE TABLE IF NOT EXISTS attachments (
     CONSTRAINT fk_attachment_request FOREIGN KEY (request_id) REFERENCES requests(id) ON DELETE CASCADE
 );
 
--- System Administration Service Schema
-CREATE DATABASE IF NOT EXISTS system_mgmt;
-GRANT ALL PRIVILEGES ON system_mgmt.* TO 'root'@'%';
-USE system_mgmt;
-
-
-FLUSH PRIVILEGES;
-
--- Event Management Service Schema
-CREATE DATABASE IF NOT EXISTS event_mgmt;
-GRANT ALL PRIVILEGES ON event_mgmt.* TO 'root'@'%';
-USE event_mgmt;
-
-CREATE TABLE IF NOT EXISTS events (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    event_number VARCHAR(50) NOT NULL UNIQUE,
-    company_id VARCHAR(50) NOT NULL,
-    source_code VARCHAR(50) NOT NULL,
-    category_code VARCHAR(50), -- ITIL Category (Informational, Warning, Exception)
-    node VARCHAR(200),
-    severity_code VARCHAR(50) NOT NULL,
-    message TEXT NOT NULL,
-    event_details LONGTEXT, -- Raw payload / specific change details
-    status_code VARCHAR(50) DEFAULT 'NEW',
-    fingerprint VARCHAR(100), -- Unique identifier from Grafana/Alertmanager
-    related_request_id VARCHAR(50),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_evt_company (company_id),
-    INDEX idx_evt_status (status_code),
-    INDEX idx_evt_fingerprint (fingerprint)
-);
-
-USE system_mgmt;
-
-FLUSH PRIVILEGES;
-
-
--- Code Groups (Header)
-CREATE TABLE IF NOT EXISTS code_groups (
-    group_id VARCHAR(50) PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    description TEXT,
-    is_system BOOLEAN DEFAULT FALSE, -- Protect from deletion
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
-
--- Common Codes (Lines)
-CREATE TABLE IF NOT EXISTS common_codes (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    group_id VARCHAR(50) NOT NULL,
-    code_id VARCHAR(50) NOT NULL,
-    code_name VARCHAR(100) NOT NULL,
-    description TEXT,
-    sort_order INT DEFAULT 0,
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    UNIQUE KEY uk_group_code (group_id, code_id),
-    CONSTRAINT fk_common_code_group FOREIGN KEY (group_id) REFERENCES code_groups(group_id) ON DELETE CASCADE
-);
-
--- Companies Table (Customer Management)
-CREATE TABLE IF NOT EXISTS companies (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    company_id VARCHAR(50) NOT NULL UNIQUE,
-    name VARCHAR(200) NOT NULL,
-    business_number VARCHAR(50),
-    representative_name VARCHAR(100),
-    phone VARCHAR(50),
-    email VARCHAR(100),
-    address TEXT,
-    status VARCHAR(20) DEFAULT 'ACTIVE',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
-
--- Users Table (System Management with Spring Security compatibility)
-CREATE TABLE IF NOT EXISTS users (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    user_id VARCHAR(50) NOT NULL UNIQUE,  -- Login ID
-    password VARCHAR(255) NOT NULL,        -- Hashed Password
-    name VARCHAR(100) NOT NULL,
-    email VARCHAR(100),
-    role VARCHAR(50) DEFAULT 'ROLE_USER',
-    company_id VARCHAR(50) NOT NULL,      -- Isolation ID
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT fk_user_company FOREIGN KEY (company_id) REFERENCES companies(company_id)
-);
-
--- Seed Data: MSP Company & Default Users
-INSERT INTO companies (company_id, name, business_number, representative_name, phone, email, address, status)
-VALUES ('MSP', 'MSP(삭제불가)', NULL, NULL, NULL, NULL, NULL, 'ACTIVE'),
-('126-81-03725', '하이닉스', '031-5185-4114', '곽노정', '031-5185-4114', 'www@skhynix.com', '경기도 이천시 부발읍 경충대로 2091', 'ACTIVE'),
-('124-81-00998', '삼성전자', '02-2255-0114', '한종희', '02-2255-0114', 'www@samsung.com', '경기도 수원시 영통구 삼성로 129 (매탄동)', 'ACTIVE');
-
-INSERT INTO users (user_id, password, name, email, role, company_id)
-VALUES 
-('admin', '$2a$10$h8Dz0Jxxjv2hxT.oN/41tukeALShSKcQjCdwiJFQm6ogvOMsTKPm2', 'System Administrator', 'admin@msp.com', 'ROLE_ADMIN', 'MSP'),
-('operator1', '$2a$10$9wEuO9flJ2.1D7ik6Cfsp.dwf7e1mOZEGN/wDCKXgE2PLcK8FCYKi', '운영자1', 'op1@msp.com', 'ROLE_OPERATOR', 'MSP'),
-('operator2', '$2a$10$9wEuO9flJ2.1D7ik6Cfsp.dwf7e1mOZEGN/wDCKXgE2PLcK8FCYKi', '운영자2', 'op2@msp.com', 'ROLE_OPERATOR', 'MSP'),
-('user1', '$2a$10$9wEuO9flJ2.1D7ik6Cfsp.dwf7e1mOZEGN/wDCKXgE2PLcK8FCYKi', '사용자1', 'user1@comp1.com', 'ROLE_USER', '126-81-03725'),
-('user2', '$2a$10$9wEuO9flJ2.1D7ik6Cfsp.dwf7e1mOZEGN/wDCKXgE2PLcK8FCYKi', '사용자2', 'user2@comp1.com', 'ROLE_USER', '124-81-00998');
-
--- Seed Data: Common Code Groups
-INSERT INTO code_groups (group_id, name, description, is_system) VALUES 
-('SR_STATUS', '요청 상태', '서비스 요청 처리 상태', 1),
-('SR_PRIORITY', '우선순위', '우선순위 등급 (P1~P4)', 1),
-('SR_TYPE', '요청 유형', '요청의 성격 (장애, 서비스요청 등)', 1),
-('SR_CATEGORY', '서비스 카테고리', '기술 분류 (H/W, S/W 등)', 1),
-('SR_IMPACT', '영향도', '비즈니스 영향 범위', 1),
-('SR_URGENCY', '긴급도', '처리 시급성', 1),
-('SR_RESOLUTION', '해결 구분', '해결 처리 코드', 1),
-('SR_SOURCE', '접수 경로', '요청 유입 경로', 1),
-('EV_STATUS', '이벤트 상태', '이벤트 처리 상태', 1),
-('EV_SOURCE', '이벤트 발생처', '이벤트 발생 시스템', 1),
-('EV_SEVERITY', '이벤트 심각도', '이벤트 심각도', 1),
-('EV_CATEGORY', '이벤트 유형', '이벤트 분류 유형 (ITIL)', 1);
-
--- Seed Data: Common Codes
-INSERT INTO common_codes (group_id, code_id, code_name, sort_order, is_active) VALUES 
--- Status
-('SR_STATUS', 'OPEN', 'Open', 10, 1),
-('SR_STATUS', 'ASSIGNED', 'Assigned', 20, 1),
-('SR_STATUS', 'IN_PROGRESS', 'In-progress', 30, 1),
-('SR_STATUS', 'PENDING', '보류됨', 40, 1),
-('SR_STATUS', 'RESOLVED', 'Resolved', 50, 1),
-('SR_STATUS', 'CLOSED', 'Closed', 60, 1),
-('SR_STATUS', 'CANCELLED', 'Cancelled', 70, 1),
-
--- Priority
-('SR_PRIORITY', 'P1', 'Critical (P1)', 10, 1),
-('SR_PRIORITY', 'P2', 'High (P2)', 20, 1),
-('SR_PRIORITY', 'P3', 'Medium (P3)', 30, 1),
-('SR_PRIORITY', 'P4', 'Low (P4)', 40, 1),
-
--- Type
-('SR_TYPE', 'INCIDENT', '장애', 10, 1),
-('SR_TYPE', 'SERVICE_REQUEST', '서비스 요청', 20, 1),
-('SR_TYPE', 'CHANGE', '변경 요청', 30, 1),
-('SR_TYPE', 'INQUIRY', '단순 문의', 40, 1),
-
--- Category
-('SR_CATEGORY', 'HARDWARE', '하드웨어', 10, 1),
-('SR_CATEGORY', 'SOFTWARE', '소프트웨어', 20, 1),
-('SR_CATEGORY', 'NETWORK', '네트워크/통신', 30, 1),
-('SR_CATEGORY', 'ACCOUNT', '계정/권한', 40, 1),
-('SR_CATEGORY', 'ADMIN', '일반 행정 지원', 50, 1),
-
--- Impact (3x3 Matrix basis)
-('SR_IMPACT', 'HIGH', '높음', 10, 1),
-('SR_IMPACT', 'MEDIUM', '중간', 20, 1),
-('SR_IMPACT', 'LOW', '낮음', 30, 1),
-
--- Urgency (3x3 Matrix basis)
-('SR_URGENCY', 'HIGH', '높음', 10, 1),
-('SR_URGENCY', 'MEDIUM', '중간', 20, 1),
-('SR_URGENCY', 'LOW', '낮음', 30, 1),
-
--- Resolution
-('SR_RESOLUTION', 'FIXED', '조치 완료', 10, 1),
-('SR_RESOLUTION', 'WORKAROUND', '임시 조치', 20, 1),
-('SR_RESOLUTION', 'VOID', '거부/오접수', 30, 1),
-('SR_RESOLUTION', 'USER_CLOSED', '사용자 취소', 40, 1),
-
--- Source
-('SR_SOURCE', 'PORTAL', 'Self-Service Portal', 10, 1),
-('SR_SOURCE', 'EMAIL', 'Email', 20, 1),
-('SR_SOURCE', 'PHONE', 'Phone', 30, 1),
-('SR_SOURCE', 'DIRECT', 'Direct Walk-in', 40, 1),
-
--- Event Status
-('EV_STATUS', 'NEW', '신규', 10, 1),
-('EV_STATUS', 'ACKNOWLEDGED', '인지됨', 20, 1),
-('EV_STATUS', 'SUPPRESSED', '억제됨', 30, 1),
-('EV_STATUS', 'PROMOTED', '장애 승격', 40, 1),
-('EV_STATUS', 'RESOLVED', '해결됨', 50, 1),
-
--- Event Source
-('EV_SOURCE', 'DATADOG', 'Datadog', 10, 1),
-('EV_SOURCE', 'ZABBIX', 'Zabbix', 20, 1),
-('EV_SOURCE', 'PRM_GRF', 'Prometheus/Grafana', 30, 1),
-('EV_SOURCE', 'AWS_CW', 'AWS CloudWatch', 40, 1),
-
--- Event Severity
-('EV_SEVERITY', 'INFO', '정보', 10, 1),
-('EV_SEVERITY', 'WARNING', '경고', 20, 1),
-('EV_SEVERITY', 'CRITICAL', '심각', 30, 1),
-('EV_SEVERITY', 'ERROR', '에러', 40, 1);
-
-
--- Seed Data: Sample Events
-USE event_mgmt;
-INSERT INTO events (event_number, company_id, source_code, category_code, node, severity_code, message, event_details, status_code) VALUES 
-('EVT-2026-0001', 'MSP', 'DATADOG', 'EXCP', 'order-service-01', 'CRITICAL', 'JVM Garbage Collection duration exceeded 5s', '{"heap_usage": "98%", "gc_type": "G1"}', 'NEW'),
-('EVT-2026-0002', 'MSP', 'ZABBIX', 'WARN', 'payment-api-02', 'WARNING', 'API endpoint /v1/pay responding with 500ms latency', '{"p99": "512ms", "threshold": "200ms"}', 'NEW'),
-('EVT-2026-0003', 'MSP', 'PRM_GRF', 'INFO', 'system-monitor', 'INFO', 'Disk space usage on /var/log reached 75%', '{"mount": "/var/log", "used": "75%"}', 'ACKNOWLEDGED'),
-('EVT-2026-0004', 'MSP', 'DATADOG', 'EXCP', 'mariadb-primary', 'CRITICAL', 'Database connection pool exhausted (Max 100)', '{"connections": 100, "waiting_threads": 45}', 'NEW'),
-('EVT-2026-0005', 'MSP', 'AWS_CW', 'WARN', 'nginx-gateway', 'WARNING', 'High number of 502 Bad Gateway errors detected', '{"count_502": 150, "period": "1m"}', 'NEW'),
-('EVT-2026-0006', 'MSP', 'PRM_GRF', 'INFO', 'auth-service', 'INFO', 'Security patch v2.4.1 applied successfully', '{"version": "2.4.1", "status": "success"}', 'RESOLVED'),
-('EVT-2026-0007', 'MSP', 'ZABBIX', 'EXCP', 'storage-s3-proxy', 'CRITICAL', 'S3 bucket connection timeout observed from application', '{"error": "Timeout", "retry_count": 3}', 'NEW'),
-('EVT-2026-0008', 'MSP', 'DATADOG', 'WARN', 'redis-cache-cluster', 'WARNING', 'Cache eviction rate increased by 200%', '{"evictions_per_sec": 450}', 'NEW'),
-('EVT-2026-0009', 'MSP', 'PRM_GRF', 'INFO', 'inventory-batch', 'INFO', 'Daily inventory sync completed with 2 non-critical errors', '{"processed": 15000, "errors": 2}', 'NEW'),
-('EVT-2026-0010', 'MSP', 'AWS_CW', 'EXCP', 'security-scanner', 'CRITICAL', 'Multiple unauthorized login attempts detected from IP 192.168.1.100', '{"attempts": 50, "source_ip": "192.168.1.100"}', 'NEW');
-
--- Incident Management Table & Data
+-- -----------------------------------------------------------------------------
+-- 3. Incident Management Schema
+-- -----------------------------------------------------------------------------
 USE incident_mgmt;
 
 CREATE TABLE IF NOT EXISTS incidents (
@@ -295,12 +100,296 @@ CREATE TABLE IF NOT EXISTS incidents (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     sla_due_date TIMESTAMP NULL,
-    is_sla_breached BOOLEAN DEFAULT FALSE
+    is_sla_breached BOOLEAN DEFAULT FALSE NOT NULL
 );
 
-INSERT INTO incidents (incident_id, title, description, tenant_id, category_id, impact, urgency, priority, status, requester_id, sla_due_date) VALUES 
-('INC-20260404-001', 'Critical: Global Payment Gateway Unresponsive', 'All credit card transactions are failing globally. Error 503 from upstream provider.', 'SYSTEM', 'NETWORK', 'HIGH', 'HIGH', 'P1', 'NEW', 'admin', DATE_ADD(NOW(), INTERVAL 4 HOUR)),
-('INC-20260404-002', 'High: Database Replication Lag in Asia-East Region', 'Replication lag increased to 300s. Potential stale data being read by users.', 'SYSTEM', 'DATABASE', 'HIGH', 'MEDIUM', 'P2', 'IN_PROGRESS', 'system', DATE_ADD(NOW(), INTERVAL 8 HOUR)),
-('INC-20260404-003', 'Medium: Intermittent Failures in Email Notification Service', 'Some users report not receiving welcome emails or password reset links.', 'SYSTEM', 'SOFTWARE', 'MEDIUM', 'MEDIUM', 'P3', 'NEW', 'user1', DATE_ADD(NOW(), INTERVAL 24 HOUR)),
-('INC-20260404-004', 'Low: UI Typo in Dashboard Performance Tab', 'Misspelling discovered in the analytics header: "Trnasactions" -> "Transactions".', 'SYSTEM', 'UI_UX', 'LOW', 'LOW', 'P4', 'NEW', 'user2', DATE_ADD(NOW(), INTERVAL 48 HOUR)),
-('INC-20260404-005', 'Medium: Automated Report Generation Slowdown', 'Daily financial reports taking 10 minutes instead of the usual 45 seconds.', 'SYSTEM', 'SOFTWARE', 'MEDIUM', 'MEDIUM', 'P3', 'IN_PROGRESS', 'admin', DATE_ADD(NOW(), INTERVAL 24 HOUR));
+CREATE TABLE IF NOT EXISTS incident_histories (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    incident_id BIGINT NOT NULL,
+    changed_by VARCHAR(100) NOT NULL,
+    change_subject VARCHAR(200) NOT NULL,
+    old_value TEXT,
+    new_value TEXT,
+    change_reason TEXT,
+    changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (incident_id) REFERENCES incidents(id) ON DELETE CASCADE
+);
+
+-- -----------------------------------------------------------------------------
+-- 4. Event Management Schema
+-- -----------------------------------------------------------------------------
+USE event_mgmt;
+
+CREATE TABLE IF NOT EXISTS events (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    event_number VARCHAR(50) NOT NULL UNIQUE,
+    company_id VARCHAR(50) NOT NULL,
+    source_code VARCHAR(50) NOT NULL,
+    category_code VARCHAR(50),
+    node VARCHAR(200),
+    severity_code VARCHAR(50) NOT NULL,
+    message TEXT NOT NULL,
+    event_details LONGTEXT,
+    status_code VARCHAR(50) DEFAULT 'NEW',
+    fingerprint VARCHAR(100),
+    related_request_id VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_evt_company (company_id),
+    INDEX idx_evt_status (status_code),
+    INDEX idx_evt_fingerprint (fingerprint)
+);
+
+-- -----------------------------------------------------------------------------
+-- 5. System Administration Schema
+-- -----------------------------------------------------------------------------
+USE system_mgmt;
+
+-- 5-1. Governance Codes
+CREATE TABLE IF NOT EXISTS code_groups (
+    group_id VARCHAR(50) PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    is_system BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS common_codes (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    group_id VARCHAR(50) NOT NULL,
+    code_id VARCHAR(50) NOT NULL,
+    code_name VARCHAR(100) NOT NULL,
+    description TEXT,
+    sort_order INT DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_group_code (group_id, code_id),
+    CONSTRAINT fk_common_code_group FOREIGN KEY (group_id) REFERENCES code_groups(group_id) ON DELETE CASCADE
+);
+
+-- 5-2. Legacy / Bootstrap Master Tables
+CREATE TABLE IF NOT EXISTS companies (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    company_id VARCHAR(50) NOT NULL UNIQUE,
+    name VARCHAR(200) NOT NULL,
+    business_number VARCHAR(50),
+    representative_name VARCHAR(100),
+    phone VARCHAR(50),
+    email VARCHAR(100),
+    address TEXT,
+    status VARCHAR(20) DEFAULT 'ACTIVE',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS users (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id VARCHAR(50) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100),
+    role VARCHAR(50) DEFAULT 'ROLE_USER',
+    company_id VARCHAR(50) NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_user_company_legacy FOREIGN KEY (company_id) REFERENCES companies(company_id)
+);
+
+-- 5-3. Advanced Organizational Schema (Refactored)
+CREATE TABLE IF NOT EXISTS customer_companies (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  customer_id VARCHAR(50) UNIQUE NOT NULL,
+  name VARCHAR(200) NOT NULL,
+  business_number VARCHAR(50),
+  representative_name VARCHAR(100),
+  phone VARCHAR(50),
+  email VARCHAR(100),
+  address TEXT,
+  status VARCHAR(20) DEFAULT 'ACTIVE',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS customer_teams (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  customer_company_id BIGINT,
+  name VARCHAR(100) NOT NULL,
+  description TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (customer_company_id) REFERENCES customer_companies(id)
+);
+
+CREATE TABLE IF NOT EXISTS customer_users (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  customer_team_id BIGINT,
+  user_id VARCHAR(50) UNIQUE NOT NULL,
+  password VARCHAR(255) NOT NULL,
+  name VARCHAR(100) NOT NULL,
+  email VARCHAR(100),
+  role VARCHAR(50) DEFAULT 'ROLE_USER',
+  is_active TINYINT(1) DEFAULT 1,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (customer_team_id) REFERENCES customer_teams(id)
+);
+
+CREATE TABLE IF NOT EXISTS operator_companies (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  operator_company_id VARCHAR(50) UNIQUE NOT NULL,
+  name VARCHAR(200) NOT NULL,
+  business_number VARCHAR(50),
+  status VARCHAR(20) DEFAULT 'ACTIVE',
+  representative_name VARCHAR(100),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS operator_teams (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  operator_company_id BIGINT,
+  name VARCHAR(100) NOT NULL,
+  description TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (operator_company_id) REFERENCES operator_companies(id)
+);
+
+CREATE TABLE IF NOT EXISTS operators (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  user_id VARCHAR(50) UNIQUE NOT NULL,
+  password VARCHAR(255) NOT NULL,
+  name VARCHAR(100) NOT NULL,
+  email VARCHAR(100),
+  role VARCHAR(50) DEFAULT 'ROLE_OPER',
+  is_active TINYINT(1) DEFAULT 1,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS operator_team_members (
+  operator_id BIGINT,
+  operator_team_id BIGINT,
+  PRIMARY KEY (operator_id, operator_team_id),
+  FOREIGN KEY (operator_id) REFERENCES operators(id),
+  FOREIGN KEY (operator_team_id) REFERENCES operator_teams(id)
+);
+
+CREATE TABLE IF NOT EXISTS team_customer_map (
+  operator_team_id BIGINT,
+  customer_company_id BIGINT,
+  PRIMARY KEY (operator_team_id, customer_company_id),
+  FOREIGN KEY (operator_team_id) REFERENCES operator_teams(id),
+  FOREIGN KEY (customer_company_id) REFERENCES customer_companies(id)
+);
+
+CREATE TABLE IF NOT EXISTS msp_customer_contracts (
+  operator_company_id BIGINT,
+  customer_company_id BIGINT,
+  contract_date DATE,
+  is_active TINYINT(1) DEFAULT 1,
+  PRIMARY KEY (operator_company_id, customer_company_id),
+  FOREIGN KEY (operator_company_id) REFERENCES operator_companies(id),
+  FOREIGN KEY (customer_company_id) REFERENCES customer_companies(id)
+);
+
+-- -----------------------------------------------------------------------------
+-- 6. Seed Data (Master & Metadata)
+-- -----------------------------------------------------------------------------
+USE system_mgmt;
+
+-- 6-1. Code Groups
+INSERT IGNORE INTO code_groups (group_id, name, description, is_system) VALUES 
+('SR_STATUS', '요청 상태', '서비스 요청 처리 상태', 1),
+('SR_PRIORITY', '우선순위', '우선순위 등급 (P1~P4)', 1),
+('SR_TYPE', '요청 유형', '요청의 성격 (장애, 서비스요청 등)', 1),
+('SR_CATEGORY', '서비스 카테고리', '기술 분류 (H/W, S/W 등)', 1),
+('SR_IMPACT', '영향도', '비즈니스 영향 범위', 1),
+('SR_URGENCY', '긴급도', '처리 시급성', 1),
+('SR_RESOLUTION', '해결 구분', '해결 처리 코드', 1),
+('SR_SOURCE', '접수 경로', '요청 유입 경로', 1),
+('EV_STATUS', '이벤트 상태', '이벤트 처리 상태', 1),
+('EV_SOURCE', '이벤트 발생처', '이벤트 발생 시스템', 1),
+('EV_SEVERITY', '이벤트 심각도', '이벤트 심각도', 1),
+('EV_CATEGORY', '이벤트 유형', '이벤트 분류 유형 (ITIL)', 1),
+('OPE_ROLE', '운영자 역할', 'ITSM 운영 인력의 전문 분야 및 권한 등급', 1),
+('CUS_ROLE', '고객 사용자 역할', '고객 포털 사용자 권한 체계 관리', 1);
+
+-- 6-2. Common Codes
+INSERT IGNORE INTO common_codes (group_id, code_id, code_name, sort_order, is_active) VALUES 
+('SR_STATUS', 'OPEN', 'Open', 10, 1),
+('SR_STATUS', 'ASSIGNED', 'Assigned', 20, 1),
+('SR_STATUS', 'IN_PROGRESS', 'In-progress', 30, 1),
+('SR_STATUS', 'PENDING', '보류됨', 40, 1),
+('SR_STATUS', 'RESOLVED', 'Resolved', 50, 1),
+('SR_STATUS', 'CLOSED', 'Closed', 60, 1),
+('SR_STATUS', 'CANCELLED', 'Cancelled', 70, 1),
+('SR_PRIORITY', 'P1', 'Critical (P1)', 10, 1),
+('SR_PRIORITY', 'P2', 'High (P2)', 20, 1),
+('SR_PRIORITY', 'P3', 'Medium (P3)', 30, 1),
+('SR_PRIORITY', 'P4', 'Low (P4)', 40, 1),
+('SR_TYPE', 'INCIDENT', '장애', 10, 1),
+('SR_TYPE', 'SERVICE_REQUEST', '서비스 요청', 20, 1),
+('SR_TYPE', 'CHANGE', '변경 요청', 30, 1),
+('SR_TYPE', 'INQUIRY', '단순 문의', 40, 1),
+('OPE_ROLE', 'ROLE_ADMIN', '시스템 관리자', 10, 1),
+('OPE_ROLE', 'ROLE_OPER', '일반 운영자', 40, 1),
+('CUS_ROLE', 'ROLE_CUS_ADMIN', '고객사 관리자', 10, 1),
+('CUS_ROLE', 'ROLE_CUS_USER', '일반 사용자', 30, 1);
+
+-- 6-3. Legacy Bootstrap Data
+INSERT IGNORE INTO companies (company_id, name, business_number, representative_name, status)
+VALUES ('MSP', 'MSP(삭제불가)', '000-00-00000', '운영관리자', 'ACTIVE'),
+('126-81-03725', '하이닉스', '031-5185-4114', '곽노정', 'ACTIVE'),
+('124-81-00998', '삼성전자', '02-2255-0114', '한종희', 'ACTIVE');
+
+INSERT IGNORE INTO users (user_id, password, name, email, role, company_id)
+VALUES 
+('admin', '$2a$10$h8Dz0Jxxjv2hxT.oN/41tukeALShSKcQjCdwiJFQm6ogvOMsTKPm2', 'System Administrator', 'admin@msp.com', 'ROLE_ADMIN', 'MSP'),
+('operator1', '$2a$10$9wEuO9flJ2.1D7ik6Cfsp.dwf7e1mOZEGN/wDCKXgE2PLcK8FCYKi', '운영자1', 'op1@msp.com', 'ROLE_OPER', 'MSP'),
+('operator2', '$2a$10$9wEuO9flJ2.1D7ik6Cfsp.dwf7e1mOZEGN/wDCKXgE2PLcK8FCYKi', '운영자2', 'op2@msp.com', 'ROLE_OPER', 'MSP'),
+('user1', '$2a$10$9wEuO9flJ2.1D7ik6Cfsp.dwf7e1mOZEGN/wDCKXgE2PLcK8FCYKi', '사용자1', 'user1@comp1.com', 'ROLE_USER', '126-81-03725');
+
+-- 6-4. Data Migration to Refactored Schema
+INSERT IGNORE INTO customer_companies (customer_id, name, business_number, representative_name, status)
+SELECT company_id, name, business_number, representative_name, status FROM companies WHERE company_id <> 'MSP';
+
+INSERT IGNORE INTO operator_companies (operator_company_id, name, business_number, status, representative_name)
+SELECT company_id, name, business_number, status, representative_name FROM companies WHERE company_id = 'MSP';
+
+INSERT IGNORE INTO customer_teams (customer_company_id, name, description)
+SELECT id, '기본팀', '마이그레이션 자동 생성' FROM customer_companies;
+
+INSERT IGNORE INTO operator_teams (operator_company_id, name, description)
+SELECT id, '운영본부', '마이그레이션 자동 생성' FROM operator_companies;
+
+INSERT IGNORE INTO customer_users (customer_team_id, user_id, password, name, email, role, is_active)
+SELECT 
+  (SELECT ct.id FROM customer_teams ct JOIN customer_companies cc ON ct.customer_company_id = cc.id WHERE cc.customer_id = u.company_id LIMIT 1),
+  u.user_id, u.password, u.name, u.email, u.role, u.is_active
+FROM users u WHERE u.role = 'ROLE_USER';
+
+INSERT IGNORE INTO operators (user_id, password, name, email, role, is_active)
+SELECT u.user_id, u.password, u.name, u.email, u.role, u.is_active
+FROM users u WHERE u.role IN ('ROLE_OPER', 'ROLE_ADMIN');
+
+INSERT IGNORE INTO operator_team_members (operator_id, operator_team_id)
+SELECT 
+  o.id, 
+  (SELECT ot.id FROM operator_teams ot JOIN operator_companies oc ON ot.operator_company_id = oc.id JOIN users u ON u.company_id = oc.operator_company_id WHERE u.user_id = o.user_id LIMIT 1)
+FROM operators o WHERE o.id IS NOT NULL;
+
+-- -----------------------------------------------------------------------------
+-- 7. Service Specific Seed Data
+-- -----------------------------------------------------------------------------
+
+-- 7-1. Event Management
+USE event_mgmt;
+INSERT IGNORE INTO events (event_number, company_id, source_code, category_code, node, severity_code, message, status_code) VALUES 
+('EVT-2026-0001', 'MSP', 'DATADOG', 'EXCP', 'order-service-01', 'CRITICAL', 'JVM Garbage Collection duration exceeded 5s', 'NEW'),
+('EVT-2026-0002', 'MSP', 'ZABBIX', 'WARN', 'payment-api-02', 'WARNING', 'API endpoint /v1/pay responding with 500ms latency', 'NEW');
+
+-- 7-2. Incident Management
+USE incident_mgmt;
+INSERT IGNORE INTO incidents (incident_id, title, description, tenant_id, category_id, impact, urgency, priority, status, requester_id, sla_due_date) VALUES 
+('INC-20260404-001', 'Critical: Global Payment Gateway Unresponsive', 'All credit card transactions are failing globally.', 'SYSTEM', 'NETWORK', 'HIGH', 'HIGH', 'P1', 'NEW', 'admin', DATE_ADD(NOW(), INTERVAL 4 HOUR)),
+('INC-20260404-002', 'High: Database Replication Lag in Asia-East Region', 'Replication lag increased to 300s.', 'SYSTEM', 'DATABASE', 'HIGH', 'MEDIUM', 'P2', 'IN_PROGRESS', 'system', DATE_ADD(NOW(), INTERVAL 8 HOUR));

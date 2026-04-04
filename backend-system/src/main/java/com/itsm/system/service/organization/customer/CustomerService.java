@@ -143,6 +143,10 @@ public class CustomerService {
             throw new IllegalArgumentException("Password is mandatory for new customer user registration.");
         }
         
+        if (userRepository.existsByUserId(dto.getUserId())) {
+            throw new IllegalArgumentException("User ID already exists: " + dto.getUserId());
+        }
+        
         // Validate Role
         String role = dto.getRole() != null ? dto.getRole() : "ROLE_CUS_USER";
         validateRole(role);

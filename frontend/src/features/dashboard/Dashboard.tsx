@@ -26,7 +26,7 @@ const Dashboard: React.FC = () => {
   const [toDate, setToDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [selectedCompany, setSelectedCompany] = useState(user?.role === 'ROLE_USER' ? user.companyId : 'SYSTEM');
 
-  const isAdmin = user?.role === 'ROLE_ADMIN' || user?.role === 'ROLE_OPERATOR';
+  const isAdmin = user?.role === 'ROLE_ADMIN' || user?.role === 'ROLE_OPER';
 
   const fetchStats = async (isManual = false, retryCount = 0) => {
     if (isManual) setRefreshing(true);

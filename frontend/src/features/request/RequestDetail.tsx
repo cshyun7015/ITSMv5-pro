@@ -56,7 +56,7 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => 
   const [isSearchingRequesters, setIsSearchingRequesters] = useState(false);
   const [showRequesterDropdown, setShowRequesterDropdown] = useState(false);
 
-  const isAdminOrOperator = user?.role === 'ROLE_ADMIN' || user?.role === 'ROLE_OPERATOR';
+  const isAdminOrOperator = user?.role === 'ROLE_ADMIN' || user?.role === 'ROLE_OPER';
 
   const fetchDetail = async () => {
     try {
@@ -82,7 +82,7 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => 
         apiCommonCode.getCodesByGroup('SR_RESOLUTION'),
         apiCommonCode.getCodesByGroup('SR_STATUS'),
         apiUser.list({ role: 'ROLE_ADMIN', size: 100 }),
-        apiUser.list({ role: 'ROLE_OPERATOR', size: 100 })
+        apiUser.list({ role: 'ROLE_OPER', size: 100 })
       ]);
 
       setCodes({

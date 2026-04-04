@@ -105,4 +105,16 @@ public class OperatorManagementController {
         operatorService.deleteOperator(id);
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping("/operators/operators/{id}/teams/{teamId}")
+    public ResponseEntity<Void> assignTeam(@PathVariable Long id, @PathVariable Long teamId) {
+        operatorService.assignTeam(id, teamId);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/operators/operators/{id}/teams/{teamId}")
+    public ResponseEntity<Void> unassignTeam(@PathVariable Long id, @PathVariable Long teamId) {
+        operatorService.unassignTeam(id, teamId);
+        return ResponseEntity.ok().build();
+    }
 }

@@ -21,6 +21,16 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, e.getStatus());
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, Object>> handleIllegalArgumentException(IllegalArgumentException e) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("timestamp", LocalDateTime.now());
+        response.put("status", 400);
+        response.put("error", "Bad Request");
+        response.put("message", e.getMessage());
+        return ResponseEntity.status(400).body(response);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGeneralException(Exception e) {
         Map<String, Object> response = new HashMap<>();

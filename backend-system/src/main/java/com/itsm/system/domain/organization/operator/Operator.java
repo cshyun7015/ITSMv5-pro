@@ -32,7 +32,7 @@ public class Operator {
     private String email;
 
     @Column(length = 50)
-    private String role; // ROLE_OPERATOR, ROLE_ADMIN
+    private String role; // ROLE_OPER, ROLE_ADMIN
 
     @Column(name = "is_active")
     private Boolean isActive;

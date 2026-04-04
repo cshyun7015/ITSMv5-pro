@@ -54,7 +54,6 @@ public class UserServiceImpl implements UserService {
             throw new BusinessException("User ID already exists: " + dto.getUserId(), HttpStatus.CONFLICT);
         }
 
-        // TODO: Password Hashing (BCrypt) before saving
         User user = User.builder()
                 .userId(dto.getUserId())
                 .password(passwordEncoder.encode(dto.getPassword()))

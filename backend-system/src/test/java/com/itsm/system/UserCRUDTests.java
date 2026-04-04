@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 
 import java.util.List;
@@ -31,7 +32,7 @@ public class UserCRUDTests {
             "name", "Test User Company",
             "status", "ACTIVE"
         );
-        restTemplate.postForEntity("/api/v1/system/companies", companyDto, Map.class);
+        restTemplate.postForEntity("/api/v1/system/companies", companyDto, Object.class);
     }
     
     @AfterEach
@@ -73,10 +74,10 @@ public class UserCRUDTests {
 
         // 3. List Users by Company
         HttpEntity<Void> listRequest = new HttpEntity<>(headers);
-        ResponseEntity<Map> listResponse = restTemplate.exchange(
-                "/api/v1/system/users?companyId=" + testCompanyId, HttpMethod.GET, listRequest, Map.class);
+        ResponseEntity<Map<String, Object>> listResponse = restTemplate.exchange(
+                "/api/v1/system/users?companyId=" + testCompanyId, HttpMethod.GET, listRequest, new ParameterizedTypeReference<Map<String, Object>>() {});
         assertThat(listResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
-        List content = (List) listResponse.getBody().get("content");
+        List<?> content = (List<?>) listResponse.getBody().get("content");
         assertThat(content).isNotEmpty();
 
         // 4. Update User

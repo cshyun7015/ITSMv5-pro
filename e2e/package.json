@@ -16,6 +16,7 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
+    "dotenv": "^17.4.0",
     "mysql2": "^3.9.1"
   }
 }

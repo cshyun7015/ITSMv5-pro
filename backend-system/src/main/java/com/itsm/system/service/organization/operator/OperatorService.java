@@ -8,7 +8,6 @@ import com.itsm.system.dto.organization.operator.OperatorDTO;
 import com.itsm.system.dto.organization.operator.OperatorTeamDTO;
 import com.itsm.system.repository.organization.mapping.OperatorTeamMemberRepository;
 import com.itsm.system.repository.organization.operator.OperatorCompanyRepository;
-import com.itsm.system.repository.organization.operator.OperatorRepository;
 import com.itsm.system.repository.organization.operator.OperatorTeamRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -117,6 +116,7 @@ public class OperatorService {
 
     @Transactional
     public void deleteTeam(Long id) {
+        teamMemberRepository.deleteByOperatorTeamId(id);
         teamRepository.deleteById(id);
     }
 
@@ -136,6 +136,10 @@ public class OperatorService {
     public OperatorDTO createOperator(Long teamId, OperatorDTO dto) {
         if (dto.getPassword() == null || dto.getPassword().isBlank()) {
             throw new IllegalArgumentException("Password is mandatory for new operator registration.");
+        }
+        
+        if (operatorRepository.existsByUserId(dto.getUserId())) {
+            throw new IllegalArgumentException("User ID already exists: " + dto.getUserId());
         }
         
         // Validate Role
@@ -188,7 +192,30 @@ public class OperatorService {
 
     @Transactional
     public void deleteOperator(Long id) {
+        teamMemberRepository.deleteByOperatorId(id);
         operatorRepository.deleteById(id);
+    }
+
+    @Transactional
+    public void assignTeam(Long operatorId, Long teamId) {
+        Operator operator = operatorRepository.findById(operatorId)
+                .orElseThrow(() -> new RuntimeException("Operator not found"));
+        OperatorTeam team = teamRepository.findById(teamId)
+                .orElseThrow(() -> new RuntimeException("Team not found"));
+        
+        com.itsm.system.domain.organization.mapping.OperatorTeamMember member = 
+            com.itsm.system.domain.organization.mapping.OperatorTeamMember.builder()
+                .operator(operator)
+                .operatorTeam(team)
+                .build();
+        teamMemberRepository.save(member);
+    }
+
+    @Transactional
+    public void unassignTeam(Long operatorId, Long teamId) {
+        com.itsm.system.domain.organization.mapping.OperatorTeamMember.OperatorTeamMemberId id = 
+            new com.itsm.system.domain.organization.mapping.OperatorTeamMember.OperatorTeamMemberId(operatorId, teamId);
+        teamMemberRepository.deleteById(id);
     }
 
     private OperatorCompanyDTO convertToCompanyDTO(OperatorCompany company) {

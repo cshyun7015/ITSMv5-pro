@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -54,8 +56,8 @@ class CommonCodeTests {
         assertThat(codeResponse.getBody().getCodeId()).isEqualTo("HIGH");
 
         // 3. List Items by Group
-        ResponseEntity<List> listResponse = restTemplate.getForEntity(
-                "/api/v1/system/codes/groups/" + groupId + "/items", List.class);
+        ResponseEntity<List<CommonCodeDTO>> listResponse = restTemplate.exchange(
+                "/api/v1/system/codes/groups/" + groupId + "/items", HttpMethod.GET, null, new ParameterizedTypeReference<List<CommonCodeDTO>>() {});
         
         assertThat(listResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(listResponse.getBody()).hasSize(1);

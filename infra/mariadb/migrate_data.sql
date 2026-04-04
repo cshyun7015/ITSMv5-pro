@@ -32,11 +32,11 @@ SELECT
 FROM users u
 WHERE u.role = 'ROLE_USER';
 
--- 운영자 (ROLE_OPERATOR, ROLE_ADMIN)
+-- 운영자 (ROLE_OPER, ROLE_ADMIN)
 INSERT INTO operators (user_id, password, name, email, role, is_active, created_at)
 SELECT u.user_id, u.password, u.name, u.email, u.role, u.is_active, u.created_at
 FROM users u
-WHERE u.role IN ('ROLE_OPERATOR', 'ROLE_ADMIN');
+WHERE u.role IN ('ROLE_OPER', 'ROLE_ADMIN');
 
 -- 5. 관계 매핑 초기화
 -- 5-1. 운영자 다중 팀 소속 초기화 (모든 운영자를 자신의 운영본부에 소속)

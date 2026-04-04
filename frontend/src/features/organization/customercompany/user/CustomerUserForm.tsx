@@ -17,7 +17,8 @@ const CustomerUserForm: React.FC<CustomerUserFormProps> = ({ onClose, user, onSa
     name: '',
     email: '',
     role: 'ROLE_CUS_USER',
-    status: 'ACTIVE'
+    status: 'ACTIVE',
+    password: ''
   });
 
   useEffect(() => {
@@ -41,7 +42,8 @@ const CustomerUserForm: React.FC<CustomerUserFormProps> = ({ onClose, user, onSa
         name: user.name || '',
         email: user.email || '',
         role: user.role || 'ROLE_CUS_USER',
-        status: user.status || 'ACTIVE'
+        status: user.status || 'ACTIVE',
+        password: ''
       });
     }
   }, [user]);
@@ -105,6 +107,21 @@ const CustomerUserForm: React.FC<CustomerUserFormProps> = ({ onClose, user, onSa
                   />
                 </div>
               </div>
+
+              {!user && (
+                <div className="tw-space-y-3">
+                  <label className="tw-text-[11px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest tw-ml-1 tw-flex tw-items-center tw-gap-2">
+                    <Key size={12} className="tw-text-amber-500" /> 초기 비밀번호 (IAM Credentials)
+                  </label>
+                  <input 
+                    required type="password" value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    className="tw-w-full tw-bg-slate-800/50 tw-border tw-border-white/10 tw-p-5 tw-rounded-3xl tw-outline-none focus:tw-border-blue-500 tw-transition-all tw-text-white" 
+                    placeholder="초기 비밀번호를 설정하세요" 
+                  />
+                </div>
+              )}
+
               <div className="tw-space-y-3">
                 <label className="tw-text-[11px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest tw-ml-1 tw-flex tw-items-center tw-gap-2">
                   <Mail size={12} className="tw-text-blue-500" /> 통신 채널 (IAM 이메일)

@@ -15,7 +15,7 @@ spring:
 
 server:
   port: 8080
-  max-http-header-size: 64KB # 8KB(기본값)에서 64KB로 확장
+  max-http-request-header-size: 64KB
 
 management:
   endpoints:
@@ -28,6 +28,8 @@ management:
 logging:
   level:
     org.hibernate.SQL: DEBUG
+    com.itsm.system.service.auth: TRACE
+    com.itsm.system.security: TRACE
 
 jwt:
   secret: ${JWT_SECRET:ITSMLongSecretKeyForSecurityPurposes1234567890!}

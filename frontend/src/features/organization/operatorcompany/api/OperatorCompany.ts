@@ -88,6 +88,10 @@ const OperatorCompany = {
     const response = await apiClient.get('/organization/operators/operators');
     return response.data;
   },
+  getOperator: async (id: number): Promise<OperatorDTO> => {
+    const response = await apiClient.get(`/organization/operators/operators/${id}`);
+    return response.data;
+  },
   createOperator: async (teamId: number, data: any): Promise<OperatorDTO> => {
     const response = await apiClient.post(`/organization/operators/teams/${teamId}/operators`, data);
     return response.data;

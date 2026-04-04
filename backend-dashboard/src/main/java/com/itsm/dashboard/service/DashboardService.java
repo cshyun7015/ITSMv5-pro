@@ -17,7 +17,6 @@ public class DashboardService {
     private final ObjectMapper objectMapper; // final로 선언하면 스프링이 주입해줍니다.
 
     public Mono<DashboardSummaryDTO> getSummary(String role, String companyId, String fromDate, String toDate, String token) {
-        boolean isAdmin = role.equals("ROLE_ADMIN") || role.equals("ROLE_OPERATOR");
         
         // If companyId is provided (even for Admin), system stats should reflect that company
         Mono<Map<String, Object>> systemStats = apiService.getSystemStats(companyId, token);
@@ -45,13 +44,6 @@ public class DashboardService {
                             .statusDistribution(statusMap)
                             .build();
                 });
-    }
-
-    private Map<String, Long> asLongMap(Map<String, Object> map) {
-        if (map == null) return Map.of();
-        Map<String, Long> result = new java.util.HashMap<>();
-        map.forEach((k, v) -> result.put(k, asLong(v)));
-        return result;
     }
 
     private long asLong(Object o) {

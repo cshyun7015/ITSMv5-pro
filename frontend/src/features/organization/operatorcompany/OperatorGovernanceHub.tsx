@@ -15,6 +15,7 @@ import OperatorTeamDetail from './team/OperatorTeamDetail';
 import OperatorUserForm from './user/OperatorUserForm';
 import OperatorUserDetail from './user/OperatorUserDetail';
 import TeamCustomerMapping from './TeamCustomerMapping';
+import OperatorTeamMapping from './OperatorTeamMapping';
 
 import './OperatorGovernance.css';
 
@@ -36,7 +37,9 @@ const OperatorGovernanceHub: React.FC = () => {
   const [targetLevel, setTargetLevel] = useState<'COMPANY' | 'TEAM' | 'USER' | null>(null);
   const [targetItem, setTargetItem] = useState<any>(null);
   const [showMappingModal, setShowMappingModal] = useState(false);
+  const [showUserMappingModal, setShowUserMappingModal] = useState(false);
   const [mappingTeam, setMappingTeam] = useState<any>(null);
+  const [mappingUser, setMappingUser] = useState<any>(null);
   const [deleteTarget, setDeleteTarget] = useState<{level: string, id: number, name: string} | null>(null);
 
   // --- Data Fetching ---
@@ -118,6 +121,11 @@ const OperatorGovernanceHub: React.FC = () => {
   const openMapping = (team: any) => {
     setMappingTeam(team);
     setShowMappingModal(true);
+  };
+
+  const openUserMapping = (user: any) => {
+    setMappingUser(user);
+    setShowUserMappingModal(true);
   };
 
   const openDetail = (level: 'COMPANY' | 'TEAM' | 'USER', item: any) => {
@@ -369,6 +377,11 @@ const OperatorGovernanceHub: React.FC = () => {
                           <Plus size={16} />
                         </button>
                       )}
+                      {activeStep === 'USER' && (
+                        <button onClick={() => openUserMapping(item)} className="tw-p-2.5 tw-bg-indigo-600/10 hover:tw-bg-indigo-600/20 hover:tw-text-indigo-400 tw-rounded-lg tw-transition-all tw-border tw-border-white/5" title="운영팀 매핑">
+                          <LayoutGrid size={16} />
+                        </button>
+                      )}
                       <button onClick={() => openDetail(activeStep, item)} className="tw-p-2.5 tw-bg-white/5 hover:tw-bg-indigo-600/20 hover:tw-text-indigo-400 tw-rounded-lg tw-transition-all tw-border tw-border-white/5">
                         <Eye size={16} />
                       </button>
@@ -437,6 +450,12 @@ const OperatorGovernanceHub: React.FC = () => {
           <TeamCustomerMapping 
             team={mappingTeam} 
             onClose={() => { setShowMappingModal(false); setMappingTeam(null); }} 
+          />
+        )}
+        {showUserMappingModal && mappingUser && (
+          <OperatorTeamMapping 
+            operator={mappingUser} 
+            onClose={() => { setShowUserMappingModal(false); setMappingUser(null); if (selectedTeam) fetchUsers(selectedTeam.id); else fetchUsers(); }} 
           />
         )}
         {modalMode === 'DELETE' && deleteTarget && (

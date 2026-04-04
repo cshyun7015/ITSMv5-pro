@@ -15,7 +15,7 @@ function AppContent() {
   const [currentView, setCurrentView] = useState('dashboard');
   const [scale, setScale] = useState(1);
   const { user, logout } = useAuth();
-  const isAdmin = user?.role === 'ROLE_ADMIN' || user?.role === 'ROLE_OPERATOR';
+  const isAdmin = user?.role === 'ROLE_ADMIN' || user?.role === 'ROLE_OPER';
 
   // 1280x1024 Responsive Scaling Logic
   useEffect(() => {
@@ -109,19 +109,26 @@ function AppContent() {
       </aside>
 
       <main className="main-content">
-        {currentView !== 'requests' && currentView !== 'events' && currentView !== 'dashboard' && 
-         currentView !== 'customer_mgmt' && currentView !== 'operator_mgmt' && currentView !== 'codes' && currentView !== 'incidents' && (
-          <header className="page-header">
-            <h1 className="text-gradient">
-              {currentView === 'codes' ? '공통 코드 관리' : '시스템 대시보드'}
-            </h1>
-            <div className="breadcrumbs">
-              시스템 관리 &gt; {
-                currentView === 'codes' ? '공통 코드 관리' : '대시보드'
-              }
-            </div>
-          </header>
-        )}
+        <header className="page-header">
+          <h1 className="text-gradient">
+            {currentView === 'codes' ? '공통 코드 관리' : 
+             currentView === 'customer_mgmt' ? '고객조직 관리' :
+             currentView === 'operator_mgmt' ? '운영조직 관리' :
+             currentView === 'requests' ? '요청 관리' :
+             currentView === 'events' ? '이벤트 관리' :
+             currentView === 'incidents' ? '인시던트 관리' : '시스템 대시보드'}
+          </h1>
+          <div className="breadcrumbs">
+            {currentView === 'dashboard' ? '메인' : '시스템 관리'} &gt; {
+              currentView === 'codes' ? '공통 코드 관리' : 
+              currentView === 'customer_mgmt' ? '고객조직 관리' :
+              currentView === 'operator_mgmt' ? '운영조직 관리' :
+              currentView === 'requests' ? '요청 관리' :
+              currentView === 'events' ? '이벤트 관리' :
+              currentView === 'incidents' ? '인시던트 관리' : '대시보드'
+            }
+          </div>
+        </header>
         
         <div className="content-body">
           {currentView === 'customer_mgmt' ? <CustomerGovernanceHub /> : 

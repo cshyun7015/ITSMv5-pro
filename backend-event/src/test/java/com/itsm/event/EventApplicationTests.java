@@ -1,4 +1,4 @@
-package com.itsm.request;
+package com.itsm.event;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -24,6 +24,6 @@ class EventApplicationTests {
     @Test
     void healthCheckReturnsUp() {
         String body = this.restTemplate.getForObject("http://localhost:" + port + "/health", String.class);
-        assertThat(body).contains("Request Service is UP");
+        assertThat(body).contains("Event Service is UP");
     }
 }
