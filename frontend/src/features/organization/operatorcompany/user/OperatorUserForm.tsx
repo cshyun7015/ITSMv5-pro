@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Fingerprint, X, ShieldCheck, Mail, UserCircle, Key } from 'lucide-react';
+import { Fingerprint, X, ShieldCheck, Mail, UserCircle, Key, RefreshCw } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { apiCommonCode, type CommonCode } from '../../../code/api/apiCommonCode';
 
 interface OperatorUserFormProps {
   onClose: () => void;
@@ -9,13 +10,29 @@ interface OperatorUserFormProps {
 }
 
 const OperatorUserForm: React.FC<OperatorUserFormProps> = ({ onClose, user, onSave }) => {
+  const [roles, setRoles] = useState<CommonCode[]>([]);
+  const [fetchingRoles, setFetchingRoles] = useState(true);
   const [formData, setFormData] = useState({
     userId: '',
     name: '',
     email: '',
-    role: 'Standard Operator',
+    role: 'ROLE_OPER',
     isActive: true
   });
+
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        const response = await apiCommonCode.getCodesByGroup('OPE_ROLE');
+        setRoles(response.data);
+      } catch (err) {
+        console.error('Failed to fetch OPE_ROLE codes', err);
+      } finally {
+        setFetchingRoles(false);
+      }
+    };
+    fetchRoles();
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -23,7 +40,7 @@ const OperatorUserForm: React.FC<OperatorUserFormProps> = ({ onClose, user, onSa
         userId: user.userId || '',
         name: user.name || '',
         email: user.email || '',
-        role: user.role || 'Standard Operator',
+        role: user.role || 'ROLE_OPER',
         isActive: user.isActive !== undefined ? user.isActive : true
       });
     }
@@ -108,22 +125,28 @@ const OperatorUserForm: React.FC<OperatorUserFormProps> = ({ onClose, user, onSa
                 <Key size={14} className="tw-text-amber-500" /> 시스템 운영 권한 할당
               </h3>
               <div className="tw-grid tw-grid-cols-2 tw-gap-4">
-                {[
-                  { key: 'System Admin', label: '시스템 관리자' },
-                  { key: 'Security Ops', label: '보안 운영자' },
-                  { key: 'Support Pro', label: '기술 지원' },
-                  { key: 'Standard Operator', label: '일반 운영자' }
-                ].map(r => (
-                   <button
-                    key={r.key}
-                    type="button"
-                    onClick={() => setFormData({ ...formData, role: r.key })}
-                    className={`tw-p-5 tw-rounded-[24px] tw-border tw-text-xs tw-font-black tw-uppercase tw-tracking-widest tw-transition-all tw-text-left tw-flex tw-justify-between tw-items-center ${formData.role === r.key ? 'tw-bg-indigo-600 tw-border-indigo-500 tw-text-white tw-shadow-lg tw-shadow-indigo-500/20' : 'tw-bg-white/5 tw-border-white/5 tw-text-slate-500 hover:tw-border-white/20'}`}
-                   >
-                     {r.label}
-                     {formData.role === r.key && <UserCircle size={14} />}
-                   </button>
-                ))}
+                {fetchingRoles ? (
+                  <div className="tw-col-span-2 tw-flex tw-items-center tw-justify-center tw-py-8 tw-gap-3 tw-text-slate-500 tw-text-xs tw-font-bold tw-uppercase tw-tracking-widest">
+                    <RefreshCw size={16} className="tw-animate-spin tw-text-indigo-500" />
+                    권한 체계 동기화 중...
+                  </div>
+                ) : roles.length > 0 ? (
+                  roles.map(r => (
+                    <button
+                      key={r.codeId}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, role: r.codeId })}
+                      className={`tw-p-5 tw-rounded-[24px] tw-border tw-text-xs tw-font-black tw-uppercase tw-tracking-widest tw-transition-all tw-text-left tw-flex tw-justify-between tw-items-center ${formData.role === r.codeId ? 'tw-bg-indigo-600 tw-border-indigo-500 tw-text-white tw-shadow-lg tw-shadow-indigo-500/20' : 'tw-bg-white/5 tw-border-white/5 tw-text-slate-500 hover:tw-border-white/20'}`}
+                    >
+                      {r.codeName}
+                      {formData.role === r.codeId && <UserCircle size={14} />}
+                    </button>
+                  ))
+                ) : (
+                  <div className="tw-col-span-2 tw-p-6 tw-bg-rose-500/10 tw-border tw-border-rose-500/20 tw-rounded-2xl tw-text-rose-400 tw-text-xs tw-font-bold tw-text-center">
+                    역할 정보가 정의되지 않았습니다. (OPE_ROLE)
+                  </div>
+                )}
               </div>
             </section>
 

@@ -14,6 +14,7 @@ import OperatorTeamForm from './team/OperatorTeamForm';
 import OperatorTeamDetail from './team/OperatorTeamDetail';
 import OperatorUserForm from './user/OperatorUserForm';
 import OperatorUserDetail from './user/OperatorUserDetail';
+import TeamCustomerMapping from './TeamCustomerMapping';
 
 import './OperatorGovernance.css';
 
@@ -34,6 +35,8 @@ const OperatorGovernanceHub: React.FC = () => {
   const [modalMode, setModalMode] = useState<'NONE' | 'FORM' | 'DETAIL' | 'DELETE'>('NONE');
   const [targetLevel, setTargetLevel] = useState<'COMPANY' | 'TEAM' | 'USER' | null>(null);
   const [targetItem, setTargetItem] = useState<any>(null);
+  const [showMappingModal, setShowMappingModal] = useState(false);
+  const [mappingTeam, setMappingTeam] = useState<any>(null);
   const [deleteTarget, setDeleteTarget] = useState<{level: string, id: number, name: string} | null>(null);
 
   // --- Data Fetching ---
@@ -112,6 +115,11 @@ const OperatorGovernanceHub: React.FC = () => {
     setModalMode('FORM');
   };
 
+  const openMapping = (team: any) => {
+    setMappingTeam(team);
+    setShowMappingModal(true);
+  };
+
   const openDetail = (level: 'COMPANY' | 'TEAM' | 'USER', item: any) => {
     setTargetLevel(level);
     setTargetItem(item);
@@ -133,6 +141,7 @@ const OperatorGovernanceHub: React.FC = () => {
         await OperatorCompanyAPI.createOperatorCompany(data);
       }
       fetchCompanies();
+      closeModal();
     } catch (err) {
       console.error('Failed to save operator company', err);
     }
@@ -147,20 +156,26 @@ const OperatorGovernanceHub: React.FC = () => {
         await OperatorCompanyAPI.createOperatorTeam(selectedCompany.id, data);
       }
       fetchTeams(selectedCompany.id);
+      closeModal();
     } catch (err) {
       console.error('Failed to save team', err);
     }
   };
 
   const handleSaveUser = async (data: any) => {
-    if (!selectedTeam) return;
     try {
       if (data.id) {
         await OperatorCompanyAPI.updateOperator(data.id, data);
-      } else {
+        if (selectedTeam) {
+          fetchUsers(selectedTeam.id);
+        } else {
+          fetchUsers(); // Refresh global list if no team selected
+        }
+      } else if (selectedTeam) {
         await OperatorCompanyAPI.createOperator(selectedTeam.id, data);
+        fetchUsers(selectedTeam.id);
       }
-      fetchUsers(selectedTeam.id);
+      closeModal();
     } catch (err) {
       console.error('Failed to save user', err);
     }
@@ -349,6 +364,11 @@ const OperatorGovernanceHub: React.FC = () => {
                   </td>
                   <td className="tw-px-6 tw-py-3 tw-text-right">
                     <div className="tw-flex tw-justify-end tw-gap-2" onClick={(e) => e.stopPropagation()}>
+                      {activeStep === 'TEAM' && (
+                        <button onClick={() => openMapping(item)} className="tw-p-2.5 tw-bg-indigo-600/10 hover:tw-bg-indigo-600/20 hover:tw-text-indigo-400 tw-rounded-lg tw-transition-all tw-border tw-border-white/5" title="고객사 매핑">
+                          <Plus size={16} />
+                        </button>
+                      )}
                       <button onClick={() => openDetail(activeStep, item)} className="tw-p-2.5 tw-bg-white/5 hover:tw-bg-indigo-600/20 hover:tw-text-indigo-400 tw-rounded-lg tw-transition-all tw-border tw-border-white/5">
                         <Eye size={16} />
                       </button>
@@ -412,6 +432,12 @@ const OperatorGovernanceHub: React.FC = () => {
             {targetLevel === 'TEAM' && <OperatorTeamDetail team={targetItem} onClose={closeModal} />}
             {targetLevel === 'USER' && <OperatorUserDetail user={targetItem} onClose={closeModal} />}
           </>
+        )}
+        {showMappingModal && mappingTeam && (
+          <TeamCustomerMapping 
+            team={mappingTeam} 
+            onClose={() => { setShowMappingModal(false); setMappingTeam(null); }} 
+          />
         )}
         {modalMode === 'DELETE' && deleteTarget && (
           <div className="tw-fixed tw-inset-0 tw-z-[3000] tw-flex tw-items-center tw-justify-center tw-p-6">

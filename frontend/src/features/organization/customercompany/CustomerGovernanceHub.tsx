@@ -118,6 +118,8 @@ const CustomerGovernanceHub: React.FC = () => {
         await CustomerCompany.createCustomerCompany(data);
       }
       fetchCompanies();
+      setShowCompanyForm(false);
+      setEditingCompany(null);
     } catch (error) {
       console.error('Failed to save company', error);
     }
@@ -163,10 +165,13 @@ const CustomerGovernanceHub: React.FC = () => {
     try {
       if (data.id) {
         await CustomerCompany.updateCustomerTeam(data.id, data);
+        if (selectedCompany) fetchTeams(selectedCompany.id);
       } else if (selectedCompany) {
         await CustomerCompany.createCustomerTeam(selectedCompany.id, data);
+        fetchTeams(selectedCompany.id);
       }
-      if (selectedCompany) fetchTeams(selectedCompany.id);
+      setShowTeamForm(false);
+      setEditingTeam(null);
     } catch (error) {
       console.error('Failed to save team', error);
     }
@@ -182,10 +187,18 @@ const CustomerGovernanceHub: React.FC = () => {
     try {
       if (data.id) {
         await CustomerCompany.updateCustomerUser(data.id, data);
+        if (selectedTeam) {
+          fetchUsers(selectedTeam.id);
+        } else {
+          // If update happened globally or refresh is needed
+          if (selectedCompany) fetchTeams(selectedCompany.id);
+        }
       } else if (selectedTeam) {
         await CustomerCompany.createCustomerUser(selectedTeam.id, data);
+        fetchUsers(selectedTeam.id);
       }
-      if (selectedTeam) fetchUsers(selectedTeam.id);
+      setShowUserForm(false);
+      setEditingUser(null);
     } catch (error) {
       console.error('Failed to save user', error);
     }

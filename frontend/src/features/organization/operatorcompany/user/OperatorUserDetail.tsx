@@ -1,6 +1,7 @@
-import React from 'react';
-import { Fingerprint, X, Mail, ShieldCheck, UserCircle, Key } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Fingerprint, X, Mail, ShieldCheck, UserCircle, Key, RefreshCw } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { apiCommonCode, type CommonCode } from '../../../code/api/apiCommonCode';
 
 interface OperatorUserDetailProps {
   user: any;
@@ -8,6 +9,28 @@ interface OperatorUserDetailProps {
 }
 
 const OperatorUserDetail: React.FC<OperatorUserDetailProps> = ({ user, onClose }) => {
+  const [roles, setRoles] = useState<CommonCode[]>([]);
+  const [fetching, setFetching] = useState(true);
+
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        const response = await apiCommonCode.getCodesByGroup('OPE_ROLE');
+        setRoles(response.data);
+      } catch (err) {
+        console.error('Failed to fetch OPE_ROLE for detail view', err);
+      } finally {
+        setFetching(false);
+      }
+    };
+    fetchRoles();
+  }, []);
+
+  const getRoleName = (roleId: string) => {
+    const found = roles.find(r => r.codeId === roleId);
+    return found ? found.codeName : roleId; // 찾지 못하면 ID 그대로 표시
+  };
+
   return (
     <div className="tw-fixed tw-inset-0 tw-z-[2500] tw-flex tw-items-center tw-justify-center tw-p-6">
       <motion.div 
@@ -75,7 +98,11 @@ const OperatorUserDetail: React.FC<OperatorUserDetailProps> = ({ user, onClose }
               <div>
                 <div className="tw-text-[10px] tw-text-slate-500 tw-font-bold tw-uppercase tw-mb-1">시스템 운영 역할</div>
                 <div className="tw-text-2xl tw-text-white tw-font-bold">
-                  {user.role === 'System Admin' ? '시스템 관리자' : user.role === 'Security Ops' ? '보안 운영자' : user.role === 'Support Pro' ? '기술 지원' : '일반 운영자'}
+                  {fetching ? (
+                    <RefreshCw size={18} className="tw-animate-spin tw-text-slate-600" />
+                  ) : (
+                    getRoleName(user.role)
+                  )}
                 </div>
               </div>
             </div>

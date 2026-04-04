@@ -13,7 +13,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/organization")
 @RequiredArgsConstructor
-public class OrganizationManagementController {
+public class OperatorManagementController {
 
     private final OperatorService operatorService;
 
