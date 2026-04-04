@@ -55,8 +55,8 @@ const CustomerUserForm: React.FC<CustomerUserFormProps> = ({ onClose, user, onSa
                 <Users size={32} className="tw-text-white" />
               </div>
               <div className="tw-flex tw-flex-col">
-                <span className="tw-text-3xl tw-line-height-none">{user ? 'Identity Sync' : 'IAM Onboarding'}</span>
-                <span className="tw-text-xs tw-text-blue-400 tw-font-bold tw-uppercase tw-tracking-[0.2em] tw-mt-1">Personnel Authorization Hub</span>
+                <span className="tw-text-3xl tw-line-height-none">{user ? 'ID 정보 동기화' : '사용자 IAM 등록'}</span>
+                <span className="tw-text-xs tw-text-blue-400 tw-font-bold tw-uppercase tw-tracking-[0.2em] tw-mt-1">사용자 권한 관리 허브</span>
               </div>
             </h2>
             <button type="button" onClick={onClose} className="tw-w-12 tw-h-12 tw-flex tw-items-center tw-justify-center tw-bg-white/5 hover:tw-bg-white/10 tw-rounded-full tw-text-slate-400 hover:tw-text-white tw-transition-all tw-border tw-border-white/5"><X size={24} /></button>
@@ -66,31 +66,31 @@ const CustomerUserForm: React.FC<CustomerUserFormProps> = ({ onClose, user, onSa
             {/* Identity Core */}
             <section className="tw-space-y-6">
               <h3 className="tw-text-xs tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-[0.2em] tw-flex tw-items-center tw-gap-4">
-                <Fingerprint size={14} className="tw-text-blue-500" /> Identity Core
+                <Fingerprint size={14} className="tw-text-blue-500" /> 기본 식별 정보 (Identity Core)
               </h3>
               <div className="tw-grid tw-grid-cols-2 tw-gap-6 tw-mt-4">
                 <div className="tw-space-y-3">
-                  <label className="tw-text-[11px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest tw-ml-1">Unique Login ID</label>
+                  <label className="tw-text-[11px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest tw-ml-1">로그인 식별 ID</label>
                   <input 
                     required type="text" value={formData.userId}
                     onChange={(e) => setFormData({ ...formData, userId: e.target.value })}
                     className="tw-w-full tw-bg-slate-800/50 tw-border tw-border-white/10 tw-p-5 tw-rounded-3xl tw-outline-none focus:tw-border-blue-500 tw-transition-all tw-text-white tw-font-mono" 
-                    placeholder="E.G. itops_admin" 
+                    placeholder="예: itops_admin" 
                   />
                 </div>
                 <div className="tw-space-y-3">
-                  <label className="tw-text-[11px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest tw-ml-1">Legal Full Name</label>
+                  <label className="tw-text-[11px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest tw-ml-1">사용자 성명 (Full Name)</label>
                   <input 
                     required type="text" value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     className="tw-w-full tw-bg-slate-800/50 tw-border tw-border-white/10 tw-p-5 tw-rounded-3xl tw-outline-none focus:tw-border-blue-500 tw-transition-all tw-text-white tw-font-bold" 
-                    placeholder="Display Name" 
+                    placeholder="표시 성명을 입력하세요" 
                   />
                 </div>
               </div>
               <div className="tw-space-y-3">
                 <label className="tw-text-[11px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest tw-ml-1 tw-flex tw-items-center tw-gap-2">
-                  <Mail size={12} className="tw-text-blue-500" /> Communication Channel (IAM Email)
+                  <Mail size={12} className="tw-text-blue-500" /> 통신 채널 (IAM 이메일)
                 </label>
                 <input 
                   required type="email" value={formData.email}
@@ -104,18 +104,23 @@ const CustomerUserForm: React.FC<CustomerUserFormProps> = ({ onClose, user, onSa
             {/* Privileges & Roles */}
             <section className="tw-space-y-6">
               <h3 className="tw-text-xs tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-[0.2em] tw-flex tw-items-center tw-gap-4">
-                <Key size={14} className="tw-text-amber-500" /> Governed Privilege Assignments
+                <Key size={14} className="tw-text-amber-500" /> 거버넌스 기반 권한 할당 (Privileges)
               </h3>
               <div className="tw-grid tw-grid-cols-2 tw-gap-4">
-                {['Tenant Admin', 'Security Ops', 'Support Pro', 'Standard User'].map(role => (
+                {[
+                  { id: 'Tenant Admin', label: '테넌트 관리자' },
+                  { id: 'Security Ops', label: '보안 운영자' },
+                  { id: 'Support Pro', label: '지원 전문가' },
+                  { id: 'Standard User', label: '일반 사용자' }
+                ].map(role => (
                    <button
-                    key={role}
+                    key={role.id}
                     type="button"
-                    onClick={() => setFormData({ ...formData, role })}
-                    className={`tw-p-5 tw-rounded-[24px] tw-border tw-text-xs tw-font-black tw-uppercase tw-tracking-widest tw-transition-all tw-text-left tw-flex tw-justify-between tw-items-center ${formData.role === role ? 'tw-bg-blue-600 tw-border-blue-500 tw-text-white tw-shadow-lg tw-shadow-blue-500/20' : 'tw-bg-white/5 tw-border-white/5 tw-text-slate-500 hover:tw-border-white/20'}`}
+                    onClick={() => setFormData({ ...formData, role: role.id })}
+                    className={`tw-p-5 tw-rounded-[24px] tw-border tw-text-xs tw-font-black tw-uppercase tw-tracking-widest tw-transition-all tw-text-left tw-flex tw-justify-between tw-items-center ${formData.role === role.id ? 'tw-bg-blue-600 tw-border-blue-500 tw-text-white tw-shadow-lg tw-shadow-blue-500/20' : 'tw-bg-white/5 tw-border-white/5 tw-text-slate-500 hover:tw-border-white/20'}`}
                    >
-                     {role}
-                     {formData.role === role && <UserCircle size={14} />}
+                     {role.label}
+                     {formData.role === role.id && <UserCircle size={14} />}
                    </button>
                 ))}
               </div>
@@ -126,18 +131,19 @@ const CustomerUserForm: React.FC<CustomerUserFormProps> = ({ onClose, user, onSa
                 <ShieldCheck size={20} className="tw-text-white" />
               </div>
               <div className="tw-flex tw-flex-col tw-gap-1">
-                <span className="tw-text-xs tw-font-black tw-text-white tw-uppercase tw-tracking-widest">IAM Policy Compliance Verified</span>
+                <span className="tw-text-xs tw-font-black tw-text-white tw-uppercase tw-tracking-widest">IAM 정책 규정 준수 확인됨</span>
                 <p className="tw-text-[10px] tw-text-blue-200/60 tw-leading-relaxed tw-font-bold">
-                   Initialization of this identity profile will trigger automated provisioning within the strategic shard. Privilege escalation logs will be archived for audit compliance.
+                   이 식별 프로필 초기화 시 전략적 테넌트 내에 자동 프로비저닝이 트리거됩니다. <br />
+                   권한 상승 로그는 감사 준수를 위해 아카이브됩니다.
                 </p>
               </div>
             </div>
           </div>
 
           <div className="tw-p-12 tw-bg-black/50 tw-border-t tw-border-white/5 tw-flex tw-justify-end tw-gap-6">
-            <button type="button" className="tw-py-5 tw-px-12 tw-bg-white/5 hover:tw-bg-white/10 tw-text-slate-400 hover:tw-text-white tw-rounded-[24px] tw-font-black tw-uppercase tw-tracking-widest tw-text-[11px] tw-transition-all tw-border tw-border-white/5" onClick={onClose}>Discard Profile</button>
+            <button type="button" className="tw-py-5 tw-px-12 tw-bg-white/5 hover:tw-bg-white/10 tw-text-slate-400 hover:tw-text-white tw-rounded-[24px] tw-font-black tw-uppercase tw-tracking-widest tw-text-[11px] tw-transition-all tw-border tw-border-white/5" onClick={onClose}>설정 폐기</button>
             <button type="submit" className="tw-py-5 tw-px-20 tw-bg-blue-600 hover:tw-bg-blue-500 tw-text-white tw-font-black tw-uppercase tw-tracking-widest tw-text-[11px] tw-rounded-[24px] tw-shadow-2xl tw-shadow-blue-600/40 tw-transition-all tw-transform hover:tw--translate-y-1 active:tw-translate-y-0">
-              {user ? 'Finalize Identity Provision' : 'Synchronize Identity'}
+              {user ? 'ID 프로비저닝 완료' : 'ID 정보 동기화'}
             </button>
           </div>
         </form>

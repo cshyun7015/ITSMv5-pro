@@ -15,6 +15,8 @@ import OperatorTeamDetail from './team/OperatorTeamDetail';
 import OperatorUserForm from './user/OperatorUserForm';
 import OperatorUserDetail from './user/OperatorUserDetail';
 
+import './OperatorGovernance.css';
+
 const OperatorGovernanceHub: React.FC = () => {
   // --- Core State ---
   const [companies, setCompanies] = useState<OperatorCompanyDTO[]>([]);
@@ -198,14 +200,14 @@ const OperatorGovernanceHub: React.FC = () => {
   }, [companies, teams, users, activeStep, searchTerm]);
 
   return (
-    <div className="tw-min-h-screen tw-bg-[#010409] tw-text-slate-100 tw-p-8 tw-font-sans">
+    <div className="operator-hub-container">
       <div className="tw-max-w-[1600px] tw-mx-auto tw-space-y-8">
         
         {/* Hub Header */}
         <header className="tw-flex tw-justify-between tw-items-end">
           <div className="tw-space-y-3">
             <div className="tw-flex tw-items-center tw-gap-4">
-              <div className="tw-w-12 tw-h-12 tw-bg-indigo-600 tw-rounded-2xl tw-flex tw-items-center tw-justify-center tw-shadow-2xl tw-shadow-indigo-500/20">
+              <div className="operator-title-icon">
                 <ShieldCheck size={28} className="tw-text-white" />
               </div>
               <div>
@@ -226,7 +228,7 @@ const OperatorGovernanceHub: React.FC = () => {
              </div>
              <button 
               onClick={() => openForm(activeStep)}
-              className="tw-bg-indigo-600 hover:tw-bg-indigo-500 tw-px-6 tw-py-3 tw-rounded-xl tw-font-bold tw-uppercase tw-tracking-widest tw-text-[10px] tw-flex tw-items-center tw-gap-2 tw-transition-all tw-shadow-2xl tw-shadow-indigo-600/40"
+              className="operator-btn-primary"
              >
                <Plus size={14} /> {activeStep === 'COMPANY' ? 'MSP' : activeStep === 'TEAM' ? '운영팀' : '운영자'} 등록
              </button>
@@ -234,24 +236,24 @@ const OperatorGovernanceHub: React.FC = () => {
         </header>
 
         {/* Navigation Breadcrumbs */}
-        <nav className="tw-flex tw-items-center tw-gap-4 tw-bg-white/5 tw-p-6 tw-rounded-2xl tw-border tw-border-white/5 shadow-inner">
+        <nav className="operator-breadcrumb-nav">
            <button 
             onClick={() => setActiveStep('COMPANY')}
-            className={`tw-flex tw-items-center tw-gap-3 tw-px-5 tw-py-2.5 tw-rounded-xl tw-transition-all ${activeStep === 'COMPANY' ? 'tw-bg-indigo-600 tw-text-white shadow-lg shadow-indigo-500/20' : 'tw-text-slate-500 hover:tw-text-slate-200'}`}
+            className={`nav-button ${activeStep === 'COMPANY' ? 'nav-button-active' : 'nav-button-inactive'}`}
            >
              <Building2 size={18} /> <span className="tw-text-[10px] tw-font-bold tw-uppercase tw-tracking-widest">MSP 관리</span>
            </button>
            <ChevronRight size={14} className="tw-text-slate-700" />
            <button 
             onClick={() => { setActiveStep('TEAM'); fetchTeams(selectedCompany?.id); }}
-            className={`tw-flex tw-items-center tw-gap-3 tw-px-5 tw-py-2.5 tw-rounded-xl tw-transition-all ${activeStep === 'TEAM' ? 'tw-bg-indigo-600 tw-text-white shadow-lg shadow-indigo-500/20' : 'tw-text-slate-500 hover:tw-text-slate-200'}`}
+            className={`nav-button ${activeStep === 'TEAM' ? 'nav-button-active' : 'nav-button-inactive'}`}
            >
              <LayoutGrid size={18} /> <span className="tw-text-[10px] tw-font-bold tw-uppercase tw-tracking-widest">운영팀 관리</span>
            </button>
            <ChevronRight size={14} className="tw-text-slate-700" />
            <button 
             onClick={() => { setActiveStep('USER'); fetchUsers(selectedTeam?.id); }}
-            className={`tw-flex tw-items-center tw-gap-3 tw-px-5 tw-py-2.5 tw-rounded-xl tw-transition-all ${activeStep === 'USER' ? 'tw-bg-indigo-600 tw-text-white shadow-lg shadow-indigo-500/20' : 'tw-text-slate-500 hover:tw-text-slate-200'}`}
+            className={`nav-button ${activeStep === 'USER' ? 'nav-button-active' : 'nav-button-inactive'}`}
            >
              <Users size={18} /> <span className="tw-text-[10px] tw-font-bold tw-uppercase tw-tracking-widest">운영자 관리</span>
            </button>
@@ -287,8 +289,8 @@ const OperatorGovernanceHub: React.FC = () => {
         )}
 
         {/* Data Table */}
-        <div className="tw-bg-[#0d1117] tw-rounded-3xl tw-border tw-border-white/5 tw-overflow-hidden tw-relative shadow-2xl">
-          <table className="tw-w-full tw-border-collapse">
+        <div className="operator-table-card">
+          <table className="operator-table">
             <thead>
               <tr className="tw-border-b tw-border-white/5">
                 <th className="tw-px-6 tw-py-4 tw-text-left tw-text-xs tw-font-semibold tw-text-slate-400 tw-uppercase tw-tracking-widest">MSP (이름 / ID)</th>
@@ -339,7 +341,7 @@ const OperatorGovernanceHub: React.FC = () => {
                   </td>
                   <td className="tw-px-6 tw-py-5">
                     <div className="tw-flex tw-items-center tw-gap-3">
-                      <div className={`tw-w-2 tw-h-2 tw-rounded-full ${(!anyItem.status || anyItem.status === 'ACTIVE' || anyItem.isActive) ? 'tw-bg-emerald-500 tw-shadow-[0_0_10px_rgba(16,185,129,0.8)]' : 'tw-bg-rose-500'}`} />
+                      <div className={`status-dot ${(!anyItem.status || anyItem.status === 'ACTIVE' || anyItem.isActive) ? 'status-active-dot' : 'status-inactive-dot'}`} />
                       <span className="tw-text-xs tw-font-bold tw-uppercase tw-tracking-widest">
                          {(!anyItem.status || anyItem.status === 'ACTIVE' || anyItem.isActive) ? '운영 중' : '중지됨'}
                       </span>

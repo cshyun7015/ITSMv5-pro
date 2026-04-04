@@ -51,8 +51,8 @@ const CustomerTeamForm: React.FC<CustomerTeamFormProps> = ({ onClose, team, onSa
                 <LayoutGrid size={32} className="tw-text-white" />
               </div>
               <div className="tw-flex tw-flex-col">
-                <span className="tw-text-3xl tw-line-height-none">{team ? 'Unit Refinement' : 'Structural Provision'}</span>
-                <span className="tw-text-xs tw-text-emerald-400 tw-font-bold tw-uppercase tw-tracking-[0.2em] tw-mt-1">Customer Support Unit</span>
+                <span className="tw-text-3xl tw-line-height-none">{team ? '조직 정보 수정' : '신규 조직 구성'}</span>
+                <span className="tw-text-xs tw-text-emerald-400 tw-font-bold tw-uppercase tw-tracking-[0.2em] tw-mt-1">고객 서비스 지원 유닛</span>
               </div>
             </h2>
             <button type="button" onClick={onClose} className="tw-w-12 tw-h-12 tw-flex tw-items-center tw-justify-center tw-bg-white/5 hover:tw-bg-white/10 tw-rounded-full tw-text-slate-400 hover:tw-text-white tw-transition-all tw-border tw-border-white/5"><X size={24} /></button>
@@ -62,26 +62,26 @@ const CustomerTeamForm: React.FC<CustomerTeamFormProps> = ({ onClose, team, onSa
             <section className="tw-space-y-6">
               <div className="tw-space-y-3">
                 <label className="tw-text-[11px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest tw-ml-1 tw-flex tw-items-center tw-gap-2">
-                  <FileText size={12} className="tw-text-emerald-500" /> Organizational Unit Designation
+                  <FileText size={12} className="tw-text-emerald-500" /> 고객사 팀 명칭 (Organizational Unit)
                 </label>
                 <input 
                   autoFocus required type="text" value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className="tw-w-full tw-bg-slate-800/50 tw-border tw-border-white/10 tw-p-5 tw-rounded-3xl tw-outline-none focus:tw-border-emerald-500 tw-transition-all tw-text-white tw-font-bold" 
-                  placeholder="E.G. Global Infrastructure Group" 
+                  placeholder="예: 글로벌 인프라 관리팀" 
                 />
               </div>
 
               <div className="tw-space-y-3">
                 <label className="tw-text-[11px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest tw-ml-1 tw-flex tw-items-center tw-gap-2">
-                  <Info size={12} className="tw-text-emerald-500" /> Tactical Responsibility Matrix
+                  <Info size={12} className="tw-text-emerald-500" /> 업무 범위 및 책임 상세 (Tactical Responsibility)
                 </label>
                 <textarea 
                   rows={4}
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   className="tw-w-full tw-bg-slate-800/50 tw-border tw-border-white/10 tw-p-6 tw-rounded-[32px] tw-outline-none focus:tw-border-emerald-500 tw-transition-all tw-text-white tw-resize-none tw-leading-relaxed" 
-                  placeholder="Define the primary operational scope and objectives for this unit..." 
+                  placeholder="이 유닛의 주요 운영 범위와 목표를 정의하십시오..." 
                 />
               </div>
             </section>
@@ -91,18 +91,18 @@ const CustomerTeamForm: React.FC<CustomerTeamFormProps> = ({ onClose, team, onSa
                 <ShieldAlert size={20} className="tw-text-white" />
               </div>
               <div className="tw-flex tw-flex-col tw-gap-1">
-                <span className="tw-text-xs tw-font-black tw-text-emerald-200 tw-uppercase tw-tracking-widest">Hierarchy Integrity Verified</span>
+                <span className="tw-text-xs tw-font-black tw-text-emerald-200 tw-uppercase tw-tracking-widest">계층 구조 무결성 확인됨</span>
                 <p className="tw-text-[10px] tw-text-emerald-200/60 tw-leading-relaxed tw-font-bold">
-                  Establishing this unit will allow identity aggregation and role assignment within the customer shard.
+                  이 유닛을 생성하면 고객 테넌트 내에서 식별자 통합 및 역할 부여가 가능해집니다.
                 </p>
               </div>
             </div>
           </div>
 
           <div className="tw-p-12 tw-bg-black/50 tw-border-t tw-border-white/5 tw-flex tw-justify-end tw-gap-6">
-            <button type="button" className="tw-py-5 tw-px-12 tw-bg-white/5 hover:tw-bg-white/10 tw-text-slate-400 hover:tw-text-white tw-rounded-[24px] tw-font-black tw-uppercase tw-tracking-widest tw-text-[11px] tw-transition-all tw-border tw-border-white/5" onClick={onClose}>Abort Change</button>
+            <button type="button" className="tw-py-5 tw-px-12 tw-bg-white/5 hover:tw-bg-white/10 tw-text-slate-400 hover:tw-text-white tw-rounded-[24px] tw-font-black tw-uppercase tw-tracking-widest tw-text-[11px] tw-transition-all tw-border tw-border-white/5" onClick={onClose}>변경 취소</button>
             <button type="submit" className="tw-py-5 tw-px-20 tw-bg-emerald-600 hover:tw-bg-emerald-500 tw-text-white tw-font-black tw-uppercase tw-tracking-widest tw-text-[11px] tw-rounded-[24px] tw-shadow-2xl tw-shadow-emerald-600/40 tw-transition-all tw-transform hover:tw--translate-y-1 active:tw-translate-y-0">
-              {team ? 'Finalize Unit Update' : 'Initialize Structural Unit'}
+              {team ? '정보 업데이트 완료' : '구조 유닛 초기화 및 생성'}
             </button>
           </div>
         </form>

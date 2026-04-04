@@ -6,7 +6,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import './CustomerGovernance.css';
 
 // API Client & DTOs
-import CustomerCompany, { 
+import CustomerCompany from './api/CustomerCompany';
+import type { 
   CustomerCompanyDTO, 
   CustomerTeamDTO, 
   CustomerUserDTO 
@@ -219,13 +220,13 @@ const CustomerGovernanceHub: React.FC = () => {
       {/* Force header into a single line using robust inline styles */}
       <div id="hub-header" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: '40px', paddingBottom: '24px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '32px' }}>
-          <h1 className="text-xl font-black tracking-tight text-white m-0" style={{ whiteSpace: 'nowrap' }}>고객사/고객사팀/사용자 관리</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-white m-0" style={{ whiteSpace: 'nowrap' }}>고객조직 관리</h1>
           <div style={{ width: '1px', height: '24px', backgroundColor: 'rgba(255,255,255,0.1)' }} />
           {renderBreadcrumbs()}
         </div>
         <div style={{ display: 'flex', gap: '12px' }}>
           {level === 'company' && <button className="gov-btn gov-btn-primary" onClick={() => setShowCompanyForm(true)} style={{ whiteSpace: 'nowrap' }}><Plus size={18} /> 신규 고객사 등록</button>}
-          {level === 'team' && <button className="gov-btn gov-btn-primary" onClick={() => setShowTeamForm(true)} style={{ whiteSpace: 'nowrap' }}><Plus size={18} /> 신규 팀 등록</button>}
+          {level === 'team' && <button className="gov-btn gov-btn-primary" onClick={() => setShowTeamForm(true)} style={{ whiteSpace: 'nowrap' }}><Plus size={18} /> 신규 고객팀 등록</button>}
           {level === 'user' && <button className="gov-btn gov-btn-primary" onClick={() => setShowUserForm(true)} style={{ whiteSpace: 'nowrap' }}><Plus size={18} /> 신규 사용자 등록</button>}
         </div>
       </div>
@@ -240,7 +241,7 @@ const CustomerGovernanceHub: React.FC = () => {
         >
           {loading ? (
              <div className="p-20 text-center text-slate-600 animate-pulse font-black uppercase tracking-widest">
-                Data Synchronizing...
+                데이터를 동기화하고 있습니다...
              </div>
           ) : (
             <>
@@ -364,28 +365,28 @@ const CustomerGovernanceHub: React.FC = () => {
               onClick={() => setShowDeletePopup({show: false, type: '', target: null})}
             />
             <motion.div 
-              className="tw-relative tw-bg-slate-900 tw-border tw-border-white/10 tw-p-12 tw-rounded-[48px] tw-max-w-md tw-w-full tw-shadow-[0_0_100px_rgba(244,63,94,0.15)] tw-text-center tw-overflow-hidden"
+              className="tw-relative tw-bg-slate-900 tw-border tw-border-white/10 tw-p-8 tw-rounded-3xl tw-max-w-md tw-w-full tw-shadow-[0_0_100px_rgba(244,63,94,0.15)] tw-text-center tw-overflow-hidden"
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
             >
               <div className="tw-absolute tw-top-0 tw-left-0 tw-w-full tw-h-1 tw-bg-rose-600" />
               
-              <div className="tw-w-24 tw-h-24 tw-bg-rose-500 tw-rounded-[32px] tw-flex tw-items-center tw-justify-center tw-mx-auto tw-mb-8 tw-shadow-xl tw-shadow-rose-500/20">
-                <AlertTriangle size={48} className="tw-text-white" />
+              <div className="tw-w-20 tw-h-20 tw-bg-rose-500 tw-rounded-2xl tw-flex tw-items-center tw-justify-center tw-mx-auto tw-mb-6 tw-shadow-xl tw-shadow-rose-500/20">
+                <AlertTriangle size={40} className="tw-text-white" />
               </div>
               
-              <h2 className="tw-text-3xl tw-font-black tw-text-white tw-mb-4 tw-tracking-tighter tw-leading-none">
-                {showDeletePopup.type} Permanently Deletion
+              <h2 className="tw-text-2xl tw-font-bold tw-text-white tw-mb-3 tw-tracking-tight tw-leading-none">
+                {showDeletePopup.type} 영구 삭제
               </h2>
               
-              <p className="tw-text-slate-400 tw-text-sm tw-mb-12 tw-leading-relaxed tw-px-4">
-                Are you absolutely sure you want to terminate <span className="tw-text-white tw-font-bold">"{showDeletePopup.target?.name || showDeletePopup.target?.customerId}"</span>? 
+              <p className="tw-text-slate-400 tw-text-sm tw-mb-8 tw-leading-relaxed tw-px-2">
+                정말로 <span className="tw-text-white tw-font-bold">"{showDeletePopup.target?.name || showDeletePopup.target?.customerId}"</span> 항목을 삭제하시겠습니까? 
                 {showDeletePopup.type !== '사용자' && (
                   <>
                     <br />
-                    <span className="tw-text-rose-400 tw-mt-2 tw-block tw-font-black tw-uppercase tw-text-[10px] tw-tracking-widest tw-bg-rose-500/10 tw-py-2 tw-rounded-xl tw-border tw-border-rose-500/20">
-                      Warning: All cascading child nodes (Teams/Users) will be purged.
+                    <span className="tw-text-rose-400 tw-mt-3 tw-block tw-font-bold tw-uppercase tw-text-xs tw-tracking-widest tw-bg-rose-500/10 tw-py-2.5 tw-rounded-lg tw-border tw-border-rose-500/20">
+                      경고: 모든 하위 조직(팀/사용자)이 데이터베이스에서 영구적으로 삭제됩니다.
                     </span>
                   </>
                 )}
@@ -393,16 +394,16 @@ const CustomerGovernanceHub: React.FC = () => {
               
               <div className="tw-flex tw-gap-4">
                 <button 
-                  className="tw-flex-1 tw-py-5 tw-bg-rose-600 hover:tw-bg-rose-500 tw-text-white tw-rounded-3xl tw-font-black tw-uppercase tw-tracking-widest tw-text-[11px] tw-transition-all tw-shadow-lg tw-shadow-rose-600/20 tw-transform hover:tw--translate-y-1 active:tw-translate-y-0" 
+                  className="tw-flex-1 tw-py-3.5 tw-bg-rose-600 hover:tw-bg-rose-500 tw-text-white tw-rounded-xl tw-font-bold tw-text-sm tw-transition-all tw-shadow-lg tw-shadow-rose-600/20 tw-transform hover:tw--translate-y-1 active:tw-translate-y-0" 
                   onClick={handleConfirmDelete}
                 >
-                  Confirm Purge
+                  삭제 실행
                 </button>
                 <button 
-                  className="tw-flex-1 tw-py-5 tw-bg-white/5 hover:tw-bg-white/10 tw-text-slate-400 hover:tw-text-white tw-rounded-3xl tw-font-black tw-uppercase tw-tracking-widest tw-text-[11px] tw-transition-all tw-border tw-border-white/5" 
+                  className="tw-flex-1 tw-py-3.5 tw-bg-white/5 hover:tw-bg-white/10 tw-text-slate-300 hover:tw-text-white tw-rounded-xl tw-font-bold tw-text-sm tw-transition-all tw-border tw-border-white/5" 
                   onClick={() => setShowDeletePopup({show: false, type: '', target: null})}
                 >
-                  Abort Action
+                  취소(Abort)
                 </button>
               </div>
             </motion.div>
