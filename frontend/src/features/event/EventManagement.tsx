@@ -380,7 +380,10 @@ const EventManagement: React.FC = () => {
                                                 <div className="tw-w-20">
                                                     <div className={`status-indicator !tw-text-[10px] ${
                                                         event.statusCode === 'NEW' ? 'tw-text-brand-400' : 
-                                                        event.statusCode === 'ACKNOWLEDGED' ? 'acknowledged' : 'tw-text-muted'
+                                                        event.statusCode === 'ACKNOWLEDGED' ? 'acknowledged' : 
+                                                        event.statusCode === 'PROMOTED' ? 'promoted' :
+                                                        event.statusCode === 'RESOLVED' ? 'resolved' :
+                                                        event.statusCode === 'CANCELLED' ? 'cancelled' : 'tw-text-muted'
                                                     }`}>
                                                         <div className="ping-dot !tw-w-1 !tw-h-1" />
                                                         {getCodeName('EV_STATUS', event.statusCode)}
@@ -397,7 +400,10 @@ const EventManagement: React.FC = () => {
                                                 </div>
                                                 <div className={`status-indicator ${
                                                     event.statusCode === 'NEW' ? 'tw-text-brand-400' : 
-                                                    event.statusCode === 'ACKNOWLEDGED' ? 'acknowledged' : 'tw-text-muted'
+                                                    event.statusCode === 'ACKNOWLEDGED' ? 'acknowledged' : 
+                                                    event.statusCode === 'PROMOTED' ? 'promoted' :
+                                                    event.statusCode === 'RESOLVED' ? 'resolved' :
+                                                    event.statusCode === 'CANCELLED' ? 'cancelled' : 'tw-text-muted'
                                                 }`}>
                                                     <div className="ping-dot" />
                                                     {getCodeName('EV_STATUS', event.statusCode)}

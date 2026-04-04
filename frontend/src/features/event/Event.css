@@ -140,6 +140,12 @@
     border: 1px solid hsla(0, 0%, 100%, 0.05);
 }
 
+/* Status Specific Styles */
+.status-indicator.acknowledged { color: #a78bfa; }
+.status-indicator.resolved { color: #10b981; }
+.status-indicator.promoted { color: #f97316; }
+.status-indicator.cancelled { color: #9ca3af; }
+
 .status-indicator {
     display: flex;
     align-items: center;

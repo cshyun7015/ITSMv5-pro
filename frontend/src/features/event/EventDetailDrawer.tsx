@@ -18,7 +18,7 @@ const EventDetailDrawer: React.FC<Props> = ({ event, onClose, onUpdated, codes }
         return codes[group]?.find((c: any) => c.codeId === codeId)?.codeName || codeId;
     };
 
-    const handleAction = async (action: 'promote' | 'acknowledge' | 'resolve') => {
+    const handleAction = async (action: 'promote' | 'acknowledge' | 'resolve' | 'cancel') => {
         try {
             if (action === 'promote') {
                 await apiEvent.promoteToIncident(event.id);
@@ -99,6 +99,14 @@ const EventDetailDrawer: React.FC<Props> = ({ event, onClose, onUpdated, codes }
                                         <CheckCircle size={16} /> 해결 완료
                                     </button>
                                 )}
+                                {(event.statusCode === 'NEW' || event.statusCode === 'ACKNOWLEDGED') && (
+                                    <button 
+                                        onClick={() => handleAction('cancel')}
+                                        className="tw-flex tw-items-center tw-gap-2 tw-bg-white tw-bg-opacity-10 tw-px-4 tw-py-2 tw-rounded-lg tw-text-sm tw-font-bold tw-hover:bg-opacity-30 tw-transition-all"
+                                    >
+                                        <X size={16} /> 취소 처리
+                                    </button>
+                                )}
                             </div>
                         </header>
 
@@ -109,7 +117,14 @@ const EventDetailDrawer: React.FC<Props> = ({ event, onClose, onUpdated, codes }
                                     <div className="tw-flex tw-items-center tw-gap-2 tw-text-xs tw-text-muted tw-mb-2">
                                         <Info size={14} /> STATUS
                                     </div>
-                                    <div className="tw-font-bold tw-text-indigo-300">{getCodeName('EV_STATUS', event.statusCode)}</div>
+                                    <div className={`tw-font-bold ${
+                                        event.statusCode === 'ACKNOWLEDGED' ? 'tw-text-indigo-300' :
+                                        event.statusCode === 'PROMOTED' ? 'tw-text-orange-400' :
+                                        event.statusCode === 'RESOLVED' ? 'tw-text-green-400' :
+                                        event.statusCode === 'CANCELLED' ? 'tw-text-gray-400' : 'tw-text-brand-300'
+                                    }`}>
+                                        {getCodeName('EV_STATUS', event.statusCode)}
+                                    </div>
                                 </div>
                                 <div className="tw-bg-white tw-bg-opacity-5 tw-p-4 tw-rounded-xl tw-border tw-border-white tw-border-opacity-5">
                                     <div className="tw-flex tw-items-center tw-gap-2 tw-text-xs tw-text-muted tw-mb-2">
