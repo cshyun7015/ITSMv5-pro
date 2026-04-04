@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Plus, Edit2, Trash2, Database,  
-    ChevronRight, Search, LayoutGrid, ArrowLeft 
+    ChevronRight, Search, LayoutGrid, ArrowLeft,
+    ChevronLeft, ChevronsLeft, ChevronsRight
 } from 'lucide-react';
 import { apiCommonCode } from './api/apiCommonCode';
 import type { CodeGroup, CommonCode } from './api/apiCommonCode';
@@ -21,6 +22,8 @@ const CodeManagement: React.FC = () => {
     const [editingCode, setEditingCode] = useState<CommonCode | undefined>(undefined);
     
     const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const pageSize = 10;
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
@@ -97,15 +100,25 @@ const CodeManagement: React.FC = () => {
         c.codeName.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, level]);
+
+    const totalItems = level === 'group' ? filteredGroups.length : filteredCodes.length;
+    const totalPages = Math.ceil(totalItems / pageSize);
+    const paginatedItems = level === 'group' 
+        ? filteredGroups.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+        : filteredCodes.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
     return (
-        <div className="tw-p-10 tw-bg-[#0f172a] tw-min-h-screen">
+        <div className="tw-p-6 tw-bg-[#0f172a] tw-min-h-screen">
             {/* Governance Header & Breadcrumbs */}
-            <div className="tw-bg-slate-900/50 tw-border tw-border-white/5 tw-p-8 tw-rounded-[32px] tw-mb-8 tw-backdrop-blur-xl">
+            <div className="tw-bg-slate-900/50 tw-border tw-border-white/5 tw-p-6 tw-rounded-none tw-mb-6 tw-backdrop-blur-xl">
                 <div className="tw-flex tw-justify-between tw-items-center">
                     <div className="tw-flex tw-items-center tw-gap-8">
                         <div>
-                            <h1 className="tw-text-2xl tw-font-black tw-text-white tw-tracking-tight">코드그룹/코드</h1>
-                            <p className="tw-text-slate-400 tw-text-xs tw-font-semibold tw-uppercase tw-tracking-widest tw-mt-1">시스템 공통 코드 관리</p>
+                            <h1 className="tw-text-2xl tw-font-black tw-text-white tw-tracking-tight tw-whitespace-nowrap">코드그룹/코드</h1>
+                            <p className="tw-text-slate-400 tw-text-xs tw-font-semibold tw-uppercase tw-tracking-widest tw-mt-1 tw-whitespace-nowrap">시스템 공통 코드 관리</p>
                         </div>
                         
                         <div className="tw-w-px tw-h-12 tw-bg-white/10" />
@@ -114,7 +127,7 @@ const CodeManagement: React.FC = () => {
                         <div className="tw-flex tw-items-center tw-gap-3">
                             <button 
                                 onClick={handleBackToGroups}
-                                className={`tw-flex tw-items-center tw-gap-2 tw-px-4 tw-py-2 tw-rounded-xl tw-text-sm tw-font-bold tw-transition-all ${
+                                className={`tw-flex tw-items-center tw-gap-2 tw-px-4 tw-py-2 tw-rounded-xl tw-text-sm tw-font-bold tw-transition-all tw-whitespace-nowrap ${
                                     level === 'group' ? 'tw-bg-slate-800 tw-text-white tw-shadow-lg' : 'tw-text-slate-500 hover:tw-text-slate-300'
                                 }`}
                             >
@@ -124,7 +137,7 @@ const CodeManagement: React.FC = () => {
                             {level === 'code' && selectedGroup && (
                                 <>
                                     <ChevronRight size={14} className="tw-text-slate-700" />
-                                    <div className="tw-flex tw-items-center tw-gap-2 tw-px-4 tw-py-2 tw-bg-slate-100 tw-text-slate-900 tw-rounded-xl tw-text-sm tw-font-black tw-shadow-xl tw-shadow-white/5">
+                                    <div className="tw-flex tw-items-center tw-gap-2 tw-px-4 tw-py-2 tw-bg-slate-100 tw-text-slate-900 tw-rounded-xl tw-text-sm tw-font-black tw-shadow-xl tw-shadow-white/5 tw-whitespace-nowrap">
                                         <Database size={16} /> {selectedGroup.name}
                                     </div>
                                 </>
@@ -137,26 +150,26 @@ const CodeManagement: React.FC = () => {
                             <Search className="tw-absolute tw-left-4 tw-top-1/2 tw-translate-y-[-50%] tw-text-slate-600" size={16} />
                             <input 
                                 type="text"
-                                placeholder={level === 'group' ? "그룹 검색..." : "코드 검색..."}
+                                placeholder={level === 'group' ? "그룹코드 검색..." : "코드 검색..."}
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="tw-bg-black/20 tw-border tw-border-white/5 tw-pl-12 tw-pr-6 tw-py-3 tw-rounded-[18px] tw-text-sm tw-text-white tw-w-80 focus:tw-border-slate-500 tw-transition-all outline-none tw-placeholder-slate-700"
+                                className="tw-bg-black/20 tw-border tw-border-white/5 tw-pl-12 tw-pr-6 tw-py-3 tw-rounded-[18px] tw-text-sm tw-text-white tw-w-60 focus:tw-border-slate-500 tw-transition-all outline-none tw-placeholder-slate-700"
                             />
                         </div>
                         
                         {level === 'group' ? (
                             <button 
-                                className="tw-bg-slate-50 hover:tw-bg-white tw-text-slate-900 tw-px-6 tw-py-3.5 tw-rounded-2xl tw-text-xs tw-font-black tw-flex tw-items-center tw-gap-2 tw-transition-all tw-shadow-xl"
+                                className="tw-bg-slate-50 hover:tw-bg-white tw-text-slate-900 tw-px-6 tw-py-3.5 tw-rounded-2xl tw-text-xs tw-font-black tw-flex tw-items-center tw-gap-2 tw-transition-all tw-shadow-xl tw-whitespace-nowrap"
                                 onClick={() => { setEditingGroup(undefined); setIsGroupModalOpen(true); }}
                             >
                                 <Plus size={18} /> 코드 그룹 등록
                             </button>
                         ) : (
                             <button 
-                                className="tw-bg-indigo-500 hover:tw-bg-indigo-400 tw-text-white tw-px-6 tw-py-3.5 tw-rounded-2xl tw-text-xs tw-font-black tw-flex tw-items-center tw-gap-2 tw-transition-all tw-shadow-xl tw-shadow-indigo-500/20"
+                                className="tw-bg-indigo-500 hover:tw-bg-indigo-400 tw-text-white tw-px-6 tw-py-3.5 tw-rounded-2xl tw-text-xs tw-font-black tw-flex tw-items-center tw-gap-2 tw-transition-all tw-shadow-xl tw-shadow-indigo-500/20 tw-whitespace-nowrap"
                                 onClick={() => { setEditingCode(undefined); setIsCodeModalOpen(true); }}
                             >
-                                <Plus size={18} /> 하위 코드 추가
+                                <Plus size={18} /> 코드 추가
                             </button>
                         )}
                     </div>
@@ -204,7 +217,7 @@ const CodeManagement: React.FC = () => {
                                     </thead>
                                     <tbody className="tw-divide-y tw-divide-white/5">
                                         {level === 'group' ? (
-                                            filteredGroups.map((g) => (
+                                            (paginatedItems as CodeGroup[]).map((g) => (
                                                 <tr key={g.groupId} className="group hover:tw-bg-white/[0.02] tw-transition-all">
                                                     <td className="tw-px-6 tw-py-4">
                                                         <span className="tw-text-xs tw-font-bold tw-font-mono tw-text-slate-500">
@@ -245,7 +258,7 @@ const CodeManagement: React.FC = () => {
                                                 </tr>
                                             ))
                                         ) : (
-                                            filteredCodes.map((c) => (
+                                            (paginatedItems as CommonCode[]).map((c) => (
                                                 <tr key={c.id} className="hover:tw-bg-white/[0.01] tw-transition-all">
                                                     <td className="tw-px-6 tw-py-4 tw-text-xs tw-font-mono tw-text-slate-500">#{c.sortOrder.toString().padStart(2, '0')}</td>
                                                     <td className="tw-px-6 tw-py-4">
@@ -289,6 +302,72 @@ const CodeManagement: React.FC = () => {
                                         )}
                                     </tbody>
                                 </table>
+                            </div>
+                        )}
+
+                        {/* Pagination Controls */}
+                        {!loading && totalItems > 0 && (
+                            <div className="tw-p-6 tw-bg-white/[0.01] tw-border-t tw-border-white/5 tw-flex tw-justify-between tw-items-center">
+                                <div className="tw-text-xs tw-font-bold tw-text-slate-500 tw-uppercase tw-tracking-widest">
+                                    Showing <span className="tw-text-slate-300">{(currentPage-1)*pageSize + 1}</span> to <span className="tw-text-slate-300">{Math.min(currentPage*pageSize, totalItems)}</span> of <span className="tw-text-slate-300">{totalItems}</span> Entries
+                                </div>
+                                <div className="tw-flex tw-items-center tw-gap-2">
+                                    <button 
+                                        onClick={() => setCurrentPage(1)}
+                                        disabled={currentPage === 1}
+                                        className="tw-p-2 tw-rounded-lg tw-bg-white/5 hover:tw-bg-white/10 tw-text-slate-500 hover:tw-text-white disabled:tw-opacity-20 tw-transition-all"
+                                    >
+                                        <ChevronsLeft size={16} />
+                                    </button>
+                                    <button 
+                                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                        disabled={currentPage === 1}
+                                        className="tw-p-2 tw-rounded-lg tw-bg-white/5 hover:tw-bg-white/10 tw-text-slate-500 hover:tw-text-white disabled:tw-opacity-20 tw-transition-all"
+                                    >
+                                        <ChevronLeft size={16} />
+                                    </button>
+                                    
+                                    <div className="tw-flex tw-items-center tw-gap-1 tw-px-2">
+                                        {[...Array(totalPages)].map((_, i) => {
+                                            const page = i + 1;
+                                            // Show limited pages if many
+                                            if (totalPages > 7) {
+                                                if (page !== 1 && page !== totalPages && Math.abs(page - currentPage) > 1) {
+                                                    if (Math.abs(page - currentPage) === 2) return <span key={page} className="tw-text-slate-700 tw-px-1">...</span>;
+                                                    return null;
+                                                }
+                                            }
+                                            return (
+                                                <button
+                                                    key={page}
+                                                    onClick={() => setCurrentPage(page)}
+                                                    className={`tw-w-8 tw-h-8 tw-rounded-lg tw-text-xs tw-font-bold tw-transition-all ${
+                                                        currentPage === page 
+                                                            ? 'tw-bg-indigo-500 tw-text-white tw-shadow-lg tw-shadow-indigo-500/20' 
+                                                            : 'tw-text-slate-500 hover:tw-bg-white/5 hover:tw-text-slate-300'
+                                                    }`}
+                                                >
+                                                    {page}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+
+                                    <button 
+                                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                        disabled={currentPage === totalPages}
+                                        className="tw-p-2 tw-rounded-lg tw-bg-white/5 hover:tw-bg-white/10 tw-text-slate-500 hover:tw-text-white disabled:tw-opacity-20 tw-transition-all"
+                                    >
+                                        <ChevronRight size={16} />
+                                    </button>
+                                    <button 
+                                        onClick={() => setCurrentPage(totalPages)}
+                                        disabled={currentPage === totalPages}
+                                        className="tw-p-2 tw-rounded-lg tw-bg-white/5 hover:tw-bg-white/10 tw-text-slate-500 hover:tw-text-white disabled:tw-opacity-20 tw-transition-all"
+                                    >
+                                        <ChevronsRight size={16} />
+                                    </button>
+                                </div>
                             </div>
                         )}
                     </div>

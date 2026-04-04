@@ -77,8 +77,8 @@ const CodeGroupModal: React.FC<Props> = ({ isOpen, onClose, onSaved, initialData
                             <Shield size={24} />
                         </div>
                         <div>
-                            <span className="tw-text-xs tw-font-semibold tw-text-slate-400 tw-uppercase tw-tracking-widest">마스터 메타데이터</span>
-                            <h2 className="tw-text-xl tw-font-bold tw-text-white">{initialData ? '코드 그룹 정보 수정' : '신규 그룹 마스터 등록'}</h2>
+                            <span className="tw-text-xs tw-font-semibold tw-text-slate-400 tw-uppercase tw-tracking-widest">코드그룹 / 코드 관리</span>
+                            <h2 className="tw-text-xl tw-font-bold tw-text-white">{initialData ? '코드그룹 수정' : '코드그룹 등록'}</h2>
                         </div>
                     </div>
                     <button className="tw-p-3 hover:tw-bg-white/5 tw-rounded-2xl tw-text-slate-500 hover:tw-text-white tw-transition-all" onClick={onClose}>
@@ -88,7 +88,7 @@ const CodeGroupModal: React.FC<Props> = ({ isOpen, onClose, onSaved, initialData
 
                 <form onSubmit={handleSubmit} className="tw-p-10 tw-grid tw-gap-8">
                     <div className="tw-grid tw-gap-2">
-                        <label className="tw-text-xs tw-font-semibold tw-text-slate-400 tw-uppercase tw-tracking-widest tw-px-1">그룹 식별 ID</label>
+                        <label className="tw-text-xs tw-font-semibold tw-text-slate-400 tw-uppercase tw-tracking-widest tw-px-1">코드그룹 ID</label>
                         <input 
                             type="text"
                             value={formData.groupId}
@@ -101,7 +101,7 @@ const CodeGroupModal: React.FC<Props> = ({ isOpen, onClose, onSaved, initialData
                     </div>
 
                     <div className="tw-grid tw-gap-2">
-                        <label className="tw-text-xs tw-font-semibold tw-text-slate-400 tw-uppercase tw-tracking-widest tw-px-1">화면 표시 이름</label>
+                        <label className="tw-text-xs tw-font-semibold tw-text-slate-400 tw-uppercase tw-tracking-widest tw-px-1">코드그룹 명</label>
                         <input 
                             type="text"
                             value={formData.name}
@@ -151,7 +151,7 @@ const CodeGroupModal: React.FC<Props> = ({ isOpen, onClose, onSaved, initialData
                             className="tw-flex-1 tw-py-4 tw-bg-slate-100 hover:tw-bg-white tw-text-slate-900 tw-rounded-2xl tw-text-sm tw-font-bold tw-transition-all tw-flex tw-items-center tw-justify-center tw-gap-2"
                             disabled={isSaving}
                         >
-                            <Save size={16} /> {isSaving ? '처리 중...' : (initialData ? '정보 업데이트' : '신규 등록 확인')}
+                            <Save size={16} /> {isSaving ? '처리 중...' : (initialData ? '정보 수정' : '정보 등록')}
                         </button>
                     </div>
                 </form>
