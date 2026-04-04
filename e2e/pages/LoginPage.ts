@@ -1,11 +1,14 @@
 import { Page, expect } from '@playwright/test';
 
+declare const process: { env: Record<string, string | undefined> };
+
 export class LoginPage {
   constructor(private page: Page) {}
 
   async goto() {
     await this.page.goto('/');
     await this.page.waitForLoadState('networkidle');
+    // Playwright auto-waits for the page load; networkidle is generally discouraged
   }
 
   async login(userId?: string, password?: string) {
