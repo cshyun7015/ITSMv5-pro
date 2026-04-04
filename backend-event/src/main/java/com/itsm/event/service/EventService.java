@@ -31,22 +31,67 @@ public class EventService {
 
     @Transactional
     public EventDTO createEvent(EventDTO dto) {
+        // 1. Deduplication (Occurrence counting)
+        if (dto.getFingerprint() != null && !dto.getFingerprint().isEmpty()) {
+            java.util.List<String> activeStatuses = java.util.Arrays.asList("NEW", "ACKNOWLEDGED");
+            java.util.Optional<Event> existingEvent = eventRepository.findFirstByFingerprintAndStatusCodeInOrderByCreatedAtDesc(
+                    dto.getFingerprint(), activeStatuses);
+
+            if (existingEvent.isPresent()) {
+                Event event = existingEvent.get();
+                event.setOccurrenceCount(event.getOccurrenceCount() != null ? event.getOccurrenceCount() + 1 : 2);
+                event.setLastOccurredAt(LocalDateTime.now());
+                if (event.getFirstOccurredAt() == null) {
+                    event.setFirstOccurredAt(event.getCreatedAt());
+                }
+                // Optional: Update message or severity if changed
+                event.setSeverityCode(dto.getSeverityCode() != null ? dto.getSeverityCode() : event.getSeverityCode());
+                
+                return EventDTO.fromEntity(eventRepository.save(event));
+            }
+        }
+
+        // 2. New Event Creation
         dto.setEventNumber(generateEventNumber());
         if (dto.getStatusCode() == null) {
             dto.setStatusCode("NEW");
         }
         Event entity = dto.toEntity();
+        entity.setOccurrenceCount(1);
+        entity.setFirstOccurredAt(LocalDateTime.now());
+        entity.setLastOccurredAt(LocalDateTime.now());
+        
         Event saved = eventRepository.save(entity);
         return EventDTO.fromEntity(saved);
     }
 
+    @Transactional
+    public EventDTO acknowledgeEvent(Long id, String userId) {
+        Event event = eventRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Event not found"));
+        
+        event.setStatusCode("ACKNOWLEDGED");
+        event.setAssigneeId(userId);
+        event.setAcknowledgedAt(LocalDateTime.now());
+        
+        return EventDTO.fromEntity(eventRepository.save(event));
+    }
+
     @Transactional(readOnly = true)
-    public Page<EventDTO> getEvents(String companyId, Pageable pageable) {
-        if ("MSP".equals(companyId)) {
+    public Page<EventDTO> getEventsInScope(String scopeCompanyId, Pageable pageable) {
+        // System admin (MSP) sees everything
+        if ("MSP".equals(scopeCompanyId)) {
             return eventRepository.findAll(pageable).map(EventDTO::fromEntity);
         } else {
-            return eventRepository.findByCompanyId(companyId, pageable).map(EventDTO::fromEntity);
+            // Customer user sees only their company's events
+            return eventRepository.findByCompanyId(scopeCompanyId, pageable).map(EventDTO::fromEntity);
         }
+    }
+
+    @Transactional(readOnly = true)
+    public Page<EventDTO> getEventsByCompany(String companyId, Pageable pageable) {
+        // Standard company filter (Return entries ONLY for this specific companyId)
+        return eventRepository.findByCompanyId(companyId, pageable).map(EventDTO::fromEntity);
     }
 
     @Transactional(readOnly = true)

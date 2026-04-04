@@ -24,6 +24,11 @@ public class EventDTO {
     private String eventDetails;
     private String statusCode;
     private String fingerprint;
+    private Integer occurrenceCount;
+    private LocalDateTime firstOccurredAt;
+    private LocalDateTime lastOccurredAt;
+    private String assigneeId;
+    private LocalDateTime acknowledgedAt;
     private String relatedRequestId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -41,6 +46,11 @@ public class EventDTO {
                 .eventDetails(entity.getEventDetails())
                 .statusCode(entity.getStatusCode())
                 .fingerprint(entity.getFingerprint())
+                .occurrenceCount(entity.getOccurrenceCount())
+                .firstOccurredAt(entity.getFirstOccurredAt())
+                .lastOccurredAt(entity.getLastOccurredAt())
+                .assigneeId(entity.getAssigneeId())
+                .acknowledgedAt(entity.getAcknowledgedAt())
                 .relatedRequestId(entity.getRelatedRequestId())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
@@ -60,6 +70,11 @@ public class EventDTO {
                 .eventDetails(this.eventDetails)
                 .statusCode(this.statusCode != null ? this.statusCode : "NEW")
                 .fingerprint(this.fingerprint)
+                .occurrenceCount(this.occurrenceCount)
+                .firstOccurredAt(this.firstOccurredAt)
+                .lastOccurredAt(this.lastOccurredAt)
+                .assigneeId(this.assigneeId)
+                .acknowledgedAt(this.acknowledgedAt)
                 .relatedRequestId(this.relatedRequestId)
                 .build();
     }

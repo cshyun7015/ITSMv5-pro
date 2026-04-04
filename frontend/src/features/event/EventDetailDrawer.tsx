@@ -24,7 +24,7 @@ const EventDetailDrawer: React.FC<Props> = ({ event, onClose, onUpdated, codes }
                 await apiEvent.promoteToIncident(event.id);
                 alert('인시던트로 승격되었습니다.');
             } else if (action === 'acknowledge') {
-                await apiEvent.updateEvent(event.id, { statusCode: 'ACKNOWLEDGED' });
+                await apiEvent.acknowledgeEvent(event.id);
             } else if (action === 'resolve') {
                 await apiEvent.updateEvent(event.id, { statusCode: 'RESOLVED' });
             }
@@ -116,6 +116,28 @@ const EventDetailDrawer: React.FC<Props> = ({ event, onClose, onUpdated, codes }
                                         <Clock size={14} /> CREATED AT
                                     </div>
                                     <div className="tw-font-bold">{new Date(event.createdAt!).toLocaleString()}</div>
+                                </div>
+                                <div className="tw-bg-white tw-bg-opacity-5 tw-p-4 tw-rounded-xl tw-border tw-border-white tw-border-opacity-5">
+                                    <div className="tw-flex tw-items-center tw-gap-2 tw-text-xs tw-text-muted tw-mb-2">
+                                        <Clock size={14} /> OCCURRENCES
+                                    </div>
+                                    <div className="tw-font-bold tw-text-brand-400">
+                                        {event.occurrenceCount || 1} 회 발생
+                                        {event.lastOccurredAt && (
+                                            <span className="tw-text-[10px] tw-text-muted tw-block">최종: {new Date(event.lastOccurredAt).toLocaleTimeString()}</span>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="tw-bg-white tw-bg-opacity-5 tw-p-4 tw-rounded-xl tw-border tw-border-white tw-border-opacity-5">
+                                    <div className="tw-flex tw-items-center tw-gap-2 tw-text-xs tw-text-muted tw-mb-2">
+                                        <Eye size={14} /> ASSIGNEE
+                                    </div>
+                                    <div className="tw-font-bold tw-text-amber-400">
+                                        {event.assigneeId || '미배정'}
+                                        {event.acknowledgedAt && (
+                                            <span className="tw-text-[10px] tw-text-muted tw-block">인지: {new Date(event.acknowledgedAt).toLocaleTimeString()}</span>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
 

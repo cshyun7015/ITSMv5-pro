@@ -21,7 +21,7 @@ contactPoints:
 policies:
   - orgId: 1
     receiver: ITSM-Event-Service
-    group_by: [alertname, severity]
+    group_by: [alertname, severity, companyId]
     routes:
       - receiver: Discard-Info
         object_matchers:

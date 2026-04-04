@@ -29,12 +29,14 @@ public class EventController {
             @RequestParam(value = "companyId", required = false) String queryCompanyId,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         
-        // If query param is provided, use it for filtering (if authorized)
-        // Otherwise use header
-        String effectiveCompanyId = queryCompanyId != null ? queryCompanyId : headerCompanyId;
-        if (effectiveCompanyId == null) effectiveCompanyId = "MSP";
+        if (queryCompanyId != null) {
+            // Case 1: Explicit filter provided (Filter by this specific company only)
+            return eventService.getEventsByCompany(queryCompanyId, pageable);
+        }
         
-        return eventService.getEvents(effectiveCompanyId, pageable);
+        // Case 2: No filter (Show everything in the user's scope)
+        String scopeCompanyId = headerCompanyId != null ? headerCompanyId : "MSP";
+        return eventService.getEventsInScope(scopeCompanyId, pageable);
     }
 
     @GetMapping("/{id}")
@@ -45,6 +47,14 @@ public class EventController {
     @PutMapping("/{id}")
     public EventDTO updateEvent(@PathVariable Long id, @RequestBody EventDTO dto) {
         return eventService.updateEvent(id, dto);
+    }
+
+    @PostMapping("/{id}/acknowledge")
+    public EventDTO acknowledgeEvent(
+            @PathVariable Long id,
+            @RequestHeader(value = "X-User-ID", required = false) String userId) {
+        String effectiveUserId = userId != null ? userId : "anonymous";
+        return eventService.acknowledgeEvent(id, effectiveUserId);
     }
 
     @PostMapping("/{id}/promote")

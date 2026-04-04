@@ -79,6 +79,32 @@
     position: relative;
 }
 
+/* Re-occurrence Pulse Animation */
+@keyframes pulse-reoccur {
+    0% { box-shadow: 0 0 0 0 rgba(147, 51, 234, 0.4); border-color: rgba(147, 51, 234, 0.6); }
+    70% { box-shadow: 0 0 0 15px rgba(147, 51, 234, 0); border-color: rgba(147, 51, 234, 0.2); }
+    100% { box-shadow: 0 0 0 0 rgba(147, 51, 234, 0); border-color: hsla(0, 0%, 100%, 0.05); }
+}
+
+.event-card.pulse-active {
+    animation: pulse-reoccur 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.occurrence-badge {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background: linear-gradient(135deg, #9333ea, #7c3aed);
+    color: white;
+    font-size: 10px;
+    font-weight: 900;
+    padding: 2px 8px;
+    border-radius: 100px;
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.5);
+    border: 2px solid #0b0f1a;
+    z-index: 10;
+}
+
 .event-card:hover {
     transform: scale(1.02);
     background: hsla(0, 0%, 100%, 0.05);

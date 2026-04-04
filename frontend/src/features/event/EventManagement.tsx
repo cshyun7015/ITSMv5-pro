@@ -74,11 +74,14 @@ const EventManagement: React.FC = () => {
         else setIsFetchingMore(true);
 
         try {
-            const res = await apiEvent.getEvents({ 
+            const params: any = { 
                 page: pageNum, 
-                size: 20, 
-                companyId: filterCompanyId || companyId 
-            });
+                size: 20
+            };
+            if (filterCompanyId) {
+                params.companyId = filterCompanyId;
+            }
+            const res = await apiEvent.getEvents(params);
             const newContent = res.data.content || [];
             
             if (isInitial) {
@@ -250,11 +253,11 @@ const EventManagement: React.FC = () => {
                                 <Database size={14} className="tw-text-brand-400" />
                                 <span className="tw-text-[10px] tw-font-black tw-text-muted tw-uppercase tw-tracking-widest"></span>
                                 <select 
-                                    value={filterCompanyId || 'MSP'}
-                                    onChange={(e) => setFilterCompanyId(e.target.value === 'MSP' ? null : e.target.value)}
+                                    value={filterCompanyId || 'ALL'}
+                                    onChange={(e) => setFilterCompanyId(e.target.value === 'ALL' ? null : e.target.value)}
                                     className="tw-bg-transparent tw-text-xs tw-font-bold tw-text-white tw-outline-none tw-cursor-pointer hover:tw-text-brand-400 tw-transition-colors"
                                 >
-                                    <option value="MSP" className="tw-bg-obsidian tw-text-white">전체 고객사</option>
+                                    <option value="ALL" className="tw-bg-obsidian tw-text-white">전체 고객사</option>
                                     {customers.map(c => (
                                         <option key={c.id} value={c.customerId} className="tw-bg-obsidian tw-text-white">
                                             {c.name}
@@ -306,9 +309,27 @@ const EventManagement: React.FC = () => {
                         {isMSP && (
                             <button 
                                 className="tw-bg-brand-500 tw-bg-opacity-80 tw-px-6 tw-py-2 tw-rounded-lg tw-text-sm tw-font-bold tw-hover:tw-bg-opacity-100 tw-transition-all tw-flex tw-items-center tw-gap-2"
-                                onClick={() => apiEvent.triggerWebhook({}).then(() => loadEvents(0, true))}
+                                onClick={() => {
+                                    const testPayload = {
+                                        alerts: [{
+                                            status: 'firing',
+                                            labels: {
+                                                alertname: '시뮬레이션 테스트',
+                                                severity: 'critical',
+                                                companyId: filterCompanyId || 'MSP',
+                                                instance: 'test-node-01'
+                                            },
+                                            annotations: {
+                                                summary: `[${filterCompanyId || 'MSP'}] 가상 성능 임계치 초과`,
+                                                description: '이 이벤트는 MSP 관리자에 의해 수동 시뮬레이션된 테스트 데이터입니다.'
+                                            },
+                                            fingerprint: `sim-${Date.now()}`
+                                        }]
+                                    };
+                                    apiEvent.triggerWebhook(testPayload).then(() => loadEvents(0, true));
+                                }}
                             >
-                                <Settings size={18} /> Simulate
+                                <Settings size={18} /> 시뮬레이션
                             </button>
                         )}
                     </div>
@@ -322,65 +343,87 @@ const EventManagement: React.FC = () => {
                     </div>
                 ) : (
                     <div className={isCompactView ? "tw-flex tw-flex-col tw-gap-2" : "bento-grid"}>
-                        {filteredEvents.map(event => (
-                            <div 
-                                key={event.id} 
-                                className={isCompactView ? "compact-row" : `event-card ${getSeverityStyles(event.severityCode)}`}
-                                onClick={() => setSelectedEvent(event)}
-                            >
-                                {isCompactView ? (
-                                    <>
-                                        <div className={`tw-w-1.5 tw-h-full tw-absolute tw-left-0 ${
-                                            event.severityCode === 'CRITICAL' ? 'tw-bg-red-500' : 
-                                            event.severityCode === 'WARNING' ? 'tw-bg-amber-500' : 'tw-bg-blue-500'
-                                        }`} />
-                                        <div className="tw-flex tw-items-center tw-gap-4 tw-w-full tw-px-4">
-                                            <div className="tw-w-32 tw-text-[10px] tw-font-bold tw-font-mono tw-text-indigo-400">{event.eventNumber}</div>
-                                            <div className="tw-w-24">
-                                                <div className="source-tag !tw-py-0.5 !tw-px-2">
-                                                    {getCodeName('EV_SOURCE', event.sourceCode)}
+                        {filteredEvents.map(event => {
+                            const isRecentlyUpdated = event.lastOccurredAt && 
+                                (new Date().getTime() - new Date(event.lastOccurredAt).getTime() < 5000);
+                            
+                            return (
+                                <div 
+                                    key={event.id} 
+                                    className={`${isCompactView ? "compact-row" : `event-card ${getSeverityStyles(event.severityCode)}`} ${isRecentlyUpdated ? 'pulse-active' : ''}`}
+                                    onClick={() => setSelectedEvent(event)}
+                                >
+                                    {event.occurrenceCount && event.occurrenceCount > 1 && (
+                                        <div className="occurrence-badge">
+                                            {event.occurrenceCount > 99 ? '99+' : event.occurrenceCount}
+                                        </div>
+                                    )}
+                                    
+                                    {isCompactView ? (
+                                        <>
+                                            <div className={`tw-w-1.5 tw-h-full tw-absolute tw-left-0 ${
+                                                event.severityCode === 'CRITICAL' ? 'tw-bg-red-500' : 
+                                                event.severityCode === 'WARNING' ? 'tw-bg-amber-500' : 'tw-bg-blue-500'
+                                            }`} />
+                                            <div className="tw-flex tw-items-center tw-gap-4 tw-w-full tw-px-4">
+                                                <div className="tw-w-32 tw-text-[10px] tw-font-bold tw-font-mono tw-text-indigo-400">{event.eventNumber}</div>
+                                                <div className="tw-w-24">
+                                                    <div className="source-tag !tw-py-0.5 !tw-px-2">
+                                                        {getCodeName('EV_SOURCE', event.sourceCode)}
+                                                    </div>
+                                                </div>
+                                                <div className="tw-flex-1 tw-truncate tw-text-sm tw-font-medium text-white">{event.message}</div>
+                                                <div className="tw-w-40 tw-truncate tw-text-xs tw-text-muted tw-flex tw-items-center tw-gap-2">
+                                                    <Server size={12} /> {event.node}
+                                                </div>
+                                                <div className="tw-w-24 tw-text-[10px] tw-text-muted">{new Date(event.createdAt!).toLocaleString([], {month: '2-digit', day: '2-digit', hour: '2-digit', minute:'2-digit'})}</div>
+                                                <div className="tw-w-20">
+                                                    <div className={`status-indicator !tw-text-[10px] ${
+                                                        event.statusCode === 'NEW' ? 'tw-text-brand-400' : 
+                                                        event.statusCode === 'ACKNOWLEDGED' ? 'acknowledged' : 'tw-text-muted'
+                                                    }`}>
+                                                        <div className="ping-dot !tw-w-1 !tw-h-1" />
+                                                        {getCodeName('EV_STATUS', event.statusCode)}
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div className="tw-flex-1 tw-truncate tw-text-sm tw-font-medium text-white">{event.message}</div>
-                                            <div className="tw-w-40 tw-truncate tw-text-xs tw-text-muted tw-flex tw-items-center tw-gap-2">
-                                                <Server size={12} /> {event.node}
-                                            </div>
-                                            <div className="tw-w-24 tw-text-[10px] tw-text-muted">{new Date(event.createdAt!).toLocaleString([], {month: '2-digit', day: '2-digit', hour: '2-digit', minute:'2-digit'})}</div>
-                                            <div className="tw-w-20">
-                                                <div className={`status-indicator !tw-text-[10px] ${event.statusCode === 'NEW' ? 'tw-text-brand-400' : 'tw-text-muted'}`}>
-                                                    <div className="ping-dot !tw-w-1 !tw-h-1" />
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className="card-top">
+                                                <div className="source-tag">
+                                                    {getSourceIcon(event.sourceCode)}
+                                                    {getCodeName('EV_SOURCE', event.sourceCode)}
+                                                </div>
+                                                <div className={`status-indicator ${
+                                                    event.statusCode === 'NEW' ? 'tw-text-brand-400' : 
+                                                    event.statusCode === 'ACKNOWLEDGED' ? 'acknowledged' : 'tw-text-muted'
+                                                }`}>
+                                                    <div className="ping-dot" />
                                                     {getCodeName('EV_STATUS', event.statusCode)}
                                                 </div>
                                             </div>
-                                        </div>
-                                    </>
-                                ) : (
-                                    <>
-                                        <div className="card-top">
-                                            <div className="source-tag">
-                                                {getSourceIcon(event.sourceCode)}
-                                                {getCodeName('EV_SOURCE', event.sourceCode)}
+                                            <div className="card-content">
+                                                <h3 className="event-message">{event.message}</h3>
+                                                <div className="tw-flex tw-items-center tw-gap-2 tw-mt-2">
+                                                    <Server size={12} className="tw-text-muted" />
+                                                    <span className="event-node">{event.node}</span>
+                                                </div>
                                             </div>
-                                            <div className={`status-indicator ${event.statusCode === 'NEW' ? 'tw-text-brand-400' : 'tw-text-muted'}`}>
-                                                <div className="ping-dot" />
-                                                {getCodeName('EV_STATUS', event.statusCode)}
+                                            <div className="card-footer">
+                                                <span className="event-time">
+                                                    {event.occurrenceCount && event.occurrenceCount > 1 
+                                                        ? `${new Date(event.lastOccurredAt!).toLocaleString()} (최근 발생)` 
+                                                        : new Date(event.createdAt!).toLocaleString()
+                                                    }
+                                                </span>
+                                                <span className="tw-font-mono tw-text-white tw-text-opacity-20 tw-text-[10px] tw-font-bold">{event.eventNumber}</span>
                                             </div>
-                                        </div>
-                                        <div className="card-content">
-                                            <h3 className="event-message">{event.message}</h3>
-                                            <div className="tw-flex tw-items-center tw-gap-2 tw-mt-2">
-                                                <Server size={12} className="tw-text-muted" />
-                                                <span className="event-node">{event.node}</span>
-                                            </div>
-                                        </div>
-                                        <div className="card-footer">
-                                            <span className="event-time">{new Date(event.createdAt!).toLocaleString()}</span>
-                                            <span className="tw-font-mono tw-text-white tw-text-opacity-20 tw-text-[10px] tw-font-bold">{event.eventNumber}</span>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                        ))}
+                                        </>
+                                    )}
+                                </div>
+                            );
+                        })}
                     </div>
                 )}
 

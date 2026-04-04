@@ -132,6 +132,11 @@ CREATE TABLE IF NOT EXISTS events (
     event_details LONGTEXT,
     status_code VARCHAR(50) DEFAULT 'NEW',
     fingerprint VARCHAR(100),
+    occurrence_count INT DEFAULT 1,
+    first_occurred_at TIMESTAMP NULL,
+    last_occurred_at TIMESTAMP NULL,
+    assignee_id VARCHAR(50),
+    acknowledged_at TIMESTAMP NULL,
     related_request_id VARCHAR(50),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -351,7 +356,7 @@ VALUES
 
 -- 6-4. Data Migration to Refactored Schema
 INSERT IGNORE INTO customer_companies (customer_id, name, business_number, representative_name, status)
-SELECT company_id, name, business_number, representative_name, status FROM companies WHERE company_id <> 'MSP';
+SELECT company_id, name, business_number, representative_name, status FROM companies;
 
 INSERT IGNORE INTO operator_companies (operator_company_id, name, business_number, status, representative_name)
 SELECT company_id, name, business_number, status, representative_name FROM companies WHERE company_id = 'MSP';

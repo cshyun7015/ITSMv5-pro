@@ -12,13 +12,13 @@ groups:
         data:
           - refId: A
             relativeTimeRange: { from: 300, to: 0 }
-            datasourceUid: Prometheus
+            datasourceUid: prometheus
             model:
               expr: "up == 0"
         for: 1m
         annotations:
-          summary: "Service {{ $labels.job }} is DOWN"
-          description: "Instance {{ $labels.instance }} has been unreachable for more than 1 minute."
+          summary: "[{{ $labels.companyId }}] Service {{ $labels.job }} is DOWN"
+          description: "Tenant [{{ $labels.companyId }}]: Instance {{ $labels.instance }} has been unreachable for more than 1 minute."
         labels:
           severity: critical
 
@@ -29,13 +29,13 @@ groups:
         data:
           - refId: A
             relativeTimeRange: { from: 300, to: 0 }
-            datasourceUid: Prometheus
+            datasourceUid: prometheus
             model:
-              expr: "sum(rate(http_server_requests_seconds_count{status=~\"5..\"}[1m])) by (job, instance) > 0"
+              expr: "sum(rate(http_server_requests_seconds_count{status=~\"5..\"}[1m])) by (job, instance, companyId) > 0"
         for: 1m
         annotations:
-          summary: "High 5xx Error Rate on {{ $labels.job }}"
-          description: "Internal Server Errors are occurring on {{ $labels.instance }}."
+          summary: "[{{ $labels.companyId }}] High 5xx Error Rate on {{ $labels.job }}"
+          description: "Tenant [{{ $labels.companyId }}]: Internal Server Errors are occurring on {{ $labels.instance }}."
         labels:
           severity: critical
 
@@ -46,13 +46,13 @@ groups:
         data:
           - refId: A
             relativeTimeRange: { from: 300, to: 0 }
-            datasourceUid: Prometheus
+            datasourceUid: prometheus
             model:
-              expr: "avg(system_cpu_usage) by (job, instance) > 0.8"
+              expr: "avg(system_cpu_usage) by (job, instance, companyId) > 0.8"
         for: 5m
         annotations:
-          summary: "High CPU usage on {{ $labels.job }}"
-          description: "CPU usage is above 80% on {{ $labels.instance }}."
+          summary: "[{{ $labels.companyId }}] High CPU usage on {{ $labels.job }}"
+          description: "Tenant [{{ $labels.companyId }}]: CPU usage is above 80% on {{ $labels.instance }}."
         labels:
           severity: warning
 
@@ -63,13 +63,13 @@ groups:
         data:
           - refId: A
             relativeTimeRange: { from: 300, to: 0 }
-            datasourceUid: Prometheus
+            datasourceUid: prometheus
             model:
-              expr: "(sum(hikaricp_connections_active) by (job, instance) / sum(hikaricp_connections_max) by (job, instance)) > 0.7"
+              expr: "(sum(hikaricp_connections_active) by (job, instance, companyId) / sum(hikaricp_connections_max) by (job, instance, companyId)) > 0.7"
         for: 5m
         annotations:
-          summary: "High DB connection usage on {{ $labels.job }}"
-          description: "DB connection pool is more than 70% full."
+          summary: "[{{ $labels.companyId }}] High DB connection usage on {{ $labels.job }}"
+          description: "Tenant [{{ $labels.companyId }}]: DB connection pool is more than 70% full."
         labels:
           severity: warning
 
@@ -85,12 +85,12 @@ groups:
         data:
           - refId: A
             relativeTimeRange: { from: 600, to: 0 }
-            datasourceUid: Loki
+            datasourceUid: loki
             model:
-              expr: "count_over_time({service=~\"system-.*\"} |= \"created\" [10m]) > 0"
+              expr: "sum(count_over_time({service=~\"system-.*\"} |= \"created\" [10m])) by (service, companyId) > 0"
         for: 0m
         annotations:
-          summary: "New administrative activity detected"
-          description: "System logs indicate a new resource or tenant was created."
+          summary: "[{{ $labels.companyId }}] New administrative activity detected"
+          description: "Tenant [{{ $labels.companyId }}]: System logs indicate a new resource or tenant was created."
         labels:
           severity: info

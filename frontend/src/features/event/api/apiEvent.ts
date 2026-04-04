@@ -12,6 +12,11 @@ export interface EventItem {
     eventDetails?: string; // Raw JSON payload
     statusCode: string;
     fingerprint?: string;
+    occurrenceCount?: number;
+    firstOccurredAt?: string;
+    lastOccurredAt?: string;
+    assigneeId?: string;
+    acknowledgedAt?: string;
     relatedRequestId?: string;
     createdAt?: string;
     updatedAt?: string;
@@ -41,6 +46,10 @@ export const apiEvent = {
         return apiClient.put(`/event/${id}`, data);
     },
 
+    acknowledgeEvent: (id: number) => {
+        return apiClient.post(`/event/${id}/acknowledge`);
+    },
+    
     promoteToIncident: (id: number) => {
         return apiClient.post(`/event/${id}/promote`);
     },
