@@ -49,6 +49,11 @@ public class OrganizationManagementController {
         return ResponseEntity.ok(operatorService.getTeamsByCompany(companyId));
     }
 
+    @GetMapping("/operators/teams")
+    public ResponseEntity<List<OperatorTeamDTO>> getAllTeams() {
+        return ResponseEntity.ok(operatorService.getAllTeams());
+    }
+
     @PostMapping("/operators/companies/{companyId}/teams")
     public ResponseEntity<OperatorTeamDTO> createOperatorTeam(@PathVariable Long companyId, @RequestBody OperatorTeamDTO dto) {
         return ResponseEntity.ok(operatorService.createTeam(companyId, dto));
@@ -68,6 +73,11 @@ public class OrganizationManagementController {
     @GetMapping("/operators/teams/{teamId}/operators")
     public ResponseEntity<List<OperatorDTO>> getOperatorsByTeam(@PathVariable Long teamId) {
         return ResponseEntity.ok(operatorService.getOperatorsByTeam(teamId));
+    }
+
+    @GetMapping("/operators/operators")
+    public ResponseEntity<List<OperatorDTO>> getAllOperators() {
+        return ResponseEntity.ok(operatorService.getAllOperators());
     }
 
     @PostMapping("/operators/teams/{teamId}/operators")

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Fingerprint, X, Mail, ShieldCheck, UserCircle, Key, Activity } from 'lucide-react';
+import { Fingerprint, X, Mail, ShieldCheck, UserCircle, Key } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface OperatorUserDetailProps {
@@ -28,8 +28,8 @@ const OperatorUserDetail: React.FC<OperatorUserDetailProps> = ({ user, onClose }
               <UserCircle size={32} className="tw-text-white" />
             </div>
             <div className="tw-flex tw-flex-col">
-              <span className="tw-text-3xl tw-line-height-none">Profile Audit</span>
-              <span className="tw-text-xs tw-text-indigo-400 tw-font-bold tw-uppercase tw-tracking-[0.2em] tw-mt-1">Structural Identity Shard</span>
+              <span className="tw-text-3xl tw-line-height-none">사용자 상세 프로필</span>
+              <span className="tw-text-xs tw-text-indigo-400 tw-font-bold tw-uppercase tw-tracking-[0.2em] tw-mt-1">사용자 식별 정보</span>
             </div>
           </h2>
           <button onClick={onClose} className="tw-w-12 tw-h-12 tw-flex tw-items-center tw-justify-center tw-bg-white/5 hover:tw-bg-white/10 tw-rounded-full tw-text-slate-400 hover:tw-text-white tw-transition-all tw-border tw-border-white/5"><X size={24} /></button>
@@ -43,9 +43,9 @@ const OperatorUserDetail: React.FC<OperatorUserDetailProps> = ({ user, onClose }
             </div>
             <div className="tw-space-y-2">
                <div className="tw-flex tw-items-center tw-gap-3">
-                 <span className="tw-bg-indigo-500/20 tw-text-indigo-400 tw-px-4 tw-py-1 tw-rounded-full tw-text-[9px] tw-font-black tw-uppercase tw-tracking-widest tw-border tw-border-indigo-500/30">OPERATOR</span>
+                 <span className="tw-bg-indigo-500/20 tw-text-indigo-400 tw-px-4 tw-py-1 tw-rounded-full tw-text-[9px] tw-font-black tw-uppercase tw-tracking-widest tw-border tw-border-indigo-500/30">운영자</span>
                  <span className={`tw-px-4 tw-py-1 tw-rounded-full tw-text-[9px] tw-font-black tw-uppercase tw-tracking-widest tw-border ${user.isActive ? 'tw-bg-emerald-500/20 tw-text-emerald-400 tw-border-emerald-500/30' : 'tw-bg-rose-500/20 tw-text-rose-400 tw-border-rose-500/30'}`}>
-                   {user.isActive ? 'ACTIVE' : 'SUSPENDED'}
+                   {user.isActive ? '활성' : '정지됨'}
                  </span>
                </div>
                <h1 className="tw-text-4xl tw-font-black tw-text-white tw-tracking-tight">{user.name}</h1>
@@ -59,10 +59,10 @@ const OperatorUserDetail: React.FC<OperatorUserDetailProps> = ({ user, onClose }
             <div className="tw-bg-white/5 tw-p-8 tw-rounded-[40px] tw-border tw-border-white/5 tw-space-y-6 shadow-inner">
               <div className="tw-flex tw-items-center tw-gap-4 tw-text-indigo-400">
                 <Fingerprint size={24} />
-                <span className="tw-text-[11px] tw-font-black tw-uppercase tw-tracking-widest">IAM Credentials</span>
+                <span className="tw-text-[11px] tw-font-black tw-uppercase tw-tracking-widest">계정 인증 정보</span>
               </div>
               <div>
-                <div className="tw-text-[10px] tw-text-slate-500 tw-font-bold tw-uppercase tw-mb-1">Identity UID</div>
+                <div className="tw-text-[10px] tw-text-slate-500 tw-font-bold tw-uppercase tw-mb-1">로그인 ID</div>
                 <div className="tw-text-2xl tw-text-white tw-font-mono">{user.userId}</div>
               </div>
             </div>
@@ -70,11 +70,13 @@ const OperatorUserDetail: React.FC<OperatorUserDetailProps> = ({ user, onClose }
             <div className="tw-bg-white/5 tw-p-8 tw-rounded-[40px] tw-border tw-border-white/5 tw-space-y-6 shadow-inner">
               <div className="tw-flex tw-items-center tw-gap-4 tw-text-amber-400">
                 <Key size={24} />
-                <span className="tw-text-[11px] tw-font-black tw-uppercase tw-tracking-widest">Privilege Matrix</span>
+                <span className="tw-text-[11px] tw-font-black tw-uppercase tw-tracking-widest">권한 매트릭스</span>
               </div>
               <div>
-                <div className="tw-text-[10px] tw-text-slate-500 tw-font-bold tw-uppercase tw-mb-1">Governance Role</div>
-                <div className="tw-text-2xl tw-text-white tw-font-bold">{user.role}</div>
+                <div className="tw-text-[10px] tw-text-slate-500 tw-font-bold tw-uppercase tw-mb-1">시스템 운영 역할</div>
+                <div className="tw-text-2xl tw-text-white tw-font-bold">
+                  {user.role === 'System Admin' ? '시스템 관리자' : user.role === 'Security Ops' ? '보안 운영자' : user.role === 'Support Pro' ? '기술 지원' : '일반 운영자'}
+                </div>
               </div>
             </div>
           </div>
@@ -84,9 +86,9 @@ const OperatorUserDetail: React.FC<OperatorUserDetailProps> = ({ user, onClose }
               <ShieldCheck size={24} className="tw-text-white" />
             </div>
             <div className="tw-flex tw-flex-col tw-gap-1">
-              <span className="tw-text-xs tw-font-black tw-text-white tw-uppercase tw-tracking-widest">Authorization Shard Verified</span>
+              <span className="tw-text-xs tw-font-black tw-text-white tw-uppercase tw-tracking-widest">운영 권한 확인됨</span>
               <p className="tw-text-[10px] tw-text-indigo-200/60 tw-leading-relaxed tw-font-bold">
-                This identity profile is currently authorized for global orchestration within the tactical command layer.
+                이 사용자 프로필은 현재 시스템 운영 레이어 내에서의 전역 오케스트레이션 권한을 보유하고 있습니다.
               </p>
             </div>
           </div>
@@ -94,7 +96,7 @@ const OperatorUserDetail: React.FC<OperatorUserDetailProps> = ({ user, onClose }
 
         {/* Footer */}
         <div className="tw-p-10 tw-bg-black/50 tw-border-t tw-border-white/5 tw-flex tw-justify-end">
-          <button onClick={onClose} className="tw-py-4 tw-px-12 tw-bg-white/5 hover:tw-bg-white/10 tw-text-slate-400 hover:tw-text-white tw-rounded-[20px] tw-font-black tw-uppercase tw-tracking-widest tw-text-[11px] tw-transition-all tw-border tw-border-white/5">Close Identity Audit</button>
+          <button onClick={onClose} className="tw-py-4 tw-px-12 tw-bg-white/5 hover:tw-bg-white/10 tw-text-slate-400 hover:tw-text-white tw-rounded-[20px] tw-font-black tw-uppercase tw-tracking-widest tw-text-[11px] tw-transition-all tw-border tw-border-white/5">닫기</button>
         </div>
       </motion.div>
     </div>

@@ -10,6 +10,8 @@ export interface OperatorCompanyDTO {
   email?: string;
   address?: string;
   status: string;
+  teamCount?: number;
+  operatorCount?: number;
   createdAt?: string;
 }
 
@@ -60,6 +62,10 @@ const OperatorCompany = {
     const response = await apiClient.get(`/organization/operators/companies/${companyId}/teams`);
     return response.data;
   },
+  getAllTeams: async (): Promise<OperatorTeamDTO[]> => {
+    const response = await apiClient.get('/organization/operators/teams');
+    return response.data;
+  },
   createOperatorTeam: async (companyId: number, data: any): Promise<OperatorTeamDTO> => {
     const response = await apiClient.post(`/organization/operators/companies/${companyId}/teams`, data);
     return response.data;
@@ -75,6 +81,10 @@ const OperatorCompany = {
   // --- Operator Users CRUD ---
   getOperatorsByTeam: async (teamId: number): Promise<OperatorDTO[]> => {
     const response = await apiClient.get(`/organization/operators/teams/${teamId}/operators`);
+    return response.data;
+  },
+  getAllOperators: async (): Promise<OperatorDTO[]> => {
+    const response = await apiClient.get('/organization/operators/operators');
     return response.data;
   },
   createOperator: async (teamId: number, data: any): Promise<OperatorDTO> => {

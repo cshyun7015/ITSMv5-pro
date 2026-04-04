@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface OperatorTeamRepository extends JpaRepository<OperatorTeam, Long> {
     List<OperatorTeam> findByOperatorCompanyId(Long operatorCompanyId);
+    long countByOperatorCompanyId(Long operatorCompanyId);
 }

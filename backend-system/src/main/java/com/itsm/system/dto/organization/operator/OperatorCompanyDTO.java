@@ -14,6 +14,9 @@ public class OperatorCompanyDTO {
     private String operatorCompanyId;
     private String name;
     private String businessNumber;
+    private String representativeName;
     private String status;
+    private Integer teamCount;
+    private Integer operatorCount;
     private LocalDateTime createdAt;
 }

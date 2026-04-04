@@ -11,4 +11,7 @@ import java.util.List;
 public interface OperatorTeamMemberRepository extends JpaRepository<OperatorTeamMember, OperatorTeamMemberId> {
     List<OperatorTeamMember> findByOperatorId(Long operatorId);
     List<OperatorTeamMember> findByOperatorTeamId(Long operatorTeamId);
+
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(tm) FROM OperatorTeamMember tm WHERE tm.operatorTeam.operatorCompany.id = :companyId")
+    long countByCompanyId(Long companyId);
 }

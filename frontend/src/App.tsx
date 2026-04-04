@@ -75,19 +75,19 @@ function AppContent() {
                 className={`nav-item ${currentView === 'customer_mgmt' ? 'active' : ''}`}
                 onClick={() => setCurrentView('customer_mgmt')}
               >
-                고객사/사용자 관리
+                고객조직 관리
               </div>
               <div 
                 className={`nav-item ${currentView === 'operator_mgmt' ? 'active' : ''}`}
                 onClick={() => setCurrentView('operator_mgmt')}
               >
-                운영사/운영자 관리
+                운영조직 관리
               </div>
               <div 
                 className={`nav-item ${currentView === 'codes' ? 'active' : ''}`}
                 onClick={() => setCurrentView('codes')}
               >
-                공통 코드 관리
+                공통코드 관리
               </div>
             </>
           )}

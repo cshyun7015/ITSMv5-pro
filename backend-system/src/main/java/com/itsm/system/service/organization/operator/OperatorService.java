@@ -45,6 +45,7 @@ public class OperatorService {
                 .operatorCompanyId(dto.getOperatorCompanyId())
                 .name(dto.getName())
                 .businessNumber(dto.getBusinessNumber())
+                .representativeName(dto.getRepresentativeName())
                 .status(dto.getStatus() != null ? dto.getStatus() : "ACTIVE")
                 .build();
         return convertToCompanyDTO(companyRepository.save(company));
@@ -56,6 +57,7 @@ public class OperatorService {
                 .orElseThrow(() -> new RuntimeException("Operator company not found"));
         company.setName(dto.getName());
         company.setBusinessNumber(dto.getBusinessNumber());
+        company.setRepresentativeName(dto.getRepresentativeName());
         company.setStatus(dto.getStatus());
         return convertToCompanyDTO(companyRepository.save(company));
     }
@@ -67,6 +69,12 @@ public class OperatorService {
 
     public List<OperatorTeamDTO> getTeamsByCompany(Long companyId) {
         return teamRepository.findByOperatorCompanyId(companyId).stream()
+                .map(this::convertToTeamDTO)
+                .collect(Collectors.toList());
+    }
+
+    public List<OperatorTeamDTO> getAllTeams() {
+        return teamRepository.findAll().stream()
                 .map(this::convertToTeamDTO)
                 .collect(Collectors.toList());
     }
@@ -100,6 +108,12 @@ public class OperatorService {
     public List<OperatorDTO> getOperatorsByTeam(Long teamId) {
         return teamMemberRepository.findByOperatorTeamId(teamId).stream()
                 .map(tm -> convertToOperatorDTO(tm.getOperator()))
+                .collect(Collectors.toList());
+    }
+
+    public List<OperatorDTO> getAllOperators() {
+        return operatorRepository.findAll().stream()
+                .map(this::convertToOperatorDTO)
                 .collect(Collectors.toList());
     }
 
@@ -148,7 +162,10 @@ public class OperatorService {
                 .operatorCompanyId(company.getOperatorCompanyId())
                 .name(company.getName())
                 .businessNumber(company.getBusinessNumber())
+                .representativeName(company.getRepresentativeName())
                 .status(company.getStatus())
+                .teamCount((int) teamRepository.countByOperatorCompanyId(company.getId()))
+                .operatorCount((int) teamMemberRepository.countByCompanyId(company.getId()))
                 .createdAt(company.getCreatedAt())
                 .build();
     }

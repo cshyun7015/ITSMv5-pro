@@ -28,6 +28,9 @@ public class OperatorCompany {
     @Column(name = "business_number", length = 50)
     private String businessNumber;
 
+    @Column(name = "representative_name", length = 100)
+    private String representativeName;
+
     @Column(length = 20)
     private String status;
 
