@@ -10,10 +10,19 @@
 /* Sidebar Styling */
 .sidebar {
   width: 280px;
+  flex-shrink: 0;
   padding: 30px 20px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.sidebar.collapsed {
+  width: 80px;
+  padding: 30px 10px;
 }
 
 .logo-section {
@@ -106,6 +115,8 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
+  transition: margin-left 0.3s ease;
+  min-width: 0; /* Prevents overflow breaking flex layout */
 }
 
 .page-header {
