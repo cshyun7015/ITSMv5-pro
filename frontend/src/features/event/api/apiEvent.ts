@@ -50,6 +50,10 @@ export const apiEvent = {
         return apiClient.post(`/event/${id}/acknowledge`);
     },
     
+    assignEvent: (id: number, assigneeId: string) => {
+        return apiClient.post(`/event/${id}/assign`, null, { params: { assigneeId } });
+    },
+    
     promoteToIncident: (id: number) => {
         return apiClient.post(`/event/${id}/promote`);
     },

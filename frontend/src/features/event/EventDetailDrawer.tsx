@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ExternalLink, ShieldAlert, CheckCircle, Eye, Info, Clock, Server, Terminal } from 'lucide-react';
+import { X, ExternalLink, ShieldAlert, CheckCircle, Eye, Info, Clock, Server, Terminal, UserPlus } from 'lucide-react';
 import apiEvent from './api/apiEvent';
 import type { EventItem } from './api/apiEvent';
+import apiUser, { type UserDTO } from '../../api/apiUser';
 
 interface Props {
     event: EventItem | null;
@@ -12,21 +13,46 @@ interface Props {
 }
 
 const EventDetailDrawer: React.FC<Props> = ({ event, onClose, onUpdated, codes }) => {
+    const [operators, setOperators] = useState<UserDTO[]>([]);
+    const [selectedOp, setSelectedOp] = useState<string>('');
+    const userCompanyId = localStorage.getItem('companyId');
+
+    useEffect(() => {
+        if (event) {
+            // Fetch potential assignees (Operators from the same company)
+            apiUser.list({ 
+                companyId: userCompanyId || undefined, 
+                size: 100 
+            }).then(res => {
+                setOperators(res.content);
+            });
+            setSelectedOp(event.assigneeId || '');
+        }
+    }, [event, userCompanyId]);
+
     if (!event) return null;
 
     const getCodeName = (group: string, codeId: string) => {
         return codes[group]?.find((c: any) => c.codeId === codeId)?.codeName || codeId;
     };
 
-    const handleAction = async (action: 'promote' | 'acknowledge' | 'resolve' | 'cancel') => {
+    const handleAction = async (action: 'promote' | 'acknowledge' | 'resolve' | 'cancel' | 'assign') => {
         try {
             if (action === 'promote') {
                 await apiEvent.promoteToIncident(event.id);
                 alert('인시던트로 승격되었습니다.');
             } else if (action === 'acknowledge') {
                 await apiEvent.acknowledgeEvent(event.id);
+            } else if (action === 'assign') {
+                if (!selectedOp) {
+                    alert('배정할 운영자를 선택해 주세요.');
+                    return;
+                }
+                await apiEvent.assignEvent(event.id, selectedOp);
             } else if (action === 'resolve') {
                 await apiEvent.updateEvent(event.id, { statusCode: 'RESOLVED' });
+            } else if (action === 'cancel') {
+                await apiEvent.updateEvent(event.id, { statusCode: 'CANCELLED' });
             }
             onUpdated();
             onClose();
@@ -74,21 +100,44 @@ const EventDetailDrawer: React.FC<Props> = ({ event, onClose, onUpdated, codes }
                             </div>
                             <h2 className="tw-text-2xl tw-font-extrabold tw-text-white tw-mt-2">{event.message}</h2>
                             
-                            <div className="tw-flex tw-gap-4 tw-mt-4">
-                                {(event.statusCode === 'NEW' || event.statusCode === 'ACKNOWLEDGED') && (
-                                    <button 
-                                        onClick={() => handleAction('promote')}
-                                        className="tw-flex tw-items-center tw-gap-2 tw-bg-red-600 tw-bg-opacity-80 tw-px-4 tw-py-2 tw-rounded-lg tw-text-sm tw-font-bold tw-hover:bg-opacity-100 tw-transition-all"
+                            <div className="tw-flex tw-flex-wrap tw-gap-3 tw-mt-4">
+                                {/* Assignment Selector */}
+                                <div className="tw-flex tw-items-center tw-gap-2 tw-bg-white tw-bg-opacity-5 tw-p-1 tw-pl-3 tw-rounded-lg tw-border tw-border-white tw-border-opacity-10">
+                                    <UserPlus size={14} className="tw-text-muted" />
+                                    <select 
+                                        className="tw-bg-transparent tw-text-sm tw-outline-none tw-pr-2"
+                                        value={selectedOp}
+                                        onChange={(e) => setSelectedOp(e.target.value)}
                                     >
-                                        <ShieldAlert size={16} /> 장애 승격
+                                        <option value="">운영자 선택...</option>
+                                        {operators.map(op => (
+                                            <option key={op.userId} value={op.userId}>{op.name} ({op.userId})</option>
+                                        ))}
+                                    </select>
+                                    <button 
+                                        onClick={() => handleAction('assign')}
+                                        className="tw-bg-indigo-600 tw-px-3 tw-py-1 tw-rounded tw-text-xs tw-font-bold tw-hover:tw-bg-indigo-700 tw-transition-all"
+                                    >
+                                        배정
                                     </button>
-                                )}
+                                </div>
+
+                                <div className="tw-h-8 tw-w-px tw-bg-white tw-bg-opacity-10 tw-mx-1" />
+
                                 {event.statusCode === 'NEW' && (
                                     <button 
                                         onClick={() => handleAction('acknowledge')}
                                         className="tw-flex tw-items-center tw-gap-2 tw-bg-brand-600 tw-bg-opacity-80 tw-px-4 tw-py-2 tw-rounded-lg tw-text-sm tw-font-bold tw-hover:bg-opacity-100 tw-transition-all"
                                     >
                                         <Eye size={16} /> 인지 처리
+                                    </button>
+                                )}
+                                {(event.statusCode === 'NEW' || event.statusCode === 'ACKNOWLEDGED') && (
+                                    <button 
+                                        onClick={() => handleAction('promote')}
+                                        className="tw-flex tw-items-center tw-gap-2 tw-bg-red-600 tw-bg-opacity-80 tw-px-4 tw-py-2 tw-rounded-lg tw-text-sm tw-font-bold tw-hover:bg-opacity-100 tw-transition-all"
+                                    >
+                                        <ShieldAlert size={16} /> 장애 승격
                                     </button>
                                 )}
                                 {event.statusCode !== 'RESOLVED' && (

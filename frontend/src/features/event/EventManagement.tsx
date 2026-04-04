@@ -343,6 +343,16 @@ const EventManagement: React.FC = () => {
                     </div>
                 ) : (
                     <div className={isCompactView ? "tw-flex tw-flex-col tw-gap-2" : "bento-grid"}>
+                        {isCompactView && (
+                            <div className="tw-flex tw-items-center tw-gap-4 tw-px-4 tw-py-2 tw-bg-white tw-bg-opacity-5 tw-rounded-lg tw-border tw-border-white tw-border-opacity-5 tw-mb-2">
+                                <div className="tw-w-32 tw-text-[10px] tw-font-black tw-text-indigo-400 tw-uppercase tw-tracking-widest">이벤트 번호</div>
+                                <div className="tw-w-24 tw-text-[10px] tw-font-black tw-text-muted tw-uppercase tw-tracking-widest">소스</div>
+                                <div className="tw-flex-1 tw-text-[10px] tw-font-black tw-text-muted tw-uppercase tw-tracking-widest tw-max-w-[20vw]">이벤트 메시지</div>
+                                <div className="tw-w-40 tw-text-[10px] tw-font-black tw-text-muted tw-uppercase tw-tracking-widest">대상 노드</div>
+                                <div className="tw-w-24 tw-text-[10px] tw-font-black tw-text-muted tw-uppercase tw-tracking-widest">발생 시각</div>
+                                <div className="tw-w-20 tw-text-[10px] tw-font-black tw-text-muted tw-uppercase tw-tracking-widest">처리 상태</div>
+                            </div>
+                        )}
                         {filteredEvents.map(event => {
                             const isRecentlyUpdated = event.lastOccurredAt && 
                                 (new Date().getTime() - new Date(event.lastOccurredAt).getTime() < 5000);
@@ -372,7 +382,7 @@ const EventManagement: React.FC = () => {
                                                         {getCodeName('EV_SOURCE', event.sourceCode)}
                                                     </div>
                                                 </div>
-                                                <div className="tw-flex-1 tw-truncate tw-text-sm tw-font-medium text-white">{event.message}</div>
+                                                <div className="tw-flex-1 tw-truncate tw-text-sm tw-font-medium text-white tw-max-w-[20vw]">{event.message}</div>
                                                 <div className="tw-w-40 tw-truncate tw-text-xs tw-text-muted tw-flex tw-items-center tw-gap-2">
                                                     <Server size={12} /> {event.node}
                                                 </div>

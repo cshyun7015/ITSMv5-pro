@@ -57,6 +57,13 @@ public class EventController {
         return eventService.acknowledgeEvent(id, effectiveUserId);
     }
 
+    @PostMapping("/{id}/assign")
+    public EventDTO assignEvent(
+            @PathVariable Long id,
+            @RequestParam String assigneeId) {
+        return eventService.acknowledgeEvent(id, assigneeId);
+    }
+
     @PostMapping("/{id}/promote")
     public EventDTO promoteEvent(@PathVariable Long id) {
         return eventService.promoteToIncident(id);
