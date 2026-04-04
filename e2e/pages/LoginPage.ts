@@ -8,9 +8,12 @@ export class LoginPage {
     await this.page.waitForLoadState('networkidle');
   }
 
-  async login(userId: string, password: string = 'password123') {
-    await this.page.fill('input[placeholder="your.id"]', userId);
-    await this.page.fill('input[placeholder="••••••••"]', password);
+  async login(userId?: string, password?: string) {
+    const finalUserId = userId || process.env.ADMIN_ID || 'admin';
+    const finalPassword = password || process.env.ADMIN_PASSWORD || 'admin123';
+    
+    await this.page.fill('input[placeholder="your.id"]', finalUserId);
+    await this.page.fill('input[placeholder="••••••••"]', finalPassword);
     await this.page.click('button:has-text("LOG IN")');
     await expect(this.page.locator('.app-container')).toBeVisible({ timeout: 20000 });
   }

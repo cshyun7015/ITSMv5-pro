@@ -334,6 +334,8 @@ services:
       - DB_PORT=3306
       - DB_USER=root
       - DB_PASSWORD=itsmpass
+      - ADMIN_ID=admin
+      - ADMIN_PASSWORD=admin123
       - TZ=Asia/Seoul
     depends_on:
       portal-ui:

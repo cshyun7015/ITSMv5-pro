@@ -1,4 +1,5 @@
-import axios, { InternalAxiosRequestConfig, AxiosResponse } from 'axios';
+import axios from 'axios';
+import type { InternalAxiosRequestConfig, AxiosResponse } from 'axios';
 
 const API_BASE_URL = '/api/v1'; // Relative path for proxy-based container access
 
@@ -12,10 +13,12 @@ const apiClient = axios.create({
 
 // Request Interceptor: Inject Company ID and Auth headers if needed
 apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  // Use companyId from localStorage if available (set by AuthProvider)
+  // Use companyId/userId from localStorage if available (set by AuthProvider)
   const companyId = localStorage.getItem('companyId') || 'SYSTEM';
+  const userId = localStorage.getItem('userId') || 'anonymous';
   if (config.headers) {
     config.headers['X-Company-ID'] = companyId;
+    config.headers['X-User-ID'] = userId;
   }
   return config;
 });
