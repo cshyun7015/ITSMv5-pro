@@ -25,10 +25,16 @@ public class EventController {
 
     @GetMapping
     public Page<EventDTO> getEvents(
-            @RequestHeader(value = "X-Company-ID", required = false) String companyId,
+            @RequestHeader(value = "X-Company-ID", required = false) String headerCompanyId,
+            @RequestParam(value = "companyId", required = false) String queryCompanyId,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        if (companyId == null) companyId = "MSP"; // Fallback
-        return eventService.getEvents(companyId, pageable);
+        
+        // If query param is provided, use it for filtering (if authorized)
+        // Otherwise use header
+        String effectiveCompanyId = queryCompanyId != null ? queryCompanyId : headerCompanyId;
+        if (effectiveCompanyId == null) effectiveCompanyId = "MSP";
+        
+        return eventService.getEvents(effectiveCompanyId, pageable);
     }
 
     @GetMapping("/{id}")

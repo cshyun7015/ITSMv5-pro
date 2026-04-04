@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { RefreshCw, Search, Filter, AlertTriangle, Bell, Settings, Database, Server, Smartphone, LayoutGrid, List, Clock } from 'lucide-react';
+import { RefreshCw, Search, AlertTriangle, Bell, Settings, Database, Server, Smartphone, LayoutGrid, List, Clock } from 'lucide-react';
 import { AreaChart, Area, ResponsiveContainer } from 'recharts';
 import apiEvent from './api/apiEvent';
 import type { EventItem } from './api/apiEvent';
 import { apiCommonCode } from '../code/api/apiCommonCode';
 import type { CommonCode } from '../code/api/apiCommonCode';
+import CustomerCompanyAPI from '../organization/customercompany/api/CustomerCompany';
+import type { CustomerCompanyDTO } from '../organization/customercompany/api/CustomerCompany';
 import EventDetailDrawer from './EventDetailDrawer';
 import './Event.css';
 
@@ -23,6 +25,7 @@ const REFRESH_OPTIONS = [
 const EventManagement: React.FC = () => {
     const [events, setEvents] = useState<EventItem[]>([]);
     const [codes, setCodes] = useState<{ [key: string]: CommonCode[] }>({});
+    const [customers, setCustomers] = useState<CustomerCompanyDTO[]>([]);
     const [selectedEvent, setSelectedEvent] = useState<EventItem | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isFetchingMore, setIsFetchingMore] = useState(false);
@@ -30,6 +33,7 @@ const EventManagement: React.FC = () => {
     // UI States
     const [searchQuery, setSearchQuery] = useState('');
     const [filterSeverity, setFilterSeverity] = useState<string | null>(null);
+    const [filterCompanyId, setFilterCompanyId] = useState<string | null>(null);
     const [isCompactView, setIsCompactView] = useState(false);
     const [autoRefreshInterval, setAutoRefreshInterval] = useState(60000);
     
@@ -57,6 +61,13 @@ const EventManagement: React.FC = () => {
         fetchCodes();
     }, []);
 
+    // 1.1 Fetch Customer List (for MSP)
+    useEffect(() => {
+        if (isMSP) {
+            CustomerCompanyAPI.getCustomerCompanies().then(setCustomers);
+        }
+    }, [isMSP]);
+
     // 2. Fetch Events Logic
     const loadEvents = useCallback(async (pageNum: number, isInitial: boolean = false) => {
         if (isInitial) setIsLoading(true);
@@ -66,7 +77,7 @@ const EventManagement: React.FC = () => {
             const res = await apiEvent.getEvents({ 
                 page: pageNum, 
                 size: 20, 
-                companyId 
+                companyId: filterCompanyId || companyId 
             });
             const newContent = res.data.content || [];
             
@@ -83,7 +94,7 @@ const EventManagement: React.FC = () => {
             setIsLoading(false);
             setIsFetchingMore(false);
         }
-    }, [companyId]);
+    }, [companyId, filterCompanyId]);
 
     // Initial Load & Page change Load
     useEffect(() => {
@@ -234,6 +245,24 @@ const EventManagement: React.FC = () => {
                                 </button>
                             ))}
                         </div>
+                        {isMSP && (
+                            <div className="tw-flex tw-items-center tw-gap-2 tw-bg-white tw-bg-opacity-5 tw-px-4 tw-py-1.5 tw-rounded-xl tw-border tw-border-white tw-border-opacity-10 tw-shadow-inner">
+                                <Database size={14} className="tw-text-brand-400" />
+                                <span className="tw-text-[10px] tw-font-black tw-text-muted tw-uppercase tw-tracking-widest"></span>
+                                <select 
+                                    value={filterCompanyId || 'MSP'}
+                                    onChange={(e) => setFilterCompanyId(e.target.value === 'MSP' ? null : e.target.value)}
+                                    className="tw-bg-transparent tw-text-xs tw-font-bold tw-text-white tw-outline-none tw-cursor-pointer hover:tw-text-brand-400 tw-transition-colors"
+                                >
+                                    <option value="MSP" className="tw-bg-obsidian tw-text-white">전체 고객사</option>
+                                    {customers.map(c => (
+                                        <option key={c.id} value={c.customerId} className="tw-bg-obsidian tw-text-white">
+                                            {c.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
                     </div>
                     
                     <div className="tw-flex tw-items-center tw-gap-4">
