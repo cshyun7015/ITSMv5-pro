@@ -55,6 +55,11 @@ public class CustomerManagementController {
         return ResponseEntity.ok(customerService.createTeam(companyId, dto));
     }
 
+    @GetMapping("/teams/{id}")
+    public ResponseEntity<CustomerTeamDTO> getTeam(@PathVariable Long id) {
+        return ResponseEntity.ok(customerService.getTeam(id));
+    }
+
     @PutMapping("/teams/{id}")
     public ResponseEntity<CustomerTeamDTO> updateTeam(@PathVariable Long id, @RequestBody CustomerTeamDTO dto) {
         return ResponseEntity.ok(customerService.updateTeam(id, dto));
@@ -75,6 +80,11 @@ public class CustomerManagementController {
     @PostMapping("/teams/{teamId}/users")
     public ResponseEntity<CustomerUserDTO> createUser(@PathVariable Long teamId, @RequestBody CustomerUserDTO dto) {
         return ResponseEntity.ok(customerService.createUser(teamId, dto));
+    }
+
+    @GetMapping("/users/{id}")
+    public ResponseEntity<CustomerUserDTO> getUser(@PathVariable Long id) {
+        return ResponseEntity.ok(customerService.getUser(id));
     }
 
     @PutMapping("/users/{id}")

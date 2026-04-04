@@ -10,6 +10,7 @@ import com.itsm.system.repository.organization.customer.CustomerCompanyRepositor
 import com.itsm.system.repository.organization.customer.CustomerTeamRepository;
 import com.itsm.system.repository.organization.customer.CustomerUserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +25,8 @@ public class CustomerService {
     private final CustomerCompanyRepository companyRepository;
     private final CustomerTeamRepository teamRepository;
     private final CustomerUserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final com.itsm.system.domain.code.CommonCodeRepository commonCodeRepository;
 
     public List<CustomerCompanyDTO> getAllCompanies() {
         return companyRepository.findAll().stream()
@@ -41,6 +44,18 @@ public class CustomerService {
         return teamRepository.findByCustomerCompanyId(companyId).stream()
                 .map(this::convertToTeamDTO)
                 .collect(Collectors.toList());
+    }
+
+    public CustomerTeamDTO getTeam(Long id) {
+        return teamRepository.findById(id)
+                .map(this::convertToTeamDTO)
+                .orElseThrow(() -> new RuntimeException("Team not found"));
+    }
+
+    public CustomerUserDTO getUser(Long id) {
+        return userRepository.findById(id)
+                .map(this::convertToUserDTO)
+                .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
     public List<CustomerUserDTO> getUsersByTeam(Long teamId) {
@@ -123,13 +138,22 @@ public class CustomerService {
     public CustomerUserDTO createUser(Long teamId, CustomerUserDTO dto) {
         CustomerTeam team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new RuntimeException("Team not found"));
+        
+        if (dto.getPassword() == null || dto.getPassword().isBlank()) {
+            throw new IllegalArgumentException("Password is mandatory for new customer user registration.");
+        }
+        
+        // Validate Role
+        String role = dto.getRole() != null ? dto.getRole() : "ROLE_CUS_USER";
+        validateRole(role);
+        
         CustomerUser user = CustomerUser.builder()
                 .customerTeam(team)
                 .userId(dto.getUserId())
                 .name(dto.getName())
                 .email(dto.getEmail())
-                .password("$2a$10$8.UnVuG9HHgffUDAlk8Ur.8QLWSc5XqZLn5dUX44n3bc9kW18Wp9y") // Default: password
-                .role(dto.getRole() != null ? dto.getRole() : "ROLE_USER")
+                .password(passwordEncoder.encode(dto.getPassword()))
+                .role(role)
                 .isActive(dto.getIsActive() != null ? dto.getIsActive() : true)
                 .build();
         return convertToUserDTO(userRepository.save(user));
@@ -139,9 +163,14 @@ public class CustomerService {
     public CustomerUserDTO updateUser(Long id, CustomerUserDTO dto) {
         CustomerUser user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        if (dto.getRole() != null) {
+            validateRole(dto.getRole());
+            user.setRole(dto.getRole());
+        }
+        
         user.setName(dto.getName());
         user.setEmail(dto.getEmail());
-        user.setRole(dto.getRole());
         user.setIsActive(dto.getIsActive());
         
         if (dto.getCustomerTeamId() != null) {
@@ -151,6 +180,12 @@ public class CustomerService {
         }
         
         return convertToUserDTO(userRepository.save(user));
+    }
+
+    private void validateRole(String roleId) {
+        if (!commonCodeRepository.existsByGroupIdAndCodeId("CUS_ROLE", roleId)) {
+            throw new IllegalArgumentException("Invalid role code: " + roleId + ". It must exist in the CUS_ROLE group.");
+        }
     }
 
     @Transactional

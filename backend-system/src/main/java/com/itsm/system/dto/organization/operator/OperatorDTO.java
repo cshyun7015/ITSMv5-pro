@@ -13,6 +13,7 @@ import java.util.List;
 public class OperatorDTO {
     private Long id;
     private String userId;
+    private String password;
     private String name;
     private String email;
     private String role;

@@ -15,6 +15,7 @@ public class CustomerUserDTO {
     private String customerTeamName;
     private String customerCompanyName;
     private String userId;
+    private String password;
     private String name;
     private String email;
     private String role;

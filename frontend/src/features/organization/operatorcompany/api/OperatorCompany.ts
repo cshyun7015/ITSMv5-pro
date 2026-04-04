@@ -27,6 +27,7 @@ export interface OperatorTeamDTO {
 export interface OperatorDTO {
   id: number;
   userId: string;
+  password?: string;
   name: string;
   email: string;
   role: string;

@@ -28,3 +28,4 @@ e2e/playwright-report/data/
 backend-system/bin/
 backend-dashboard/bin/
 backend-incident/.gradle/
+tmp/

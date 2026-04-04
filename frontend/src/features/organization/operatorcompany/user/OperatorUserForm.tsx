@@ -14,6 +14,7 @@ const OperatorUserForm: React.FC<OperatorUserFormProps> = ({ onClose, user, onSa
   const [fetchingRoles, setFetchingRoles] = useState(true);
   const [formData, setFormData] = useState({
     userId: '',
+    password: '',
     name: '',
     email: '',
     role: 'ROLE_OPER',
@@ -38,6 +39,7 @@ const OperatorUserForm: React.FC<OperatorUserFormProps> = ({ onClose, user, onSa
     if (user) {
       setFormData({
         userId: user.userId || '',
+        password: '', // Password is not loaded for editing
         name: user.name || '',
         email: user.email || '',
         role: user.role || 'ROLE_OPER',
@@ -106,16 +108,31 @@ const OperatorUserForm: React.FC<OperatorUserFormProps> = ({ onClose, user, onSa
                   />
                 </div>
               </div>
-              <div className="tw-space-y-3">
-                <label className="tw-text-xs tw-font-semibold tw-text-slate-400 tw-uppercase tw-tracking-widest tw-ml-1 tw-flex tw-items-center tw-gap-2">
-                  <Mail size={12} className="tw-text-indigo-500" /> 커뮤니케이션 채널 (이메일)
-                </label>
-                <input 
-                  required type="email" value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="tw-w-full tw-bg-slate-800/50 tw-border tw-border-white/10 tw-px-4 tw-py-3 tw-rounded-xl tw-outline-none focus:tw-border-indigo-500 tw-transition-all tw-text-white" 
-                  placeholder="user@example.com" 
-                />
+              <div className="tw-grid tw-grid-cols-2 tw-gap-6 tw-mt-4">
+                <div className="tw-space-y-3">
+                  <label className="tw-text-xs tw-font-semibold tw-text-slate-400 tw-uppercase tw-tracking-widest tw-ml-1 tw-flex tw-items-center tw-gap-2">
+                    <Mail size={12} className="tw-text-indigo-500" /> 이메일 주소
+                  </label>
+                  <input 
+                    required type="email" value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="tw-w-full tw-bg-slate-800/50 tw-border tw-border-white/10 tw-px-4 tw-py-3 tw-rounded-xl tw-outline-none focus:tw-border-indigo-500 tw-transition-all tw-text-white" 
+                    placeholder="user@example.com" 
+                  />
+                </div>
+                {!user && (
+                  <div className="tw-space-y-3">
+                    <label className="tw-text-xs tw-font-semibold tw-text-slate-400 tw-uppercase tw-tracking-widest tw-ml-1 tw-flex tw-items-center tw-gap-2">
+                      <Key size={12} className="tw-text-rose-500" /> 초기 비밀번호 (필수)
+                    </label>
+                    <input 
+                      required type="password" value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      className="tw-w-full tw-bg-slate-800/50 tw-border tw-border-rose-500/20 tw-px-4 tw-py-3 tw-rounded-xl tw-outline-none focus:tw-border-rose-500 tw-transition-all tw-text-white" 
+                      placeholder="8자 이상 입력" 
+                    />
+                  </div>
+                )}
               </div>
             </section>
 

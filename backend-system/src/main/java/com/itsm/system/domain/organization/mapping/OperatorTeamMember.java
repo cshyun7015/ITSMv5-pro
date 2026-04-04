@@ -17,7 +17,8 @@ import java.io.Serializable;
 public class OperatorTeamMember {
 
     @EmbeddedId
-    private OperatorTeamMemberId id;
+    @Builder.Default
+    private OperatorTeamMemberId id = new OperatorTeamMemberId();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("operatorId")
