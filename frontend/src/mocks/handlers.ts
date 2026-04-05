@@ -3,7 +3,32 @@ import { defaultMockData, hugeMockData } from './data';
 
 const API_BASE = '/api/v1/request';
 
+// Static mock users for E2E test login bypass
+const MOCK_USERS: Record<string, { userId: string; name: string; role: string; companyId: string; companyName: string }> = {
+  'admin':     { userId: 'admin',     name: 'System Admin',  role: 'ROLE_ADMIN', companyId: 'MSP', companyName: 'MSP Co.' },
+  'operator1': { userId: 'operator1', name: 'Operator One',  role: 'ROLE_OPER',  companyId: 'MSP', companyName: 'MSP Co.' },
+  'user1':     { userId: 'user1',     name: 'Customer User', role: 'ROLE_USER',   companyId: 'CUS-001', companyName: 'Client Corp.' },
+};
+
 export const handlers = [
+  // ── Auth Endpoints ──────────────────────────────────────────────────────────
+  // POST /api/v1/auth/login — always succeeds if userId is in MOCK_USERS
+  http.post('/api/v1/auth/login', async ({ request }) => {
+    const scenario = sessionStorage.getItem('mock-scenario') || 'default';
+    if (scenario === 'real') return passthrough();
+
+    const body = await request.json() as any;
+    const user = MOCK_USERS[body?.userId];
+    if (user) {
+      return HttpResponse.json(user, { status: 200 });
+    }
+    return new HttpResponse(JSON.stringify({ message: 'Invalid credentials' }), { status: 401 });
+  }),
+
+  // POST /api/v1/auth/logout
+  http.post('/api/v1/auth/logout', () => new HttpResponse(null, { status: 204 })),
+
+  // ── Request Endpoints ────────────────────────────────────────────────────────
   // List Requests
   http.get(API_BASE, async () => {
     const scenario = sessionStorage.getItem('mock-scenario') || 'default';
