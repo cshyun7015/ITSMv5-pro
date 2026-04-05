@@ -66,8 +66,8 @@ public class RequestServiceImpl implements RequestService {
         Specification<Request> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             
-            // Company Isolation (unless MSP operator)
-            if (companyId != null && !"MSP".equalsIgnoreCase(companyId.trim())) {
+            // Company Isolation & Customer Filter
+            if (companyId != null && !companyId.trim().isEmpty()) {
                 predicates.add(cb.equal(root.get("companyId"), companyId.trim()));
             }
 
