@@ -16,7 +16,7 @@ public interface RequestService {
     void deleteRequest(Long id);
 
     // Audit
-    List<com.itsm.request.domain.RequestHistory> getHistory(Long requestId);
+    List<com.itsm.request.dto.RequestHistoryDTO> getHistory(Long requestId);
     
     // Comments
     RequestCommentDTO addComment(Long requestId, RequestCommentDTO dto);

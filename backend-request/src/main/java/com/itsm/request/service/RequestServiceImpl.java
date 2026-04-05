@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.itsm.request.dto.RequestHistoryDTO;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -198,8 +199,19 @@ public class RequestServiceImpl implements RequestService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<com.itsm.request.domain.RequestHistory> getHistory(Long requestId) {
-        return historyRepository.findByRequestIdOrderByCreatedAtDesc(requestId);
+    public List<RequestHistoryDTO> getHistory(Long requestId) {
+        return historyRepository.findByRequestIdOrderByCreatedAtDesc(requestId).stream()
+                .map(history -> RequestHistoryDTO.builder()
+                        .id(history.getId())
+                        .requestId(history.getRequest().getId())
+                        .fieldName(history.getFieldName())
+                        .oldValue(history.getOldValue())
+                        .newValue(history.getNewValue())
+                        .action(history.getAction())
+                        .changedBy(history.getChangedBy())
+                        .createdAt(history.getCreatedAt())
+                        .build())
+                .collect(Collectors.toList());
     }
 
     @Override

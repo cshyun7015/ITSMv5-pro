@@ -69,7 +69,7 @@ public class RequestController {
     }
 
     @GetMapping("/{id}/history")
-    public List<com.itsm.request.domain.RequestHistory> getHistory(@PathVariable Long id) {
+    public List<com.itsm.request.dto.RequestHistoryDTO> getHistory(@PathVariable Long id) {
         return requestService.getHistory(id);
     }
 
