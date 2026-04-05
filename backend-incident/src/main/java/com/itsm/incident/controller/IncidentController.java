@@ -6,7 +6,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
+import com.itsm.incident.domain.types.IncidentStatus;
 
 @RestController
 @RequestMapping("/api/v1/incident")
@@ -36,5 +39,14 @@ public class IncidentController {
             @RequestBody IncidentDTO dto, 
             @RequestParam String userId) {
         return ResponseEntity.ok(service.update(id, dto, userId));
+    }
+
+    @GetMapping("/transitions")
+    public ResponseEntity<Map<IncidentStatus, List<IncidentStatus>>> getTransitions() {
+        Map<IncidentStatus, List<IncidentStatus>> transitions = new EnumMap<>(IncidentStatus.class);
+        for (IncidentStatus status : IncidentStatus.values()) {
+            transitions.put(status, status.getNextAllowedStates());
+        }
+        return ResponseEntity.ok(transitions);
     }
 }

@@ -43,4 +43,5 @@ export const apiIncident = {
   update: (id: number, data: Partial<IncidentDTO>, userId: string) => 
     axios.put<IncidentDTO>(`${API_BASE_URL}/${id}?userId=${userId}`, data),
   delete: (id: number) => axios.delete(`${API_BASE_URL}/${id}`),
+  getTransitions: () => axios.get<Record<string, string[]>>(`${API_BASE_URL}/transitions`),
 };

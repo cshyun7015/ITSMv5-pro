@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { type IncidentDTO } from './api/apiIncident';
 import { X, ShieldAlert, Zap, Clock, Save } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useIncidentStatusRules } from './hooks/useIncidentStatusRules';
+import { canEditField } from './utils/incidentRules';
 
 interface Props {
   incident: IncidentDTO | null;
@@ -21,7 +23,20 @@ const IncidentFormModal: React.FC<Props> = ({ incident, onClose, onSubmit }) => 
     tenantId: 'SYSTEM'
   };
 
+  const { getAllowedNextStatuses, isBackendFailed } = useIncidentStatusRules();
   const [formData, setFormData] = useState<Partial<IncidentDTO>>(defaultForm);
+
+  const STATUS_LABELS: Record<string, string> = {
+    NEW: 'NEW (Initial Log)',
+    ASSIGNED: 'ASSIGNED (Ownership)',
+    IN_PROGRESS: 'IN_PROGRESS (Tactical Action)',
+    ON_HOLD: 'ON_HOLD (Pending External)',
+    RESOLVED: 'RESOLVED (Restored)',
+    CLOSED: 'CLOSED (Final Audit)'
+  };
+
+  const currentStatus = incident?.status || 'NEW';
+  const isEditable = (field: string) => canEditField(currentStatus, field);
 
   useEffect(() => {
     if (incident) {
@@ -85,21 +100,24 @@ const IncidentFormModal: React.FC<Props> = ({ incident, onClose, onSubmit }) => 
                       type="checkbox" 
                       className="tw-w-4 tw-h-4 tw-accent-rose-500" 
                       checked={formData.isMajorIncident}
+                      disabled={!isEditable('isMajorIncident')}
                       onChange={e => handlePriorityChange('isMajorIncident', e.target.checked)}
                     />
                     <span className="tw-text-[10px] tw-font-black tw-text-rose-500 tw-uppercase">Major Incident</span>
                   </label>
                 </div>
                 <input 
-                  className="tw-w-full tw-bg-white/5 tw-border tw-border-white/10 tw-rounded-2xl tw-px-6 tw-py-4 tw-text-white tw-font-bold tw-outline-none focus:tw-border-blue-500/50 transition-all placeholder:tw-text-slate-700"
+                  className={`tw-w-full tw-bg-white/5 tw-border tw-border-white/10 tw-rounded-2xl tw-px-6 tw-py-4 tw-text-white tw-font-bold tw-outline-none focus:tw-border-blue-500/50 transition-all placeholder:tw-text-slate-700 ${!isEditable('title') ? 'tw-opacity-50 tw-cursor-not-allowed' : ''}`}
                   placeholder="Enter a brief title (e.g. Server down in Seoul)"
                   value={formData.title}
+                  readOnly={!isEditable('title')}
                   onChange={e => setFormData({...formData, title: e.target.value})}
                 />
                 <textarea 
-                  className="tw-w-full tw-bg-white/5 tw-border tw-border-white/10 tw-rounded-2xl tw-px-6 tw-py-4 tw-text-white tw-text-sm tw-outline-none focus:tw-border-blue-500/50 transition-all tw-min-h-[140px] placeholder:tw-text-slate-700"
+                  className={`tw-w-full tw-bg-white/5 tw-border tw-border-white/10 tw-rounded-2xl tw-px-6 tw-py-4 tw-text-white tw-text-sm tw-outline-none focus:tw-border-blue-500/50 transition-all tw-min-h-[140px] placeholder:tw-text-slate-700 ${!isEditable('description') ? 'tw-opacity-50 tw-cursor-not-allowed' : ''}`}
                   placeholder="Provide detailed symptoms, error codes, and business impact..."
                   value={formData.description}
+                  readOnly={!isEditable('description')}
                   onChange={e => setFormData({...formData, description: e.target.value})}
                 />
               </div>
@@ -108,7 +126,8 @@ const IncidentFormModal: React.FC<Props> = ({ incident, onClose, onSubmit }) => 
                 <div className="tw-space-y-4">
                   <label className="tw-text-[10px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest">Reporting Channel</label>
                   <select 
-                    className="tw-w-full tw-bg-white/5 tw-border tw-border-white/10 tw-rounded-2xl tw-px-6 tw-py-4 tw-text-white tw-font-bold tw-appearance-none focus:tw-border-blue-500/50 transition-all tw-cursor-pointer"
+                    className={`tw-w-full tw-bg-white/5 tw-border tw-border-white/10 tw-rounded-2xl tw-px-6 tw-py-4 tw-text-white tw-font-bold tw-appearance-none focus:tw-border-blue-500/50 transition-all tw-cursor-pointer ${!isEditable('channel') ? 'tw-opacity-50 tw-cursor-not-allowed' : ''}`}
+                    disabled={!isEditable('channel')}
                     value={formData.channel || 'OTHER'}
                     onChange={e => setFormData({...formData, channel: e.target.value as any})}
                   >
@@ -123,8 +142,9 @@ const IncidentFormModal: React.FC<Props> = ({ incident, onClose, onSubmit }) => 
                 <div className="tw-space-y-4">
                   <label className="tw-text-[10px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest">Affected User ID</label>
                   <input 
-                    className="tw-w-full tw-bg-white/5 tw-border tw-border-white/10 tw-rounded-2xl tw-px-6 tw-py-4 tw-text-white tw-font-bold tw-outline-none focus:tw-border-blue-500/50 transition-all placeholder:tw-text-slate-700"
+                    className={`tw-w-full tw-bg-white/5 tw-border tw-border-white/10 tw-rounded-2xl tw-px-6 tw-py-4 tw-text-white tw-font-bold tw-outline-none focus:tw-border-blue-500/50 transition-all placeholder:tw-text-slate-700 ${!isEditable('affectedUserId') ? 'tw-opacity-50 tw-cursor-not-allowed' : ''}`}
                     placeholder="Affected user ID (if different)"
+                    readOnly={!isEditable('affectedUserId')}
                     value={formData.affectedUserId || ''}
                     onChange={e => setFormData({...formData, affectedUserId: e.target.value})}
                   />
@@ -136,8 +156,8 @@ const IncidentFormModal: React.FC<Props> = ({ incident, onClose, onSubmit }) => 
                   <label className="tw-text-[10px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest">Impact Level</label>
                   <div className="tw-relative">
                     <select 
-                      className="tw-w-full tw-bg-white/5 tw-border tw-border-white/10 tw-rounded-2xl tw-px-6 tw-py-4 tw-text-white tw-font-bold tw-appearance-none focus:tw-border-blue-500/50 transition-all tw-cursor-pointer"
-                      disabled={formData.isMajorIncident}
+                      className={`tw-w-full tw-bg-white/5 tw-border tw-border-white/10 tw-rounded-2xl tw-px-6 tw-py-4 tw-text-white tw-font-bold tw-appearance-none focus:tw-border-blue-500/50 transition-all tw-cursor-pointer ${(!isEditable('impact') || formData.isMajorIncident) ? 'tw-opacity-50 tw-cursor-not-allowed' : ''}`}
+                      disabled={!isEditable('impact') || formData.isMajorIncident}
                       value={formData.impact}
                       onChange={e => handlePriorityChange('impact', e.target.value)}
                     >
@@ -151,8 +171,8 @@ const IncidentFormModal: React.FC<Props> = ({ incident, onClose, onSubmit }) => 
                   <label className="tw-text-[10px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest">Urgency Metric</label>
                   <div className="tw-relative">
                     <select 
-                      className="tw-w-full tw-bg-white/5 tw-border tw-border-white/10 tw-rounded-2xl tw-px-6 tw-py-4 tw-text-white tw-font-bold tw-appearance-none focus:tw-border-blue-500/50 transition-all tw-cursor-pointer"
-                      disabled={formData.isMajorIncident}
+                      className={`tw-w-full tw-bg-white/5 tw-border tw-border-white/10 tw-rounded-2xl tw-px-6 tw-py-4 tw-text-white tw-font-bold tw-appearance-none focus:tw-border-blue-500/50 transition-all tw-cursor-pointer ${(!isEditable('urgency') || formData.isMajorIncident) ? 'tw-opacity-50 tw-cursor-not-allowed' : ''}`}
+                      disabled={!isEditable('urgency') || formData.isMajorIncident}
                       value={formData.urgency}
                       onChange={e => handlePriorityChange('urgency', e.target.value)}
                     >
@@ -164,21 +184,90 @@ const IncidentFormModal: React.FC<Props> = ({ incident, onClose, onSubmit }) => 
                 </div>
               </div>
 
+              <AnimatePresence>
+                {formData.status === 'ON_HOLD' && (
+                  <motion.div 
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="tw-space-y-4 tw-overflow-hidden"
+                  >
+                    <label className="tw-text-[10px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest">On-Hold Reason</label>
+                    <textarea 
+                      className={`tw-w-full tw-bg-amber-500/5 tw-border tw-border-amber-500/20 tw-rounded-2xl tw-px-6 tw-py-4 tw-text-white tw-text-sm tw-outline-none focus:tw-border-amber-500/50 transition-all tw-min-h-[100px] placeholder:tw-text-slate-700 ${!isEditable('onHoldReason') ? 'tw-opacity-50 tw-cursor-not-allowed' : ''}`}
+                      placeholder="Specify why this incident is paused (e.g. Awaiting vendor, Customer info needed)..."
+                      value={formData.onHoldReason || ''}
+                      readOnly={!isEditable('onHoldReason')}
+                      onChange={e => setFormData({...formData, onHoldReason: e.target.value})}
+                    />
+                  </motion.div>
+                )}
+
+                {(formData.status === 'RESOLVED' || formData.status === 'IN_PROGRESS') && (
+                  <motion.div 
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="tw-space-y-6 tw-overflow-hidden tw-pt-4 tw-border-t tw-border-white/5"
+                  >
+                     <div className="tw-grid tw-grid-cols-1 tw-gap-6">
+                        <div className="tw-space-y-4">
+                          <label className="tw-text-[10px] tw-font-black tw-text-emerald-500 tw-uppercase tw-tracking-widest">Resolution Code</label>
+                          <select 
+                            className={`tw-w-full tw-bg-emerald-500/5 tw-border tw-border-emerald-500/20 tw-rounded-2xl tw-px-6 tw-py-4 tw-text-white tw-font-bold tw-appearance-none focus:tw-border-emerald-500/50 transition-all tw-cursor-pointer ${!isEditable('resolutionCode') ? 'tw-opacity-50 tw-cursor-not-allowed' : ''}`}
+                            disabled={!isEditable('resolutionCode')}
+                            value={formData.resolutionCode || ''}
+                            onChange={e => setFormData({...formData, resolutionCode: e.target.value})}
+                          >
+                            <option value="">Select Resolution Code</option>
+                            <option value="FIXED_PERMANENT">FIXED (Permanent)</option>
+                            <option value="WORKAROUND_APPLIED">WORKAROUND Applied</option>
+                            <option value="THIRD_PARTY_FIX">THIRD PARTY Fix</option>
+                            <option value="NOT_REPRODUCIBLE">NOT REPRODUCIBLE</option>
+                            <option value="BY_DESIGN">BY DESIGN / NO FIX</option>
+                          </select>
+                        </div>
+                        <div className="tw-space-y-4">
+                          <label className="tw-text-[10px] tw-font-black tw-text-emerald-500 tw-uppercase tw-tracking-widest">Workaround / Resolution Details</label>
+                          <textarea 
+                            className={`tw-w-full tw-bg-emerald-500/5 tw-border tw-border-emerald-500/20 tw-rounded-2xl tw-px-6 tw-py-4 tw-text-white tw-text-sm tw-outline-none focus:tw-border-emerald-500/50 transition-all tw-min-h-[100px] placeholder:tw-text-slate-700 ${!isEditable('workaround') ? 'tw-opacity-50 tw-cursor-not-allowed' : ''}`}
+                            placeholder="Detail the steps taken to restore service..."
+                            value={formData.workaround || ''}
+                            readOnly={!isEditable('workaround')}
+                            onChange={e => setFormData({...formData, workaround: e.target.value})}
+                          />
+                        </div>
+                     </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
               <div className="tw-space-y-4">
                 <label className="tw-text-[10px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest">ITIL Lifecycle Status</label>
                 <div className="tw-relative">
                   <select 
-                    className="tw-w-full tw-bg-white/5 tw-border tw-border-white/10 tw-rounded-2xl tw-px-6 tw-py-4 tw-text-white tw-font-bold tw-appearance-none focus:tw-border-blue-500/50 transition-all tw-cursor-pointer tw-text-emerald-400"
+                    className={`tw-w-full tw-bg-white/5 tw-border tw-border-white/10 tw-rounded-2xl tw-px-6 tw-py-4 tw-text-white tw-font-bold tw-appearance-none focus:tw-border-blue-500/50 transition-all tw-cursor-pointer ${!incident ? 'tw-opacity-50 tw-cursor-not-allowed' : 'tw-text-emerald-400'}`}
+                    disabled={!incident}
                     value={formData.status}
                     onChange={e => setFormData({...formData, status: e.target.value as any})}
                   >
-                    <option value="NEW">NEW (Initial Log)</option>
-                    <option value="ASSIGNED">ASSIGNED (Ownership)</option>
-                    <option value="IN_PROGRESS">IN_PROGRESS (Tactical Action)</option>
-                    <option value="ON_HOLD">ON_HOLD (Pending External)</option>
-                    <option value="RESOLVED">RESOLVED (Restored)</option>
-                    <option value="CLOSED">CLOSED (Final Audit)</option>
+                    {!incident ? (
+                      <option value="NEW">NEW (Initial Log)</option>
+                    ) : (
+                      // Fetch next allowed statuses via hook (Backend check with Frontend fallback)
+                      getAllowedNextStatuses(incident.status).map(status => (
+                        <option key={status} value={status}>
+                          {STATUS_LABELS[status] || status}
+                        </option>
+                      ))
+                    )}
                   </select>
+                  {isBackendFailed && (
+                     <div className="tw-mt-2 tw-text-[10px] tw-text-orange-400 tw-font-bold tw-flex tw-items-center tw-gap-1">
+                        <span className="tw-w-1.5 tw-h-1.5 tw-bg-orange-500 tw-rounded-full tw-animate-pulse" />
+                        BACKEND SYNC OFFLINE - ENFORCING FRONTEND GOVERNANCE
+                     </div>
+                  )}
                 </div>
               </div>
 

@@ -322,16 +322,73 @@ const IncidentManagement: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="tw-pt-4">
-                      <button 
-                        onClick={() => {
-                          const updated = { ...selectedIncident, status: 'RESOLVED' as any };
-                          handleAction('update', updated);
-                        }}
-                        className="tw-w-full tw-py-4 tw-bg-blue-600 hover:tw-bg-blue-500 tw-text-white tw-rounded-2xl tw-text-xs tw-font-black shadow-lg tw-shadow-blue-500/20 transition-all active:tw-scale-95"
-                      >
-                         EXECUTE RESOLUTION
-                      </button>
+                    {/* 🛡️ Status Action Control */}
+                    <div className="tw-pt-6 tw-border-t tw-border-white/5">
+                      <span className="tw-text-[10px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest tw-mb-4 tw-block">Workflow Actions</span>
+                      <div className="tw-flex tw-flex-col tw-gap-3">
+                        {selectedIncident.status === 'NEW' && (
+                          <button 
+                            onClick={() => handleAction('update', { ...selectedIncident, status: 'ASSIGNED' as any })}
+                            className="tw-w-full tw-py-4 tw-bg-blue-600 hover:tw-bg-blue-500 tw-text-white tw-rounded-2xl tw-text-[10px] tw-font-black shadow-lg tw-shadow-blue-500/20 transition-all active:tw-scale-95"
+                          >
+                            ASSIGN TO OPERATOR
+                          </button>
+                        )}
+                        {(selectedIncident.status === 'ASSIGNED' || selectedIncident.status === 'ON_HOLD') && (
+                          <button 
+                            onClick={() => handleAction('update', { ...selectedIncident, status: 'IN_PROGRESS' as any })}
+                            className="tw-w-full tw-py-4 tw-bg-amber-600 hover:tw-bg-amber-500 tw-text-white tw-rounded-2xl tw-text-[10px] tw-font-black shadow-lg tw-shadow-amber-500/20 transition-all active:tw-scale-95"
+                          >
+                            START WORK
+                          </button>
+                        )}
+                        {selectedIncident.status === 'IN_PROGRESS' && (
+                          <button 
+                            onClick={() => handleAction('update', { ...selectedIncident, status: 'RESOLVED' as any })}
+                            className="tw-w-full tw-py-4 tw-bg-emerald-600 hover:tw-bg-emerald-500 tw-text-white tw-rounded-2xl tw-text-[10px] tw-font-black shadow-lg tw-shadow-emerald-500/20 transition-all active:tw-scale-95"
+                          >
+                            RESOLVE INCIDENT
+                          </button>
+                        )}
+                        {['NEW', 'ASSIGNED', 'IN_PROGRESS'].includes(selectedIncident.status) && (
+                          <button 
+                            onClick={() => handleAction('update', { ...selectedIncident, status: 'ON_HOLD' as any })}
+                            className="tw-w-full tw-py-3 tw-bg-slate-800 hover:tw-bg-slate-700 tw-text-slate-300 tw-rounded-2xl tw-text-[10px] tw-font-black transition-all active:tw-scale-95"
+                          >
+                            SUSPEND (HOLD)
+                          </button>
+                        )}
+                        {selectedIncident.status === 'RESOLVED' && (
+                          <div className="tw-flex tw-gap-3">
+                            <button 
+                              onClick={() => handleAction('update', { ...selectedIncident, status: 'IN_PROGRESS' as any })}
+                              className="tw-flex-1 tw-py-4 tw-bg-rose-600 hover:tw-bg-rose-500 tw-text-white tw-rounded-2xl tw-text-[10px] tw-font-black transition-all active:tw-scale-95"
+                            >
+                              RE-OPEN
+                            </button>
+                            <button 
+                              onClick={() => handleAction('update', { ...selectedIncident, status: 'CLOSED' as any })}
+                              className="tw-flex-1 tw-py-4 tw-bg-blue-900 hover:tw-bg-blue-800 tw-text-white tw-rounded-2xl tw-text-[10px] tw-font-black transition-all active:tw-scale-95"
+                            >
+                              COMPLETE CLOSE
+                            </button>
+                          </div>
+                        )}
+                        {selectedIncident.status !== 'CLOSED' && selectedIncident.status !== 'RESOLVED' && (
+                          <button 
+                            onClick={() => handleAction('update', { ...selectedIncident, status: 'CLOSED' as any })}
+                            className="tw-w-full tw-py-3 tw-bg-white/5 hover:tw-bg-white/10 tw-text-rose-500/70 tw-rounded-2xl tw-text-[10px] tw-font-black transition-all active:tw-scale-95"
+                          >
+                            CANCEL INCIDENT
+                          </button>
+                        )}
+                        {selectedIncident.status === 'CLOSED' && (
+                          <div className="tw-p-6 tw-bg-white/5 tw-rounded-2xl tw-text-center tw-border tw-border-white/5">
+                            <p className="tw-text-[10px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest">Incident Terminated</p>
+                            <p className="tw-text-xs tw-text-slate-500 tw-mt-2">Record locked for ITIL data governance.</p>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -51,12 +51,20 @@ public class IncidentService {
 
     @Transactional
     public IncidentDTO update(Long id, IncidentDTO dto, String userId) {
-        Incident incident = repository.findById(id).orElseThrow();
+        Incident incident = repository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Incident not found: " + id));
         
+        // 1. Status Transition Validation
         if (dto.getStatus() != null && dto.getStatus() != incident.getStatus()) {
-            logHistory(incident, userId, "Status Change", incident.getStatus().name(), dto.getStatus().name(), "Workflow Step");
+            if (!incident.getStatus().canTransitionTo(dto.getStatus())) {
+                throw new IllegalStateException(String.format("Invalid status transition: %s -> %s", 
+                        incident.getStatus(), dto.getStatus()));
+            }
+            
+            logHistory(incident, userId, "Status Change", incident.getStatus().name(), dto.getStatus().name(), "Workflow Progress");
             incident.setStatus(dto.getStatus());
             
+            // Auto-timestamp for resolution milestones
             if (dto.getStatus() == IncidentStatus.RESOLVED) {
                 incident.setResolvedAt(LocalDateTime.now());
             } else if (dto.getStatus() == IncidentStatus.CLOSED) {
@@ -64,17 +72,31 @@ public class IncidentService {
             }
         }
         
+        // 2. Data Synchronization (Assignee, Resolution Info, etc.)
+        if (incident.getStatus() == IncidentStatus.CLOSED) {
+            throw new IllegalStateException("Cannot update a CLOSED incident.");
+        }
+
         if (dto.getAssigneeId() != null && !dto.getAssigneeId().equals(incident.getAssigneeId())) {
             logHistory(incident, userId, "Assignee Change", incident.getAssigneeId(), dto.getAssigneeId(), "Manual Assignment");
             incident.setAssigneeId(dto.getAssigneeId());
         }
 
-        incident.setTitle(dto.getTitle());
-        incident.setDescription(dto.getDescription());
-        incident.setImpact(dto.getImpact());
-        incident.setUrgency(dto.getUrgency());
-        incident.setResolutionCode(dto.getResolutionCode());
-        incident.setWorkaround(dto.getWorkaround());
+        if (dto.getTitle() != null) incident.setTitle(dto.getTitle());
+        if (dto.getDescription() != null) incident.setDescription(dto.getDescription());
+        if (dto.getImpact() != null) incident.setImpact(dto.getImpact());
+        if (dto.getUrgency() != null) incident.setUrgency(dto.getUrgency());
+        if (dto.getResolutionCode() != null) incident.setResolutionCode(dto.getResolutionCode());
+        if (dto.getWorkaround() != null) incident.setWorkaround(dto.getWorkaround());
+        if (dto.getOnHoldReason() != null) incident.setOnHoldReason(dto.getOnHoldReason());
+        
+        // Manual Boolean Check (DTO boolean defaults to false, need to check if provided or if logic allows)
+        incident.setMajorIncident(dto.isMajorIncident());
+
+        if (dto.getCategoryId() != null) incident.setCategoryId(dto.getCategoryId());
+        if (dto.getSubCategoryId() != null) incident.setSubCategoryId(dto.getSubCategoryId());
+        if (dto.getServiceId() != null) incident.setServiceId(dto.getServiceId());
+        if (dto.getCiId() != null) incident.setCiId(dto.getCiId());
         
         return toDTO(repository.save(incident));
     }
