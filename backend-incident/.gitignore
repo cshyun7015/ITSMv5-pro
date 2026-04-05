@@ -1,0 +1,51 @@
+# IDE Settings
+.idea/
+.eclipse/
+.vscode/
+*.iml
+.classpath
+.project
+.settings/
+
+# Build Artifacts
+target/
+build/
+out/
+
+# Maven
+.mvn/
+# Gradle
+.gradle/
+**/build/
+**/target/
+
+# Dependency Directories
+bower_components/
+node_modules/
+
+# Environment and Log Files
+.env
+application.properties.example
+*.log
+logs/
+*.txt
+
+# System Files
+.DS_Store
+Thumbs.db
+
+# Testing
+test-reports/
+coverage/
+
+# Temporary Files
+*.swp
+*.tmp
+*~
+.#*
+
+# Backup Files
+*.bak
+
+bin/
+gradle/

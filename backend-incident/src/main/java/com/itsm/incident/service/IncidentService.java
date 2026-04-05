@@ -54,6 +54,10 @@ public class IncidentService {
         Incident incident = repository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Incident not found: " + id));
         
+        if (incident.getStatus() == IncidentStatus.CLOSED) {
+            throw new IllegalStateException("Cannot update a CLOSED incident.");
+        }
+
         // 1. Status Transition Validation
         if (dto.getStatus() != null && dto.getStatus() != incident.getStatus()) {
             if (!incident.getStatus().canTransitionTo(dto.getStatus())) {
@@ -73,9 +77,6 @@ public class IncidentService {
         }
         
         // 2. Data Synchronization (Assignee, Resolution Info, etc.)
-        if (incident.getStatus() == IncidentStatus.CLOSED) {
-            throw new IllegalStateException("Cannot update a CLOSED incident.");
-        }
 
         if (dto.getAssigneeId() != null && !dto.getAssigneeId().equals(incident.getAssigneeId())) {
             logHistory(incident, userId, "Assignee Change", incident.getAssigneeId(), dto.getAssigneeId(), "Manual Assignment");

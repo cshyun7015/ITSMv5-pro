@@ -42,7 +42,7 @@ const ConfirmModal: React.FC<{
                   onClick={onCancel}
                   className="tw-flex-1 tw-py-4 tw-bg-white/5 hover:tw-bg-white/10 tw-text-white tw-font-bold tw-rounded-2xl tw-transition-all"
                 >
-                  Cancel
+                  취소
                 </button>
                 <button 
                   onClick={onConfirm}
@@ -71,7 +71,7 @@ const SLACountdown: React.FC<{ dueDate?: string; isBreached?: boolean }> = ({ du
       const now = new Date().getTime();
       const diff = target - now;
       if (diff <= 0) {
-        setTimeLeft('BREACHED');
+        setTimeLeft('SLA 위반');
         setProgress(0);
         clearInterval(timer);
       } else {
@@ -88,7 +88,7 @@ const SLACountdown: React.FC<{ dueDate?: string; isBreached?: boolean }> = ({ du
   return (
     <div className="tw-mt-4">
       <div className="tw-flex tw-justify-between tw-items-center tw-mb-1">
-        <span className="tw-text-[10px] tw-text-slate-500 tw-uppercase tw-font-bold tw-tracking-widest">SLA Resolution</span>
+        <span className="tw-text-[10px] tw-text-slate-500 tw-uppercase tw-font-bold tw-tracking-widest">SLA 해결 목표</span>
         <span className={`tw-text-[10px] tw-font-mono tw-font-black ${isBreached || timeLeft === 'BREACHED' ? 'tw-text-rose-500' : 'tw-text-emerald-400'}`}>
           {timeLeft}
         </span>
@@ -169,31 +169,31 @@ const IncidentManagement: React.FC = () => {
             </div>
             <div>
               <h1 className="tw-text-3xl tw-font-black tw-tracking-tight tw-text-white tw-flex tw-items-center tw-gap-2">
-                Triage Center <span className="tw-text-sm tw-font-bold tw-py-1 tw-px-3 tw-bg-white/5 tw-rounded-full tw-text-slate-400 tw-border tw-border-white/10 tw-tracking-widest tw-ml-4">TACTICAL OPS</span>
+                인시던트 관제 센터 <span className="tw-text-sm tw-font-bold tw-py-1 tw-px-3 tw-bg-white/5 tw-rounded-full tw-text-slate-400 tw-border tw-border-white/10 tw-tracking-widest tw-ml-4">현장 운영 실습</span>
               </h1>
-              <p className="tw-text-slate-500 tw-font-bold tw-uppercase tw-text-[10px] tw-tracking-widest tw-mt-1">Real-time service restoration workspace</p>
+              <p className="tw-text-slate-500 tw-font-bold tw-uppercase tw-text-[10px] tw-tracking-widest tw-mt-1">실시간 서비스 복구 및 트리아지 워크스페이스</p>
             </div>
           </div>
           <button 
             className="tw-px-6 tw-py-3 tw-bg-blue-600 hover:tw-bg-blue-500 tw-text-white tw-rounded-2xl tw-font-black tw-flex tw-items-center tw-gap-2 tw-shadow-lg tw-shadow-blue-600/20 tw-transition-all active:tw-scale-95"
             onClick={() => { setEditingIncident(null); setIsModalOpen(true); }}
           >
-            <Plus size={20} /> CREATE TICKET
+            <Plus size={20} /> 티켓 생성
           </button>
         </header>
 
         {/* 📈 Bento Stats Ribbon */}
         <div className="tw-grid tw-grid-cols-4 tw-gap-4 tw-mb-8">
           {[
-            { label: 'System Load', value: incidents.length, icon: Database, color: 'tw-text-slate-400' },
-            { label: 'Critical (P1)', value: incidents.filter(i => i.priority === 'P1').length, icon: AlertTriangle, color: 'tw-text-rose-500' },
-            { label: 'Active Tasks', value: incidents.filter(i => i.status !== 'RESOLVED').length, icon: Zap, color: 'tw-text-amber-400' },
-            { label: 'SLA Warnings', value: incidents.filter(i => i.isSlaBreached).length, icon: Clock, color: 'tw-text-rose-400' }
+            { label: '전체 로드', value: incidents.length, icon: Database, color: 'tw-text-slate-400' },
+            { label: '심각 장애 (P1)', value: incidents.filter(i => i.priority === 'P1').length, icon: AlertTriangle, color: 'tw-text-rose-500' },
+            { label: '진행 중인 작업', value: incidents.filter(i => i.status !== 'RESOLVED').length, icon: Zap, color: 'tw-text-amber-400' },
+            { label: 'SLA 경고/위반', value: incidents.filter(i => i.isSlaBreached).length, icon: Clock, color: 'tw-text-rose-400' }
           ].map((stat, idx) => (
             <div key={idx} className="inc-card tw-p-6">
               <div className="tw-flex tw-justify-between tw-items-start tw-mb-4">
                 <stat.icon className={stat.color} size={24} />
-                <div className="tw-text-[10px] tw-text-slate-600 tw-font-black tw-uppercase tw-tracking-widest">Live</div>
+                <div className="tw-text-[10px] tw-text-slate-600 tw-font-black tw-uppercase tw-tracking-widest">실시간</div>
               </div>
               <div className="tw-text-3xl tw-font-black tw-text-white">{stat.value}</div>
               <div className="tw-text-[10px] tw-text-slate-500 tw-font-bold tw-uppercase tw-mt-1">{stat.label}</div>
@@ -205,14 +205,14 @@ const IncidentManagement: React.FC = () => {
           {/* Main List */}
           <div className="tw-col-span-12 lg:tw-col-span-8">
             <div className="tw-flex tw-justify-between tw-items-center tw-mb-6">
-              <div className="tw-text-sm tw-font-black tw-text-slate-400 tw-uppercase tw-tracking-widest">Active Incidents ({filteredIncidents.length})</div>
+              <div className="tw-text-sm tw-font-black tw-text-slate-400 tw-uppercase tw-tracking-widest">진행 중인 인시던트 ({filteredIncidents.length})</div>
               <div className="tw-relative">
                 <Search className="tw-absolute tw-left-4 tw-top-1/2 tw--translate-y-1/2 tw-text-slate-500" size={16} />
                 <input 
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
                   className="tw-bg-slate-900/60 tw-border tw-border-white/5 tw-rounded-2xl tw-pl-12 tw-pr-4 tw-py-2 tw-text-sm tw-outline-none tw-w-64 focus:tw-border-blue-500/50" 
-                  placeholder="Filter by title..." 
+                  placeholder="제목 또는 ID로 검색..." 
                 />
               </div>
             </div>
@@ -233,7 +233,7 @@ const IncidentManagement: React.FC = () => {
                       <div className="tw-flex tw-gap-2">
                         {inc.isMajorIncident && (
                           <span className="tw-bg-rose-500 tw-text-white tw-text-[9px] tw-font-black tw-px-2 tw-py-0.5 tw-rounded-full tw-animate-pulse">
-                            MAJOR
+                            메이저
                           </span>
                         )}
                         <span className={`inc-badge ${inc.priority === 'P1' ? 'inc-p1' : 'tw-bg-white/5 tw-text-slate-400'}`}>
@@ -281,57 +281,57 @@ const IncidentManagement: React.FC = () => {
 
                   <div className="tw-space-y-8">
                     <div className="tw-p-6 tw-bg-white/5 tw-rounded-[24px] tw-border tw-border-white/5">
-                       <span className="tw-text-[10px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest">Ticket Narrative</span>
+                       <span className="tw-text-[10px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest">티켓 상세 내용</span>
                        <p className="tw-text-sm tw-text-slate-300 tw-mt-3 tw-leading-relaxed">{selectedIncident.description}</p>
                     </div>
 
                     <div className="tw-grid tw-grid-cols-2 tw-gap-4">
                        <div className="tw-p-4 tw-bg-white/2 tw-rounded-2xl tw-border tw-border-white/5">
-                         <span className="tw-text-[10px] tw-font-black tw-text-slate-600 tw-uppercase">Status</span>
+                         <span className="tw-text-[10px] tw-font-black tw-text-slate-600 tw-uppercase">인시던트 상태</span>
                          <div className="tw-text-xs tw-font-bold tw-text-blue-400 tw-mt-1">{selectedIncident.status}</div>
                        </div>
                        <div className="tw-p-4 tw-bg-white/2 tw-rounded-2xl tw-border tw-border-white/5">
-                         <span className="tw-text-[10px] tw-font-black tw-text-slate-600 tw-uppercase">Impact</span>
+                         <span className="tw-text-[10px] tw-font-black tw-text-slate-600 tw-uppercase">영향도</span>
                          <div className="tw-text-xs tw-font-bold tw-text-white tw-mt-1">
                            {selectedIncident.isMajorIncident ? (
-                             <span className="tw-text-rose-500 tw-font-black">MAJOR INCIDENT</span>
+                             <span className="tw-text-rose-500 tw-font-black">대형 장애</span>
                            ) : (
                              selectedIncident.impact
                            )}
                          </div>
                        </div>
                        <div className="tw-p-4 tw-bg-white/2 tw-rounded-2xl tw-border tw-border-white/5">
-                         <span className="tw-text-[10px] tw-font-black tw-text-slate-600 tw-uppercase">Channel</span>
-                         <div className="tw-text-xs tw-font-bold tw-text-white tw-mt-1">{selectedIncident.channel || 'OTHER'}</div>
+                         <span className="tw-text-[10px] tw-font-black tw-text-slate-600 tw-uppercase">접수 채널</span>
+                         <div className="tw-text-xs tw-font-bold tw-text-white tw-mt-1">{selectedIncident.channel || '기타'}</div>
                        </div>
                        <div className="tw-p-4 tw-bg-white/2 tw-rounded-2xl tw-border tw-border-white/5">
-                         <span className="tw-text-[10px] tw-font-black tw-text-slate-600 tw-uppercase">Affected User</span>
+                         <span className="tw-text-[10px] tw-font-black tw-text-slate-600 tw-uppercase">영향 사용자</span>
                          <div className="tw-text-xs tw-font-bold tw-text-white tw-mt-1">{selectedIncident.affectedUserId || selectedIncident.requesterId}</div>
                        </div>
                     </div>
 
                     <div>
-                      <span className="tw-text-[10px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest tw-mb-4 tw-block">Operational Timeline</span>
+                      <span className="tw-text-[10px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest tw-mb-4 tw-block">운영 타임라인</span>
                       <div className="inc-timeline-item">
                         <div className="inc-timeline-dot" />
-                        <span className="tw-text-[10px] tw-text-slate-500">Live Agent Feed</span>
+                        <span className="tw-text-[10px] tw-text-slate-500">실시간 처리 피드</span>
                         <p className="tw-text-xs tw-text-slate-300 tw-mt-1">
-                          {selectedIncident.isMajorIncident ? 'CRITICAL: Priority handling for Major Incident. ' : ''}
-                          Incident is currently being evaluated for root cause analysis.
+                          {selectedIncident.isMajorIncident ? '중요: 대형 장애에 대한 우선순위 처리가 진행 중입니다. ' : ''}
+                          인시던트의 원인 분석 및 해결 방안을 검토하고 있습니다.
                         </p>
                       </div>
                     </div>
 
                     {/* 🛡️ Status Action Control */}
                     <div className="tw-pt-6 tw-border-t tw-border-white/5">
-                      <span className="tw-text-[10px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest tw-mb-4 tw-block">Workflow Actions</span>
+                      <span className="tw-text-[10px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest tw-mb-4 tw-block">워크플로우 조치</span>
                       <div className="tw-flex tw-flex-col tw-gap-3">
                         {selectedIncident.status === 'NEW' && (
                           <button 
                             onClick={() => handleAction('update', { ...selectedIncident, status: 'ASSIGNED' as any })}
                             className="tw-w-full tw-py-4 tw-bg-blue-600 hover:tw-bg-blue-500 tw-text-white tw-rounded-2xl tw-text-[10px] tw-font-black shadow-lg tw-shadow-blue-500/20 transition-all active:tw-scale-95"
                           >
-                            ASSIGN TO OPERATOR
+                            운영자 배정 및 승인
                           </button>
                         )}
                         {(selectedIncident.status === 'ASSIGNED' || selectedIncident.status === 'ON_HOLD') && (
@@ -339,7 +339,7 @@ const IncidentManagement: React.FC = () => {
                             onClick={() => handleAction('update', { ...selectedIncident, status: 'IN_PROGRESS' as any })}
                             className="tw-w-full tw-py-4 tw-bg-amber-600 hover:tw-bg-amber-500 tw-text-white tw-rounded-2xl tw-text-[10px] tw-font-black shadow-lg tw-shadow-amber-500/20 transition-all active:tw-scale-95"
                           >
-                            START WORK
+                            조치 시작
                           </button>
                         )}
                         {selectedIncident.status === 'IN_PROGRESS' && (
@@ -347,7 +347,7 @@ const IncidentManagement: React.FC = () => {
                             onClick={() => handleAction('update', { ...selectedIncident, status: 'RESOLVED' as any })}
                             className="tw-w-full tw-py-4 tw-bg-emerald-600 hover:tw-bg-emerald-500 tw-text-white tw-rounded-2xl tw-text-[10px] tw-font-black shadow-lg tw-shadow-emerald-500/20 transition-all active:tw-scale-95"
                           >
-                            RESOLVE INCIDENT
+                            조치 완료 및 해결
                           </button>
                         )}
                         {['NEW', 'ASSIGNED', 'IN_PROGRESS'].includes(selectedIncident.status) && (
@@ -355,7 +355,7 @@ const IncidentManagement: React.FC = () => {
                             onClick={() => handleAction('update', { ...selectedIncident, status: 'ON_HOLD' as any })}
                             className="tw-w-full tw-py-3 tw-bg-slate-800 hover:tw-bg-slate-700 tw-text-slate-300 tw-rounded-2xl tw-text-[10px] tw-font-black transition-all active:tw-scale-95"
                           >
-                            SUSPEND (HOLD)
+                            일시 중단 (Hold)
                           </button>
                         )}
                         {selectedIncident.status === 'RESOLVED' && (
@@ -364,13 +364,13 @@ const IncidentManagement: React.FC = () => {
                               onClick={() => handleAction('update', { ...selectedIncident, status: 'IN_PROGRESS' as any })}
                               className="tw-flex-1 tw-py-4 tw-bg-rose-600 hover:tw-bg-rose-500 tw-text-white tw-rounded-2xl tw-text-[10px] tw-font-black transition-all active:tw-scale-95"
                             >
-                              RE-OPEN
+                              재오픈 (Re-open)
                             </button>
                             <button 
                               onClick={() => handleAction('update', { ...selectedIncident, status: 'CLOSED' as any })}
                               className="tw-flex-1 tw-py-4 tw-bg-blue-900 hover:tw-bg-blue-800 tw-text-white tw-rounded-2xl tw-text-[10px] tw-font-black transition-all active:tw-scale-95"
                             >
-                              COMPLETE CLOSE
+                              최종 종료 처리
                             </button>
                           </div>
                         )}
@@ -379,13 +379,13 @@ const IncidentManagement: React.FC = () => {
                             onClick={() => handleAction('update', { ...selectedIncident, status: 'CLOSED' as any })}
                             className="tw-w-full tw-py-3 tw-bg-white/5 hover:tw-bg-white/10 tw-text-rose-500/70 tw-rounded-2xl tw-text-[10px] tw-font-black transition-all active:tw-scale-95"
                           >
-                            CANCEL INCIDENT
+                            인시던트 취소
                           </button>
                         )}
                         {selectedIncident.status === 'CLOSED' && (
                           <div className="tw-p-6 tw-bg-white/5 tw-rounded-2xl tw-text-center tw-border tw-border-white/5">
-                            <p className="tw-text-[10px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest">Incident Terminated</p>
-                            <p className="tw-text-xs tw-text-slate-500 tw-mt-2">Record locked for ITIL data governance.</p>
+                            <p className="tw-text-[10px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest">인시던트 종료됨</p>
+                            <p className="tw-text-xs tw-text-slate-500 tw-mt-2">ITIL 데이터 관리 지침에 의해 레코드가 잠겼습니다.</p>
                           </div>
                         )}
                       </div>
@@ -411,9 +411,9 @@ const IncidentManagement: React.FC = () => {
       {/* 🛡️ Custom Tactical Confirm Modal */}
       <ConfirmModal 
         isOpen={deletingId !== null}
-        title="Destroy Record"
-        message="Are you sure you want to permanently delete this incident? This action is immediate and irrevocable in the ITIL audit log."
-        confirmLabel="Destroy Now"
+        title="레코드 영구 삭제"
+        message="이 인시던트를 영구적으로 삭제하시겠습니까? 이 작업은 즉시 실행되며 ITIL 감사 로그에서 복구할 수 없습니다."
+        confirmLabel="지금 삭제"
         onConfirm={confirmDelete}
         onCancel={() => setDeletingId(null)}
       />
