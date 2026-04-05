@@ -29,12 +29,13 @@ public class RequestController {
     @GetMapping
     public Page<RequestDTO> getRequests(
             @RequestHeader(value = "X-Company-ID", required = false) String companyId,
+            @RequestParam(required = false) String mspId,
             @RequestParam(required = false) String fromDate,
             @RequestParam(required = false) String toDate,
             @RequestParam(required = false) String title,
             @RequestParam(required = false) String requesterId,
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return requestService.getRequests(companyId, fromDate, toDate, title, requesterId, pageable);
+        return requestService.getRequests(companyId, mspId, fromDate, toDate, title, requesterId, pageable);
     }
 
     @GetMapping("/{id}")
@@ -51,6 +52,11 @@ public class RequestController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteRequest(@PathVariable Long id) {
         requestService.deleteRequest(id);
+    }
+
+    @GetMapping("/{id}/history")
+    public List<com.itsm.request.domain.RequestHistory> getHistory(@PathVariable Long id) {
+        return requestService.getHistory(id);
     }
 
     // --- Comments ---

@@ -9,11 +9,14 @@ import java.util.List;
 
 public interface RequestService {
     RequestDTO createRequest(RequestDTO dto);
-    Page<RequestDTO> getRequests(String companyId, String fromDate, String toDate, String title, String requesterId, Pageable pageable);
+    Page<RequestDTO> getRequests(String companyId, String mspId, String fromDate, String toDate, String title, String requesterId, Pageable pageable);
     List<RequestDTO> getRequestsByCompany(String companyId);
     RequestDTO getRequest(Long id);
     RequestDTO updateRequest(Long id, RequestDTO dto);
     void deleteRequest(Long id);
+
+    // Audit
+    List<com.itsm.request.domain.RequestHistory> getHistory(Long requestId);
     
     // Comments
     RequestCommentDTO addComment(Long requestId, RequestCommentDTO dto);
