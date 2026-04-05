@@ -17,7 +17,11 @@ export interface IncidentDTO {
   priority?: 'P1' | 'P2' | 'P3' | 'P4';
   status: 'NEW' | 'ASSIGNED' | 'IN_PROGRESS' | 'ON_HOLD' | 'RESOLVED' | 'CLOSED';
   onHoldReason?: string;
+  isMajorIncident?: boolean;
+  channel?: 'PHONE' | 'EMAIL' | 'SELF_SERVICE' | 'MONITORING' | 'CHAT' | 'OTHER';
+  
   requesterId: string;
+  affectedUserId?: string;
   assigneeId?: string;
   assignmentGroupId?: string;
   createdAt?: string;

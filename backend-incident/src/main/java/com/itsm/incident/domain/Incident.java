@@ -42,6 +42,9 @@ public class Incident {
     private String ciId;
 
     @Enumerated(EnumType.STRING)
+    private IncidentChannel channel;
+
+    @Enumerated(EnumType.STRING)
     private IncidentImpact impact;
 
     @Enumerated(EnumType.STRING)
@@ -49,6 +52,9 @@ public class Incident {
 
     @Enumerated(EnumType.STRING)
     private IncidentPriority priority;
+
+    @Builder.Default
+    private boolean isMajorIncident = false;
 
     // Status
     @Enumerated(EnumType.STRING)
@@ -58,6 +64,7 @@ public class Incident {
 
     // Stakeholders
     private String requesterId;
+    private String affectedUserId;
     private String assigneeId;
     private String assignmentGroupId;
 
@@ -85,7 +92,10 @@ public class Incident {
     @PrePersist
     @PreUpdate
     public void calculatePriority() {
-        if (impact != null && urgency != null) {
+        // If it's a major incident, it's always P1
+        if (isMajorIncident) {
+            this.priority = IncidentPriority.P1;
+        } else if (impact != null && urgency != null) {
             if (impact == IncidentImpact.HIGH && urgency == IncidentUrgency.HIGH) {
                 this.priority = IncidentPriority.P1;
             } else if ((impact == IncidentImpact.HIGH && urgency == IncidentUrgency.MEDIUM) ||

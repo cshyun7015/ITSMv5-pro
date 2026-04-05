@@ -3,12 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { apiIncident, type IncidentDTO } from './api/apiIncident';
 import { useAuth } from '../auth/AuthProvider';
 import { 
-  AlertTriangle, Plus, Search, Filter, 
-  Activity, Clock, User, UserGroup, 
-  ChevronRight, Calendar, Info, Trash2,
-  Zap, ShieldCheck, Database, ExternalLink,
-  MessageSquare, History, CheckCircle2,
-  ArrowUpRight, Edit2, X, AlertOctagon
+  AlertTriangle, Plus, Search, 
+  Activity, Clock, 
+  Trash2, Zap, Database, 
+  Edit2, AlertOctagon
 } from 'lucide-react';
 import IncidentFormModal from './IncidentFormModal';
 import './Incident.css';
@@ -232,9 +230,16 @@ const IncidentManagement: React.FC = () => {
                   >
                     <div className="tw-flex tw-justify-between tw-mb-3">
                       <span className="tw-text-[10px] tw-font-mono tw-text-blue-500 tw-font-bold">{inc.incidentId}</span>
-                      <span className={`inc-badge ${inc.priority === 'P1' ? 'inc-p1' : 'tw-bg-white/5 tw-text-slate-400'}`}>
-                        {inc.priority}
-                      </span>
+                      <div className="tw-flex tw-gap-2">
+                        {inc.isMajorIncident && (
+                          <span className="tw-bg-rose-500 tw-text-white tw-text-[9px] tw-font-black tw-px-2 tw-py-0.5 tw-rounded-full tw-animate-pulse">
+                            MAJOR
+                          </span>
+                        )}
+                        <span className={`inc-badge ${inc.priority === 'P1' ? 'inc-p1' : 'tw-bg-white/5 tw-text-slate-400'}`}>
+                          {inc.priority}
+                        </span>
+                      </div>
                     </div>
                     <h3 className="tw-text-base tw-font-bold tw-text-white tw-leading-tight tw-mb-4">{inc.title}</h3>
                     <SLACountdown dueDate={inc.slaDueDate} isBreached={inc.isSlaBreached} />
@@ -287,7 +292,21 @@ const IncidentManagement: React.FC = () => {
                        </div>
                        <div className="tw-p-4 tw-bg-white/2 tw-rounded-2xl tw-border tw-border-white/5">
                          <span className="tw-text-[10px] tw-font-black tw-text-slate-600 tw-uppercase">Impact</span>
-                         <div className="tw-text-xs tw-font-bold tw-text-white tw-mt-1">{selectedIncident.impact}</div>
+                         <div className="tw-text-xs tw-font-bold tw-text-white tw-mt-1">
+                           {selectedIncident.isMajorIncident ? (
+                             <span className="tw-text-rose-500 tw-font-black">MAJOR INCIDENT</span>
+                           ) : (
+                             selectedIncident.impact
+                           )}
+                         </div>
+                       </div>
+                       <div className="tw-p-4 tw-bg-white/2 tw-rounded-2xl tw-border tw-border-white/5">
+                         <span className="tw-text-[10px] tw-font-black tw-text-slate-600 tw-uppercase">Channel</span>
+                         <div className="tw-text-xs tw-font-bold tw-text-white tw-mt-1">{selectedIncident.channel || 'OTHER'}</div>
+                       </div>
+                       <div className="tw-p-4 tw-bg-white/2 tw-rounded-2xl tw-border tw-border-white/5">
+                         <span className="tw-text-[10px] tw-font-black tw-text-slate-600 tw-uppercase">Affected User</span>
+                         <div className="tw-text-xs tw-font-bold tw-text-white tw-mt-1">{selectedIncident.affectedUserId || selectedIncident.requesterId}</div>
                        </div>
                     </div>
 
@@ -296,7 +315,10 @@ const IncidentManagement: React.FC = () => {
                       <div className="inc-timeline-item">
                         <div className="inc-timeline-dot" />
                         <span className="tw-text-[10px] tw-text-slate-500">Live Agent Feed</span>
-                        <p className="tw-text-xs tw-text-slate-300 tw-mt-1">Incident is currently being evaluated for root cause analysis.</p>
+                        <p className="tw-text-xs tw-text-slate-300 tw-mt-1">
+                          {selectedIncident.isMajorIncident ? 'CRITICAL: Priority handling for Major Incident. ' : ''}
+                          Incident is currently being evaluated for root cause analysis.
+                        </p>
                       </div>
                     </div>
 

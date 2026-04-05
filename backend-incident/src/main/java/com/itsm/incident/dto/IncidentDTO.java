@@ -22,13 +22,16 @@ public class IncidentDTO {
     private String serviceId;
     private String ciId;
     
+    private IncidentChannel channel;
     private IncidentImpact impact;
     private IncidentUrgency urgency;
     private IncidentPriority priority;
     private IncidentStatus status;
     private String onHoldReason;
+    private boolean isMajorIncident;
     
     private String requesterId;
+    private String affectedUserId;
     private String assigneeId;
     private String assignmentGroupId;
     

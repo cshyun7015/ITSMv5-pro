@@ -272,7 +272,7 @@
     cursor: pointer;
     transition: all 0.2s ease;
     position: relative;
-    overflow: hidden;
+    /* overflow: hidden is removed to allow occurrence-badge to pop out */
 }
 
 .compact-row:hover {

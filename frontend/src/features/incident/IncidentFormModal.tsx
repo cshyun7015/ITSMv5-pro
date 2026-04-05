@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { type IncidentDTO } from './api/apiIncident';
-import { X, ShieldAlert, Zap, Clock, Save, Trash2, AlertTriangle } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { X, ShieldAlert, Zap, Clock, Save } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface Props {
   incident: IncidentDTO | null;
@@ -31,16 +31,17 @@ const IncidentFormModal: React.FC<Props> = ({ incident, onClose, onSubmit }) => 
     }
   }, [incident]);
 
-  const calculatePriority = (impact: string, urgency: string): string => {
+  const calculatePriority = (impact: string, urgency: string, isMajor: boolean): string => {
+    if (isMajor) return 'P1';
     if (impact === 'HIGH' && urgency === 'HIGH') return 'P1';
     if (impact === 'HIGH' || urgency === 'HIGH') return 'P2';
     if (impact === 'LOW' && urgency === 'LOW') return 'P4';
     return 'P3';
   };
 
-  const handlePriorityChange = (field: 'impact' | 'urgency', value: string) => {
+  const handlePriorityChange = (field: 'impact' | 'urgency' | 'isMajorIncident', value: any) => {
     const newData = { ...formData, [field]: value };
-    const priority = calculatePriority(newData.impact!, newData.urgency!);
+    const priority = calculatePriority(newData.impact!, newData.urgency!, !!newData.isMajorIncident);
     setFormData({ ...newData, priority: priority as any });
   };
 
@@ -77,7 +78,18 @@ const IncidentFormModal: React.FC<Props> = ({ incident, onClose, onSubmit }) => 
           <div className="tw-p-8 tw-max-h-[75vh] tw-overflow-y-auto">
             <div className="tw-space-y-8">
               <div className="tw-space-y-4">
-                <label className="tw-text-[10px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest">Identification & Summary</label>
+                <div className="tw-flex tw-justify-between tw-items-center">
+                  <label className="tw-text-[10px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest">Identification & Summary</label>
+                  <label className="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      className="tw-w-4 tw-h-4 tw-accent-rose-500" 
+                      checked={formData.isMajorIncident}
+                      onChange={e => handlePriorityChange('isMajorIncident', e.target.checked)}
+                    />
+                    <span className="tw-text-[10px] tw-font-black tw-text-rose-500 tw-uppercase">Major Incident</span>
+                  </label>
+                </div>
                 <input 
                   className="tw-w-full tw-bg-white/5 tw-border tw-border-white/10 tw-rounded-2xl tw-px-6 tw-py-4 tw-text-white tw-font-bold tw-outline-none focus:tw-border-blue-500/50 transition-all placeholder:tw-text-slate-700"
                   placeholder="Enter a brief title (e.g. Server down in Seoul)"
@@ -94,10 +106,38 @@ const IncidentFormModal: React.FC<Props> = ({ incident, onClose, onSubmit }) => 
 
               <div className="tw-grid tw-grid-cols-2 tw-gap-8">
                 <div className="tw-space-y-4">
+                  <label className="tw-text-[10px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest">Reporting Channel</label>
+                  <select 
+                    className="tw-w-full tw-bg-white/5 tw-border tw-border-white/10 tw-rounded-2xl tw-px-6 tw-py-4 tw-text-white tw-font-bold tw-appearance-none focus:tw-border-blue-500/50 transition-all tw-cursor-pointer"
+                    value={formData.channel || 'OTHER'}
+                    onChange={e => setFormData({...formData, channel: e.target.value as any})}
+                  >
+                    <option value="PHONE">PHONE</option>
+                    <option value="EMAIL">EMAIL</option>
+                    <option value="SELF_SERVICE">SELF_SERVICE</option>
+                    <option value="MONITORING">MONITORING</option>
+                    <option value="CHAT">CHAT</option>
+                    <option value="OTHER">OTHER</option>
+                  </select>
+                </div>
+                <div className="tw-space-y-4">
+                  <label className="tw-text-[10px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest">Affected User ID</label>
+                  <input 
+                    className="tw-w-full tw-bg-white/5 tw-border tw-border-white/10 tw-rounded-2xl tw-px-6 tw-py-4 tw-text-white tw-font-bold tw-outline-none focus:tw-border-blue-500/50 transition-all placeholder:tw-text-slate-700"
+                    placeholder="Affected user ID (if different)"
+                    value={formData.affectedUserId || ''}
+                    onChange={e => setFormData({...formData, affectedUserId: e.target.value})}
+                  />
+                </div>
+              </div>
+
+              <div className="tw-grid tw-grid-cols-2 tw-gap-8">
+                <div className="tw-space-y-4">
                   <label className="tw-text-[10px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest">Impact Level</label>
                   <div className="tw-relative">
                     <select 
                       className="tw-w-full tw-bg-white/5 tw-border tw-border-white/10 tw-rounded-2xl tw-px-6 tw-py-4 tw-text-white tw-font-bold tw-appearance-none focus:tw-border-blue-500/50 transition-all tw-cursor-pointer"
+                      disabled={formData.isMajorIncident}
                       value={formData.impact}
                       onChange={e => handlePriorityChange('impact', e.target.value)}
                     >
@@ -112,6 +152,7 @@ const IncidentFormModal: React.FC<Props> = ({ incident, onClose, onSubmit }) => 
                   <div className="tw-relative">
                     <select 
                       className="tw-w-full tw-bg-white/5 tw-border tw-border-white/10 tw-rounded-2xl tw-px-6 tw-py-4 tw-text-white tw-font-bold tw-appearance-none focus:tw-border-blue-500/50 transition-all tw-cursor-pointer"
+                      disabled={formData.isMajorIncident}
                       value={formData.urgency}
                       onChange={e => handlePriorityChange('urgency', e.target.value)}
                     >
