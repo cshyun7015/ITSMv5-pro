@@ -89,10 +89,11 @@ class IncidentControllerTest {
     @Test
     @DisplayName("인시던트 목록 조회 API 테스트")
     void getIncidentList_ApiTest() throws Exception {
-        when(incidentService.getList("SYSTEM")).thenReturn(Collections.singletonList(sampleDTO));
+        org.springframework.data.domain.Page<IncidentDTO> page = new org.springframework.data.domain.PageImpl<>(java.util.Collections.singletonList(sampleDTO));
+        when(incidentService.getList(any(), any(), any(), any(), any(), any(), any())).thenReturn(page);
 
         mockMvc.perform(get("/api/v1/incident?tenantId=SYSTEM"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].incidentId").value("INC-20260405-TEST"));
+                .andExpect(jsonPath("$.content[0].incidentId").value("INC-20260405-TEST"));
     }
 }

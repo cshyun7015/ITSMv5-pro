@@ -46,6 +46,7 @@ public class IncidentService {
                 .mspId(dto.getMspId())
                 .traceId(dto.getTraceId())
                 .eventId(dto.getEventId())
+                .isMajorIncident(dto.isMajorIncident())
                 .build();
 
         incident = repository.save(incident);
