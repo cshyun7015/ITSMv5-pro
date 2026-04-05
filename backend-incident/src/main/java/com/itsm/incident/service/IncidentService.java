@@ -103,7 +103,7 @@ public class IncidentService {
     }
 
     public List<IncidentDTO> getList(String tenantId) {
-        return repository.findByTenantId(tenantId).stream().map(this::toDTO).collect(Collectors.toList());
+        return repository.findAllByTenantIdOrderByCreatedAtDesc(tenantId).stream().map(this::toDTO).collect(Collectors.toList());
     }
 
     public IncidentDTO getById(Long id) {

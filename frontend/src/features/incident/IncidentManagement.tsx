@@ -103,6 +103,15 @@ const SLACountdown: React.FC<{ dueDate?: string; isBreached?: boolean }> = ({ du
   );
 };
 
+const STATUS_LABELS: Record<string, string> = {
+  NEW: '신규 (등록됨)',
+  ASSIGNED: '배정 (담당자 지정됨)',
+  IN_PROGRESS: '처리 중 (작업 진행)',
+  ON_HOLD: '보류 (외부 대기 중)',
+  RESOLVED: '조치 완료 (복구됨)',
+  CLOSED: '최종 종료 (아카이브됨)'
+};
+
 const IncidentManagement: React.FC = () => {
   const { user } = useAuth();
   const [incidents, setIncidents] = useState<IncidentDTO[]>([]);
@@ -111,7 +120,10 @@ const IncidentManagement: React.FC = () => {
   const [editingIncident, setEditingIncident] = useState<IncidentDTO | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   
-  // Deletion State
+  // Pagination & Filtering State
+  const [activeTab, setActiveTab] = useState<'ALL' | 'ACTIVE' | 'ON_HOLD' | 'CLOSED'>('ALL');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const fetchIncidents = async (refreshSelectedId?: number) => {
@@ -128,20 +140,45 @@ const IncidentManagement: React.FC = () => {
   useEffect(() => { fetchIncidents(); }, []);
 
   const filteredIncidents = useMemo(() => {
-    return incidents.filter(i => 
+    let result = incidents;
+
+    // Phase 1: Tab Filtering
+    if (activeTab === 'ACTIVE') {
+      result = result.filter(i => ['NEW', 'ASSIGNED', 'IN_PROGRESS'].includes(i.status));
+    } else if (activeTab === 'ON_HOLD') {
+      result = result.filter(i => i.status === 'ON_HOLD');
+    } else if (activeTab === 'CLOSED') {
+      result = result.filter(i => ['RESOLVED', 'CLOSED'].includes(i.status));
+    }
+
+    // Phase 2: Search Filtering
+    return result.filter(i => 
       i.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
       i.incidentId?.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [incidents, searchTerm]);
+  }, [incidents, searchTerm, activeTab]);
+
+  // Phase 3: Pagination
+  const totalPages = Math.ceil(filteredIncidents.length / itemsPerPage);
+  const paginatedIncidents = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredIncidents.slice(start, start + itemsPerPage);
+  }, [filteredIncidents, currentPage]);
+
+  // Reset page when tab or search changes
+  useEffect(() => { setCurrentPage(1); }, [searchTerm, activeTab]);
 
   const handleAction = async (type: 'create' | 'update', data: IncidentDTO) => {
     try {
       if (type === 'create') {
         await apiIncident.create({ ...data, tenantId: 'SYSTEM', requesterId: user?.userId || 'admin' });
         fetchIncidents();
-      } else if (editingIncident?.id) {
-        await apiIncident.update(editingIncident.id, data, user?.userId || 'admin');
-        fetchIncidents(editingIncident.id); // 🔥 Refresh selected incident with new data
+      } else {
+        const targetId = editingIncident?.id || selectedIncident?.id;
+        if (targetId) {
+          await apiIncident.update(targetId, data, user?.userId || 'admin');
+          fetchIncidents(targetId);
+        }
       }
       setIsModalOpen(false);
       setEditingIncident(null);
@@ -204,22 +241,41 @@ const IncidentManagement: React.FC = () => {
         <div className="tw-grid tw-grid-cols-12 tw-gap-8">
           {/* Main List */}
           <div className="tw-col-span-12 lg:tw-col-span-8">
+            {/* 🏷️ Status Quick-Tabs */}
+            <div className="tw-flex tw-gap-2 tw-mb-6">
+              {[
+                { id: 'ALL', label: '전체 목록', count: incidents.length },
+                { id: 'ACTIVE', label: '진행 중', count: incidents.filter(i => ['NEW', 'ASSIGNED', 'IN_PROGRESS'].includes(i.status)).length },
+                { id: 'ON_HOLD', label: '보류됨', count: incidents.filter(i => i.status === 'ON_HOLD').length },
+                { id: 'CLOSED', label: '종료/해결', count: incidents.filter(i => ['RESOLVED', 'CLOSED'].includes(i.status)).length }
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as any)}
+                  className={`tw-px-5 tw-py-2.5 tw-rounded-2xl tw-text-xs tw-font-black tw-transition-all tw-flex tw-items-center tw-gap-2 ${activeTab === tab.id ? 'tw-bg-blue-600 tw-text-white tw-shadow-lg tw-shadow-blue-600/30' : 'tw-bg-white/5 tw-text-slate-500 hover:tw-bg-white/10'}`}
+                >
+                  {tab.label}
+                  <span className={`tw-px-2 tw-py-0.5 tw-rounded-lg tw-text-[9px] ${activeTab === tab.id ? 'tw-bg-white/20' : 'tw-bg-white/5'}`}>{tab.count}</span>
+                </button>
+              ))}
+            </div>
+
             <div className="tw-flex tw-justify-between tw-items-center tw-mb-6">
-              <div className="tw-text-sm tw-font-black tw-text-slate-400 tw-uppercase tw-tracking-widest">진행 중인 인시던트 ({filteredIncidents.length})</div>
+              <div className="tw-text-sm tw-font-black tw-text-slate-400 tw-uppercase tw-tracking-widest">인시던트 ({filteredIncidents.length})</div>
               <div className="tw-relative">
                 <Search className="tw-absolute tw-left-4 tw-top-1/2 tw--translate-y-1/2 tw-text-slate-500" size={16} />
                 <input 
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
                   className="tw-bg-slate-900/60 tw-border tw-border-white/5 tw-rounded-2xl tw-pl-12 tw-pr-4 tw-py-2 tw-text-sm tw-outline-none tw-w-64 focus:tw-border-blue-500/50" 
-                  placeholder="제목 또는 ID로 검색..." 
+                  placeholder="ID 또는 제목 검색..." 
                 />
               </div>
             </div>
 
             <div className="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-4">
               <AnimatePresence>
-                {filteredIncidents.map((inc) => (
+                {paginatedIncidents.map((inc) => (
                   <motion.div
                     layout
                     key={inc.id}
@@ -236,6 +292,9 @@ const IncidentManagement: React.FC = () => {
                             메이저
                           </span>
                         )}
+                        <span className={`inc-badge ${inc.status === 'NEW' ? 'tw-bg-blue-500/20 tw-text-blue-400' : 'tw-bg-emerald-500/10 tw-text-emerald-500'}`}>
+                          {STATUS_LABELS[inc.status] || inc.status}
+                        </span>
                         <span className={`inc-badge ${inc.priority === 'P1' ? 'inc-p1' : 'tw-bg-white/5 tw-text-slate-400'}`}>
                           {inc.priority}
                         </span>
@@ -247,6 +306,35 @@ const IncidentManagement: React.FC = () => {
                 ))}
               </AnimatePresence>
             </div>
+
+            {/* 🔢 Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="tw-flex tw-justify-center tw-mt-8 tw-gap-2">
+                <button 
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(p => p - 1)}
+                  className="tw-p-2 tw-rounded-xl tw-bg-white/5 tw-text-slate-400 disabled:tw-opacity-30 hover:tw-bg-white/10 transition-all"
+                >
+                  ◀
+                </button>
+                {Array.from({ length: totalPages }).map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setCurrentPage(i + 1)}
+                    className={`tw-w-10 tw-h-10 tw-rounded-xl tw-text-xs tw-font-black tw-transition-all ${currentPage === i + 1 ? 'tw-bg-blue-600 tw-text-white tw-shadow-lg tw-shadow-blue-600/30' : 'tw-bg-white/5 tw-text-slate-500 hover:tw-bg-white/10'}`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+                <button 
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(p => p + 1)}
+                  className="tw-p-2 tw-rounded-xl tw-bg-white/5 tw-text-slate-400 disabled:tw-opacity-30 hover:tw-bg-white/10 transition-all"
+                >
+                  ▶
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Sidebar Detail */}
@@ -288,7 +376,7 @@ const IncidentManagement: React.FC = () => {
                     <div className="tw-grid tw-grid-cols-2 tw-gap-4">
                        <div className="tw-p-4 tw-bg-white/2 tw-rounded-2xl tw-border tw-border-white/5">
                          <span className="tw-text-[10px] tw-font-black tw-text-slate-600 tw-uppercase">인시던트 상태</span>
-                         <div className="tw-text-xs tw-font-bold tw-text-blue-400 tw-mt-1">{selectedIncident.status}</div>
+                         <div className="tw-text-xs tw-font-bold tw-text-blue-400 tw-mt-1 inc-sidebar-status">{STATUS_LABELS[selectedIncident.status] || selectedIncident.status}</div>
                        </div>
                        <div className="tw-p-4 tw-bg-white/2 tw-rounded-2xl tw-border tw-border-white/5">
                          <span className="tw-text-[10px] tw-font-black tw-text-slate-600 tw-uppercase">영향도</span>

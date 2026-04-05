@@ -10,5 +10,5 @@ import java.util.Optional;
 @Repository
 public interface IncidentRepository extends JpaRepository<Incident, Long> {
     Optional<Incident> findByIncidentId(String incidentId);
-    List<Incident> findByTenantId(String tenantId);
+    List<Incident> findAllByTenantIdOrderByCreatedAtDesc(String tenantId);
 }
