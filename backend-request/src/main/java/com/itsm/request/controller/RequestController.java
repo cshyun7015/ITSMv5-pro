@@ -28,14 +28,28 @@ public class RequestController {
 
     @GetMapping
     public Page<RequestDTO> getRequests(
-            @RequestHeader(value = "X-Company-ID", required = false) String companyId,
+            @RequestHeader(value = "X-Company-ID", required = false) String contextCompanyId,
+            @RequestHeader(value = "X-User-Role", required = false) String userRole,
+            @RequestHeader(value = "X-MSP-ID", required = false) String contextMspId,
+            @RequestParam(required = false) String companyId, 
             @RequestParam(required = false) String mspId,
             @RequestParam(required = false) String fromDate,
             @RequestParam(required = false) String toDate,
             @RequestParam(required = false) String title,
             @RequestParam(required = false) String requesterId,
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return requestService.getRequests(companyId, mspId, fromDate, toDate, title, requesterId, pageable);
+        
+        // 1. Tenant Isolation (Customer vs MSP)
+        String targetCompanyId = ("MSP".equalsIgnoreCase(contextCompanyId)) ? companyId : contextCompanyId;
+        
+        // 2. MSP Isolation for Operators (non-admins)
+        String targetMspId = mspId;
+        if ("ROLE_OPER".equalsIgnoreCase(userRole) && !"ROLE_ADMIN".equalsIgnoreCase(userRole)) {
+            // Force his own MSP ID
+            targetMspId = contextMspId;
+        }
+        
+        return requestService.getRequests(targetCompanyId, targetMspId, fromDate, toDate, title, requesterId, pageable);
     }
 
     @GetMapping("/{id}")

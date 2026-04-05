@@ -12,6 +12,7 @@ import StatusStepper from './components/StatusStepper';
 import Badge from './components/Badge';
 import RequestAttachments from './components/RequestAttachments';
 import RequestComments from './components/RequestComments';
+import RequestHistoryList from './components/RequestHistoryList';
 
 interface RequestDetailProps {
   requestId: number;
@@ -49,6 +50,7 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => 
 
   const [isDeleting, setIsDeleting] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [historyRefreshTrigger, setHistoryRefreshTrigger] = useState(0);
 
   // Requester Search States
   const [requesterSearch, setRequesterSearch] = useState('');
@@ -120,6 +122,7 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => 
       }
       setPendingFiles([]);
       setIsEditing(false);
+      setHistoryRefreshTrigger(prev => prev + 1);
       fetchDetail();
     } catch (err) {
       console.error('Failed to save', err);
@@ -349,6 +352,11 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => 
                 onNewCommentChange={setNewComment}
                 onAddComment={handleAddComment}
                 loading={commentLoading}
+              />
+
+              <RequestHistoryList 
+                requestId={requestId} 
+                refreshTrigger={historyRefreshTrigger}
               />
             </div>
 
