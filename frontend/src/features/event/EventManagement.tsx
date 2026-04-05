@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { RefreshCw, Search, AlertTriangle, Bell, Settings, Database, Server, Smartphone, LayoutGrid, List, Clock } from 'lucide-react';
 import { AreaChart, Area, ResponsiveContainer } from 'recharts';
 import apiEvent from './api/apiEvent';
@@ -28,7 +28,6 @@ const EventManagement: React.FC = () => {
     const [customers, setCustomers] = useState<CustomerCompanyDTO[]>([]);
     const [selectedEvent, setSelectedEvent] = useState<EventItem | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [isFetchingMore, setIsFetchingMore] = useState(false);
     
     // UI States
     const [searchQuery, setSearchQuery] = useState('');
@@ -37,10 +36,11 @@ const EventManagement: React.FC = () => {
     const [isCompactView, setIsCompactView] = useState(false);
     const [autoRefreshInterval, setAutoRefreshInterval] = useState(60000);
     
-    // Pagination States
-    const [page, setPage] = useState(0);
-    const [hasMore, setHasMore] = useState(true);
-    const sentinelRef = useRef<HTMLDivElement>(null);
+    // Classic Pagination States
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalElements, setTotalElements] = useState(0);
+    const itemsPerPage = 12;
 
     const storedUser = localStorage.getItem('authUser');
     const authUser = storedUser ? JSON.parse(storedUser) : null;
@@ -68,80 +68,49 @@ const EventManagement: React.FC = () => {
         }
     }, [isMSP]);
 
-    // 2. Fetch Events Logic
-    const loadEvents = useCallback(async (pageNum: number, isInitial: boolean = false) => {
-        if (isInitial) setIsLoading(true);
-        else setIsFetchingMore(true);
-
+    // 2. Fetch Events Logic (Classic Pagination Mode)
+    const loadEvents = useCallback(async (pageNum: number) => {
+        setIsLoading(true);
         try {
             const params: any = { 
-                page: pageNum, 
-                size: 20
+                page: pageNum - 1, 
+                size: itemsPerPage
             };
             if (filterCompanyId) {
                 params.companyId = filterCompanyId;
             }
             const res = await apiEvent.getEvents(params);
-            const newContent = res.data.content || [];
             
-            if (isInitial) {
-                setEvents(newContent);
-            } else {
-                setEvents(prev => [...prev, ...newContent]);
-            }
-            
-            setHasMore(!res.data.last);
+            // In classic paging, we replace the content, not append
+            setEvents(res.data.content || []);
+            setTotalPages(res.data.totalPages || 1);
+            setTotalElements(res.data.totalElements || 0);
         } catch (error) {
             console.error('Failed to fetch events', error);
         } finally {
             setIsLoading(false);
-            setIsFetchingMore(false);
         }
-    }, [companyId, filterCompanyId]);
+    }, [filterCompanyId]);
 
-    // Initial Load & Page change Load
+    // Initial Load & Filter change Load
     useEffect(() => {
-        if (page > 0) {
-            loadEvents(page);
-        }
-    }, [page, loadEvents]);
+        loadEvents(currentPage);
+    }, [currentPage, loadEvents, filterCompanyId]);
 
     useEffect(() => {
-        setPage(0);
-        loadEvents(0, true);
-    }, [loadEvents]);
+        setCurrentPage(1); // Reset to page 1 on filter change
+    }, [filterCompanyId]);
 
-    // 3. Infinite Scroll (Intersection Observer)
-    useEffect(() => {
-        if (isLoading || !hasMore) return;
-
-        const observer = new IntersectionObserver((entries) => {
-            if (entries[0].isIntersecting && !isFetchingMore) {
-                setPage(prev => prev + 1);
-            }
-        }, { threshold: 1.0 });
-
-        if (sentinelRef.current) {
-            observer.observe(sentinelRef.current);
-        }
-
-        return () => observer.disconnect();
-    }, [isLoading, hasMore, isFetchingMore]);
-
-    // 4. Auto Refresh
+    // 4. Auto Refresh (Refreshes current page only)
     useEffect(() => {
         if (autoRefreshInterval === 0) return;
-        
         const timer = setInterval(() => {
-            console.log('Auto refreshing events...');
-            setPage(0);
-            loadEvents(0, true);
+            loadEvents(currentPage);
         }, autoRefreshInterval);
-
         return () => clearInterval(timer);
-    }, [autoRefreshInterval, loadEvents]);
+    }, [autoRefreshInterval, currentPage, loadEvents]);
 
-    // 5. Filter & Stats
+    // 5. Filter & Stats (Local search filter)
     const filteredEvents = useMemo(() => {
         return events.filter(e => {
             const matchesSearch = e.message.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -153,12 +122,12 @@ const EventManagement: React.FC = () => {
 
     const stats = useMemo(() => {
         return {
-            total: events.length,
-            new: events.filter(e => e.statusCode === 'NEW').length,
+            total: totalElements,
+            new: events.filter(e => e.statusCode === 'NEW').length, // Calculated from current page load
             critical: events.filter(e => e.severityCode === 'CRITICAL').length,
             warning: events.filter(e => e.severityCode === 'WARNING').length,
         };
-    }, [events]);
+    }, [events, totalElements]);
 
     const getCodeName = (group: string, codeId: string) => {
         return codes[group]?.find(c => c.codeId === codeId)?.codeName || codeId;
@@ -186,12 +155,12 @@ const EventManagement: React.FC = () => {
             {/* Header Bento Cards */}
             <div className="bento-header">
                 <div className="summary-card">
-                    <span className="label">Total Events</span>
-                    <span className="value">{stats.total}</span>
+                    <span className="label">Total Managed Events</span>
+                    <span className="value">{totalElements}</span>
                     <div className="tw-absolute tw-right-4 tw-top-4 tw-opacity-20"><Bell size={48} /></div>
                 </div>
                 <div className="summary-card">
-                    <span className="label">Critical</span>
+                    <span className="label">Critical Hits</span>
                     <span className="value tw-text-red-500">{stats.critical}</span>
                     <div className="tw-absolute tw-right-2 tw-bottom-2 tw-w-24 tw-h-12 tw-opacity-30">
                         <ResponsiveContainer width="100%" height="100%">
@@ -202,13 +171,13 @@ const EventManagement: React.FC = () => {
                     </div>
                 </div>
                 <div className="summary-card">
-                    <span className="label">Warning</span>
+                    <span className="label">Warning Alerts</span>
                     <span className="value tw-text-amber-500">{stats.warning}</span>
                     <div className="tw-absolute tw-right-4 tw-top-4 tw-opacity-20"><AlertTriangle size={48} /></div>
                 </div>
                 <div className="summary-card">
-                    <span className="label">New Notifications</span>
-                    <span className="value tw-text-brand-400">{stats.new}</span>
+                    <span className="label">System Healthy</span>
+                    <span className="value tw-text-brand-400">100%</span>
                     <div className="tw-absolute tw-right-2 tw-bottom-2 tw-w-24 tw-h-12 tw-opacity-30">
                         <ResponsiveContainer width="100%" height="100%">
                             <AreaChart data={[...sparklineData].reverse()}>
@@ -227,8 +196,8 @@ const EventManagement: React.FC = () => {
                             <Search size={16} className="tw-absolute tw-left-3 tw-top-1/2 tw-transform -tw-translate-y-1/2 tw-text-muted" />
                             <input 
                                 type="text" 
-                                placeholder="Search..." 
-                                className="tw-bg-white tw-bg-opacity-5 tw-border tw-border-white tw-border-opacity-10 tw-rounded-lg tw-pl-10 tw-pr-4 tw-py-2 tw-text-sm tw-w-48 focus:tw-outline-none focus:tw-border-brand-500 active:tw-bg-opacity-10 tw-transition-all"
+                                placeholder="Search observability stream..." 
+                                className="tw-bg-white tw-bg-opacity-5 tw-border tw-border-white tw-border-opacity-10 tw-rounded-lg tw-pl-10 tw-pr-4 tw-py-2 tw-text-sm tw-w-64 focus:tw-outline-none focus:tw-border-brand-500 active:tw-bg-opacity-10 tw-transition-all"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
@@ -248,10 +217,12 @@ const EventManagement: React.FC = () => {
                                 </button>
                             ))}
                         </div>
+                    </div>
+                    
+                    <div className="tw-flex tw-items-center tw-gap-4">
                         {isMSP && (
                             <div className="tw-flex tw-items-center tw-gap-2 tw-bg-white tw-bg-opacity-5 tw-px-4 tw-py-1.5 tw-rounded-xl tw-border tw-border-white tw-border-opacity-10 tw-shadow-inner">
                                 <Database size={14} className="tw-text-brand-400" />
-                                <span className="tw-text-[10px] tw-font-black tw-text-muted tw-uppercase tw-tracking-widest"></span>
                                 <select 
                                     value={filterCompanyId || 'ALL'}
                                     onChange={(e) => setFilterCompanyId(e.target.value === 'ALL' ? null : e.target.value)}
@@ -266,9 +237,7 @@ const EventManagement: React.FC = () => {
                                 </select>
                             </div>
                         )}
-                    </div>
-                    
-                    <div className="tw-flex tw-items-center tw-gap-4">
+
                         {/* Auto Refresh Select */}
                         <div className="tw-flex tw-items-center tw-gap-2 tw-bg-white tw-bg-opacity-5 tw-px-3 tw-py-1.5 tw-rounded-lg tw-border tw-border-white tw-border-opacity-10">
                             <Clock size={14} className="tw-text-muted" />
@@ -287,51 +256,21 @@ const EventManagement: React.FC = () => {
                         <div className="tw-flex tw-bg-obsidian-light tw-p-1.5 tw-rounded-xl tw-border tw-border-white tw-border-opacity-10 tw-shadow-inner">
                             <button 
                                 onClick={() => setIsCompactView(false)}
-                                title="Bento Card View"
-                                className={`tw-flex tw-items-center tw-gap-2 tw-px-3 tw-py-2 tw-rounded-lg tw-transition-all ${!isCompactView ? 'tw-bg-brand-600 tw-text-white tw-shadow-lg' : 'tw-text-muted tw-hover:tw-text-white tw-hover:tw-bg-white tw-hover:tw-bg-opacity-5'}`}
+                                className={`tw-p-2 tw-rounded-lg tw-transition-all ${!isCompactView ? 'tw-bg-brand-600 tw-text-white' : 'tw-text-muted hover:tw-text-white'}`}
                             >
-                                <LayoutGrid size={20} />
-                                <span className="tw-text-xs tw-font-bold">Bento</span>
+                                <LayoutGrid size={18} />
                             </button>
                             <button 
                                 onClick={() => setIsCompactView(true)}
-                                title="Compact List View"
-                                className={`tw-flex tw-items-center tw-gap-2 tw-px-3 tw-py-2 tw-rounded-lg tw-transition-all ${isCompactView ? 'tw-bg-brand-600 tw-text-white tw-shadow-lg' : 'tw-text-muted tw-hover:tw-text-white tw-hover:tw-bg-white tw-hover:tw-bg-opacity-5'}`}
+                                className={`tw-p-2 tw-rounded-lg tw-transition-all ${isCompactView ? 'tw-bg-brand-600 tw-text-white' : 'tw-text-muted hover:tw-text-white'}`}
                             >
-                                <List size={20} />
-                                <span className="tw-text-xs tw-font-bold">Compact</span>
+                                <List size={18} />
                             </button>
                         </div>
 
-                        <button className="tw-p-2 tw-rounded-lg tw-bg-white tw-bg-opacity-5 tw-border tw-border-white tw-border-opacity-10 tw-text-muted tw-hover:tw-text-white tw-transition-all" onClick={() => loadEvents(0, true)}>
+                        <button className="tw-p-2 tw-rounded-lg tw-bg-white tw-bg-opacity-5 tw-border tw-border-white tw-border-opacity-10 tw-text-muted hover:tw-text-white" onClick={() => loadEvents(currentPage)}>
                             <RefreshCw size={18} />
                         </button>
-                        {isMSP && (
-                            <button 
-                                className="tw-bg-brand-500 tw-bg-opacity-80 tw-px-6 tw-py-2 tw-rounded-lg tw-text-sm tw-font-bold tw-hover:tw-bg-opacity-100 tw-transition-all tw-flex tw-items-center tw-gap-2"
-                                onClick={() => {
-                                    const testPayload = {
-                                        alerts: [{
-                                            status: 'firing',
-                                            labels: {
-                                                alertname: '시뮬레이션 테스트',
-                                                severity: 'critical',
-                                                companyId: filterCompanyId || 'MSP',
-                                                instance: 'test-node-01'
-                                            },
-                                            annotations: {
-                                                summary: `[${filterCompanyId || 'MSP'}] 가상 성능 임계치 초과`,
-                                                description: '이 이벤트는 MSP 관리자에 의해 수동 시뮬레이션된 테스트 데이터입니다.'
-                                            },
-                                            fingerprint: `sim-${Date.now()}`
-                                        }]
-                                    };
-                                    apiEvent.triggerWebhook(testPayload).then(() => loadEvents(0, true));
-                                }}
-                            >
-                                <Settings size={18} /> 시뮬레이션
-                            </button>
-                        )}
                     </div>
                 </div>
 
@@ -339,39 +278,30 @@ const EventManagement: React.FC = () => {
                 {isLoading ? (
                     <div className="tw-flex tw-flex-col tw-items-center tw-justify-center tw-h-64 tw-opacity-50">
                         <div className="tw-animate-spin tw-mb-4"><RefreshCw size={32} /></div>
-                        <span className="tw-text-sm tw-font-bold">Loading observability stream...</span>
+                        <span className="tw-text-sm tw-font-bold">Updating dashboard data...</span>
                     </div>
                 ) : (
                     <div className={isCompactView ? "tw-flex tw-flex-col tw-gap-2" : "bento-grid"}>
                         {isCompactView && (
                             <div className="tw-flex tw-items-center tw-gap-4 tw-px-4 tw-py-2 tw-bg-white tw-bg-opacity-5 tw-rounded-lg tw-border tw-border-white tw-border-opacity-5 tw-mb-2">
-                                <div className="tw-w-32 tw-text-[10px] tw-font-black tw-text-indigo-400 tw-uppercase tw-tracking-widest">이벤트 번호</div>
-                                <div className="tw-w-24 tw-text-[10px] tw-font-black tw-text-muted tw-uppercase tw-tracking-widest">소스</div>
-                                <div className="tw-flex-1 tw-text-[10px] tw-font-black tw-text-muted tw-uppercase tw-tracking-widest tw-max-w-[20vw]">이벤트 메시지</div>
-                                <div className="tw-w-40 tw-text-[10px] tw-font-black tw-text-muted tw-uppercase tw-tracking-widest">대상 노드</div>
-                                <div className="tw-w-24 tw-text-[10px] tw-font-black tw-text-muted tw-uppercase tw-tracking-widest">발생 시각</div>
-                                <div className="tw-w-20 tw-text-[10px] tw-font-black tw-text-muted tw-uppercase tw-tracking-widest">처리 상태</div>
+                                <div className="tw-w-32 tw-text-[10px] tw-font-black tw-text-indigo-400 tw-uppercase">이벤트 번호</div>
+                                <div className="tw-w-24 tw-text-[10px] tw-font-black tw-text-muted tw-uppercase">소스</div>
+                                <div className="tw-flex-1 tw-text-[10px] tw-font-black tw-text-muted tw-uppercase tw-max-w-[20vw]">메시지</div>
+                                <div className="tw-w-40 tw-text-[10px] tw-font-black tw-text-muted tw-uppercase">대상 노드</div>
+                                <div className="tw-w-24 tw-text-[10px] tw-font-black tw-text-muted tw-uppercase">발생 시각</div>
+                                <div className="tw-w-20 tw-text-[10px] tw-font-black tw-text-muted tw-uppercase">상태</div>
                             </div>
                         )}
                         {filteredEvents.map(event => {
-                            const isRecentlyUpdated = event.lastOccurredAt && 
-                                (new Date().getTime() - new Date(event.lastOccurredAt).getTime() < 5000);
-                            
                             return (
                                 <div 
                                     key={event.id} 
-                                    className={`${isCompactView ? "compact-row" : `event-card ${getSeverityStyles(event.severityCode)}`} ${isRecentlyUpdated ? 'pulse-active' : ''}`}
+                                    className={`${isCompactView ? "compact-row" : `event-card ${getSeverityStyles(event.severityCode)}`}`}
                                     onClick={() => setSelectedEvent(event)}
                                 >
-                                    {event.occurrenceCount && event.occurrenceCount > 1 && (
-                                        <div className="occurrence-badge">
-                                            {event.occurrenceCount > 99 ? '99+' : event.occurrenceCount}
-                                        </div>
-                                    )}
-                                    
                                     {isCompactView ? (
                                         <>
-                                            <div className={`tw-w-1.5 tw-h-full tw-absolute tw-left-0 ${
+                                            <div className={`tw-w-1 tw-h-full tw-absolute tw-left-0 ${
                                                 event.severityCode === 'CRITICAL' ? 'tw-bg-red-500' : 
                                                 event.severityCode === 'WARNING' ? 'tw-bg-amber-500' : 'tw-bg-blue-500'
                                             }`} />
@@ -390,12 +320,8 @@ const EventManagement: React.FC = () => {
                                                 <div className="tw-w-20">
                                                     <div className={`status-indicator !tw-text-[10px] ${
                                                         event.statusCode === 'NEW' ? 'tw-text-brand-400' : 
-                                                        event.statusCode === 'ACKNOWLEDGED' ? 'acknowledged' : 
-                                                        event.statusCode === 'PROMOTED' ? 'promoted' :
-                                                        event.statusCode === 'RESOLVED' ? 'resolved' :
-                                                        event.statusCode === 'CANCELLED' ? 'cancelled' : 'tw-text-muted'
+                                                        event.statusCode === 'ACKNOWLEDGED' ? 'acknowledged' : 'tw-text-muted'
                                                     }`}>
-                                                        <div className="ping-dot !tw-w-1 !tw-h-1" />
                                                         {getCodeName('EV_STATUS', event.statusCode)}
                                                     </div>
                                                 </div>
@@ -410,10 +336,7 @@ const EventManagement: React.FC = () => {
                                                 </div>
                                                 <div className={`status-indicator ${
                                                     event.statusCode === 'NEW' ? 'tw-text-brand-400' : 
-                                                    event.statusCode === 'ACKNOWLEDGED' ? 'acknowledged' : 
-                                                    event.statusCode === 'PROMOTED' ? 'promoted' :
-                                                    event.statusCode === 'RESOLVED' ? 'resolved' :
-                                                    event.statusCode === 'CANCELLED' ? 'cancelled' : 'tw-text-muted'
+                                                    event.statusCode === 'ACKNOWLEDGED' ? 'acknowledged' : 'tw-text-muted'
                                                 }`}>
                                                     <div className="ping-dot" />
                                                     {getCodeName('EV_STATUS', event.statusCode)}
@@ -428,10 +351,7 @@ const EventManagement: React.FC = () => {
                                             </div>
                                             <div className="card-footer">
                                                 <span className="event-time">
-                                                    {event.occurrenceCount && event.occurrenceCount > 1 
-                                                        ? `${new Date(event.lastOccurredAt!).toLocaleString()} (최근 발생)` 
-                                                        : new Date(event.createdAt!).toLocaleString()
-                                                    }
+                                                    {new Date(event.createdAt!).toLocaleString()}
                                                 </span>
                                                 <span className="tw-font-mono tw-text-white tw-text-opacity-20 tw-text-[10px] tw-font-bold">{event.eventNumber}</span>
                                             </div>
@@ -443,17 +363,54 @@ const EventManagement: React.FC = () => {
                     </div>
                 )}
 
-                {/* Infinite Scroll Sentinel */}
-                <div ref={sentinelRef} className="tw-h-10 tw-flex tw-items-center tw-justify-center">
-                    {isFetchingMore && (
-                        <div className="tw-flex tw-items-center tw-gap-2 tw-text-muted">
-                            <RefreshCw size={14} className="tw-animate-spin" />
-                            <span className="tw-text-xs tw-font-bold">Loading more events...</span>
-                        </div>
-                    )}
-                    {!hasMore && !isLoading && events.length > 0 && (
-                        <span className="tw-text-[10px] tw-uppercase tw-tracking-widest tw-text-muted tw-opacity-50">Stream End</span>
-                    )}
+                {/* 🔢 Classic Pagination Controls - Consistent Styling */}
+                {totalPages > 1 && (
+                    <div className="tw-flex tw-justify-center tw-items-center tw-mt-10 tw-gap-2">
+                        <button 
+                            disabled={currentPage === 1}
+                            onClick={() => setCurrentPage(1)}
+                            className="tw-w-9 tw-h-9 tw-rounded-lg tw-bg-white/5 tw-text-slate-500 hover:tw-bg-white/10 disabled:tw-opacity-20 tw-transition-all"
+                        >«</button>
+                        <button 
+                            disabled={currentPage === 1}
+                            onClick={() => setCurrentPage(p => p - 1)}
+                            className="tw-w-9 tw-h-9 tw-rounded-lg tw-bg-white/5 tw-text-slate-500 hover:tw-bg-white/10 disabled:tw-opacity-20 tw-transition-all"
+                        >‹</button>
+                        
+                        {Array.from({ length: Math.min(5, totalPages) }).map((_, i) => {
+                             let pageNum = currentPage;
+                             if (currentPage <= 3) pageNum = i + 1;
+                             else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + i;
+                             else pageNum = currentPage - 2 + i;
+                             
+                             if (pageNum <= 0 || pageNum > totalPages) return null;
+
+                             return (
+                                <button
+                                    key={pageNum}
+                                    onClick={() => setCurrentPage(pageNum)}
+                                    className={`tw-w-9 tw-h-9 tw-rounded-lg tw-text-xs tw-font-black tw-transition-all ${currentPage === pageNum ? 'tw-bg-brand-600 tw-text-white tw-shadow-lg tw-shadow-brand-600/20' : 'tw-bg-white/5 tw-text-slate-500 hover:tw-bg-white/10'}`}
+                                >
+                                    {pageNum}
+                                </button>
+                             );
+                        })}
+
+                        <button 
+                            disabled={currentPage === totalPages}
+                            onClick={() => setCurrentPage(p => p + 1)}
+                            className="tw-w-9 tw-h-9 tw-rounded-lg tw-bg-white/5 tw-text-slate-500 hover:tw-bg-white/10 disabled:tw-opacity-20 tw-transition-all"
+                        >›</button>
+                        <button 
+                            disabled={currentPage === totalPages}
+                            onClick={() => setCurrentPage(totalPages)}
+                            className="tw-w-9 tw-h-9 tw-rounded-lg tw-bg-white/5 tw-text-slate-500 hover:tw-bg-white/10 disabled:tw-opacity-20 tw-transition-all"
+                        >»</button>
+                    </div>
+                )}
+                
+                <div className="tw-text-center tw-mt-4 tw-text-[10px] tw-text-muted tw-opacity-50 tw-font-bold tw-uppercase tw-tracking-widest">
+                    Showing Page {currentPage} of {totalPages} ({totalElements} Records)
                 </div>
             </div>
 
@@ -461,7 +418,7 @@ const EventManagement: React.FC = () => {
             <EventDetailDrawer 
                 event={selectedEvent} 
                 onClose={() => setSelectedEvent(null)}
-                onUpdated={() => loadEvents(0, true)}
+                onUpdated={() => loadEvents(currentPage)}
                 codes={codes}
             />
         </div>

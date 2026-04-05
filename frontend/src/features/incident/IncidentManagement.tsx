@@ -4,11 +4,11 @@ import { apiIncident, type IncidentDTO } from './api/apiIncident';
 import { useAuth } from '../auth/AuthProvider';
 import CustomerCompany, { type CustomerCompanyDTO, type OperatorCompanyDTO } from '../organization/customercompany/api/CustomerCompany';
 import { 
-  AlertTriangle, Plus, Search, 
+  Plus, Search, 
   Activity, Clock, 
-  Trash2, Zap, Database, 
+  Trash2, Database, 
   Edit2, AlertOctagon,
-  Building2, Users
+  Building2
 } from 'lucide-react';
 import IncidentFormModal from './IncidentFormModal';
 import './Incident.css';
@@ -138,6 +138,16 @@ const IncidentManagement: React.FC = () => {
   const [filterStartDate, setFilterStartDate] = useState('');
   const [filterEndDate, setFilterEndDate] = useState('');
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
+
+  // URL Deep Link Support (e.g. ?search=INC-2026...)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const searchVal = params.get('search');
+    if (searchVal) {
+      setSearchTerm(searchVal);
+      setShowAdvancedSearch(true);
+    }
+  }, []);
 
   useEffect(() => {
     const fetchMetadata = async () => {

@@ -118,6 +118,7 @@ public class EventService {
     }
 
     @Transactional
+    @SuppressWarnings("unchecked")
     public EventDTO promoteToIncident(Long id) {
         Event event = eventRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Event not found"));
@@ -126,36 +127,61 @@ public class EventService {
             throw new RuntimeException("Only NEW or ACKNOWLEDGED events can be promoted");
         }
 
-        // Prepare request body for payload
-        Map<String, Object> requestPayload = new HashMap<>();
-        requestPayload.put("title", "[Auto-Promoted] " + event.getMessage());
-        requestPayload.put("description", String.format("Promoted from Event: %s\nNode: %s\nSeverity: %s", 
-                event.getEventNumber(), event.getNode(), event.getSeverityCode()));
-        requestPayload.put("companyId", event.getCompanyId());
-        requestPayload.put("requesterId", "system-event");
-        requestPayload.put("srTypeCode", "INCIDENT");
+        // Prepare Incident Body
+        Map<String, Object> incidentBody = new HashMap<>();
+        incidentBody.put("title", "[Escalated] " + event.getMessage());
+        incidentBody.put("description", String.format(
+            "--- Escalated from Event Management ---\n" +
+            "Event Number: %s\n" +
+            "Source: %s\n" +
+            "Node: %s\n" +
+            "Severity: %s\n" +
+            "Details: %s", 
+            event.getEventNumber(), event.getSourceCode(), event.getNode(), 
+            event.getSeverityCode(), event.getEventDetails()));
         
+        incidentBody.put("tenantId", event.getCompanyId());
+        incidentBody.put("requesterId", "system-event-mgr");
+        incidentBody.put("eventId", event.getEventNumber());
+        
+        // Severity Mapping to Impact/Urgency
+        String severity = event.getSeverityCode() != null ? event.getSeverityCode().toUpperCase() : "INFO";
+        if ("CRITICAL".equals(severity)) {
+            incidentBody.put("impact", "HIGH");
+            incidentBody.put("urgency", "HIGH");
+        } else if ("ERROR".equals(severity)) {
+            incidentBody.put("impact", "MEDIUM");
+            incidentBody.put("urgency", "HIGH");
+        } else if ("WARNING".equals(severity)) {
+            incidentBody.put("impact", "MEDIUM");
+            incidentBody.put("urgency", "MEDIUM");
+        } else {
+            incidentBody.put("impact", "LOW");
+            incidentBody.put("urgency", "LOW");
+        }
+        
+        incidentBody.put("status", "NEW");
+        incidentBody.put("channel", "MONITORING");
+
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("X-Company-ID", event.getCompanyId());
 
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestPayload, headers);
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(incidentBody, headers);
 
         try {
-            @SuppressWarnings("unchecked")
             ResponseEntity<Map<String, Object>> response = restTemplate.postForEntity(
-                    "http://request-service:8080/api/v1/request", entity, (Class<Map<String, Object>>) (Class<?>) Map.class);
+                    "http://incident-service:8080/api/v1/incident", httpEntity, (Class<Map<String, Object>>) (Class<?>) Map.class);
             
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                String reqNumber = (String) response.getBody().get("reqNumber");
-                event.setRelatedRequestId(reqNumber);
+                String incNumber = (String) response.getBody().get("incidentId");
+                event.setRelatedRequestId(incNumber);
                 event.setStatusCode("PROMOTED");
                 return EventDTO.fromEntity(eventRepository.save(event));
             } else {
-                throw new RuntimeException("Failed to create incident from request service");
+                throw new RuntimeException("Failed to create record in incident-service");
             }
         } catch (Exception e) {
-            throw new RuntimeException("Error communicating with request service: " + e.getMessage());
+            throw new RuntimeException("Escalation failed: Connectivity issue with incident-service (" + e.getMessage() + ")");
         }
     }
 

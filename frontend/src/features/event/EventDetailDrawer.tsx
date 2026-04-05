@@ -233,7 +233,10 @@ const EventDetailDrawer: React.FC<Props> = ({ event, onClose, onUpdated, codes }
                                             <div className="tw-text-xs tw-font-bold tw-text-brand-400 tw-uppercase tw-mb-1">Promoted Incident</div>
                                             <div className="tw-text-lg tw-font-extrabold">{event.relatedRequestId}</div>
                                         </div>
-                                        <button className="tw-p-3 tw-bg-brand-500 tw-bg-opacity-20 tw-rounded-full tw-text-brand-400 tw-hover:bg-opacity-40 tw-transition-all">
+                                        <button 
+                                            onClick={() => window.location.href = `/incident?search=${event.relatedRequestId}`}
+                                            className="tw-p-3 tw-bg-brand-500 tw-bg-opacity-20 tw-rounded-full tw-text-brand-400 hover:tw-bg-brand-500 hover:tw-text-white tw-transition-all"
+                                        >
                                             <ExternalLink size={20} />
                                         </button>
                                     </div>
