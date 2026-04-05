@@ -28,9 +28,18 @@ apiClient.interceptors.response.use(
   (response: AxiosResponse) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      // Redirect to login or clear auth state if unauthorized
-      console.warn('Session expired or unauthorized. Redirecting to login...');
-      // Logic for logout can be triggered here if needed
+      // Session expired or unauthorized
+      console.warn('Session expired or unauthorized. Purging local credentials...');
+      
+      // Clear persistence to force AuthProvider to reset
+      localStorage.removeItem('authUser');
+      localStorage.removeItem('companyId');
+      localStorage.removeItem('userId');
+
+      // Force reload to trigger ProtectedRoute logic and landing on /login
+      if (!window.location.pathname.includes('/login')) {
+         window.location.reload();
+      }
     }
     return Promise.reject(error);
   }
