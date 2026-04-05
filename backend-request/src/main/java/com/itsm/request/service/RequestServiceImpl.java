@@ -339,6 +339,7 @@ public class RequestServiceImpl implements RequestService {
                 .id(req.getId())
                 .reqNumber(req.getReqNumber())
                 .companyId(req.getCompanyId())
+                .mspId(req.getMspId())
                 .title(req.getTitle())
                 .description(req.getDescription())
                 .status(req.getStatus())
