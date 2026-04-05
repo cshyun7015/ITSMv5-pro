@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   X, Edit2, Shield, User, 
-  FileText, Check, Calendar, Hash, ShieldAlert, Info, Trash2
+  FileText, Check, Calendar, Hash, ShieldAlert, Info, Trash2, Clock, MapPin, Activity
 } from 'lucide-react';
 import requestApi from './api/requestApi';
 import apiUser, { type UserDTO } from '../../api/apiUser';
@@ -19,8 +19,10 @@ interface RequestDetailProps {
   onClose: () => void;
 }
 
-const LABEL_CLASS = "tw-text-[12px] tw-font-bold tw-text-slate-500 tw-uppercase tw-tracking-wider tw-whitespace-nowrap tw-shrink-0 tw-w-24";
-const VALUE_CLASS = "tw-text-sm tw-text-slate-200 tw-font-medium";
+const SECTION_TITLE_CLASS = "tw-text-[11px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-[0.1em] tw-mb-4 tw-flex tw-items-center tw-gap-2";
+const INFO_BOX_CLASS = "tw-bg-obsidian-light/50 tw-border tw-border-white/5 tw-rounded-xl tw-p-3";
+const LABEL_CLASS = "tw-text-[10px] tw-font-bold tw-text-slate-500 tw-uppercase tw-tracking-widest tw-whitespace-nowrap";
+const VALUE_CLASS = "tw-text-sm tw-text-slate-200 tw-font-semibold tw-truncate";
 
 const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => {
   const { user } = useAuth();
@@ -32,6 +34,7 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => 
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [commentLoading, setCommentLoading] = useState(false);
   const [operators, setOperators] = useState<UserDTO[]>([]);
+  const [historyRefreshTrigger, setHistoryRefreshTrigger] = useState(0);
   const [codes, setCodes] = useState<{
     types: CommonCode[];
     categories: CommonCode[];
@@ -50,7 +53,6 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => 
 
   const [isDeleting, setIsDeleting] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const [historyRefreshTrigger, setHistoryRefreshTrigger] = useState(0);
 
   // Requester Search States
   const [requesterSearch, setRequesterSearch] = useState('');
@@ -109,17 +111,24 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => 
 
   const handleSave = async () => {
     try {
-      const updateData = { ...editedData };
+      const updateData = { 
+        ...editedData, 
+        updatedBy: user?.userId || 'SYSTEM' 
+      };
+      
       if (updateData.status === 'RESOLVED' && (!updateData.srResolutionCode || !updateData.resolutionText)) {
         alert('요청 해결을 위해서는 해결 코드와 처리 내용을 입력해야 합니다.');
         return;
       }
+      
       await requestApi.updateRequest(requestId, updateData as RequestDTO);
+      
       if (pendingFiles.length > 0) {
         for (const file of pendingFiles) {
           await requestApi.uploadAttachment(requestId, file);
         }
       }
+      
       setPendingFiles([]);
       setIsEditing(false);
       setHistoryRefreshTrigger(prev => prev + 1);
@@ -133,11 +142,9 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => 
     try {
       setIsDeleting(true);
       await requestApi.deleteRequest(requestId);
-      alert('요청이 삭제되었습니다.');
       onClose();
     } catch (err) {
       console.error('Delete request failed:', err);
-      alert('삭제 중 오류가 발생했습니다.');
     } finally {
       setIsDeleting(false);
       setIsConfirmOpen(false);
@@ -145,13 +152,7 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => 
   };
 
   useEffect(() => {
-    if (!isEditing) {
-      setRequesterSearch('');
-      setRequesterResults([]);
-      setShowRequesterDropdown(false);
-      return;
-    }
-
+    if (!isEditing) return;
     const timer = setTimeout(async () => {
       if (requesterSearch.trim().length >= 2) {
         setIsSearchingRequesters(true);
@@ -164,12 +165,8 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => 
         } finally {
           setIsSearchingRequesters(false);
         }
-      } else {
-        setRequesterResults([]);
-        setShowRequesterDropdown(false);
       }
     }, 400);
-
     return () => clearTimeout(timer);
   }, [requesterSearch, isEditing]);
 
@@ -220,414 +217,229 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => 
   };
 
   return (
-    <div className="tw-fixed tw-inset-0 tw-z-50 tw-flex tw-items-center tw-justify-center tw-p-4 tw-bg-obsidian/80 tw-backdrop-blur-md">
-      <div className="tw-bg-obsidian tw-border tw-border-slate-800 tw-rounded-2xl tw-w-full tw-max-w-6xl tw-max-h-[90vh] tw-overflow-hidden tw-flex tw-flex-col tw-shadow-2xl tw-animate-slide-up">
+    <div className="tw-fixed tw-inset-0 tw-z-[2000] tw-flex tw-items-center tw-justify-center tw-p-4 tw-bg-obsidian/80 tw-backdrop-blur-xl">
+      <div className="tw-bg-obsidian tw-border tw-border-white/10 tw-rounded-3xl tw-w-full tw-max-w-5xl tw-h-[85vh] tw-overflow-hidden tw-flex tw-flex-col tw-shadow-[0_0_50px_rgba(0,0,0,0.5)] tw-animate-scale-in">
         
-        {/* Modal Header */}
-        <div className="tw-p-6 tw-border-b tw-border-slate-800 tw-flex tw-items-center tw-justify-between tw-bg-slate-800/30">
-          <div className="tw-flex tw-items-center tw-gap-4 tw-w-full">
+        {/* 🏔️ COMPACT OPERATIONAL HEADER */}
+        <div className="tw-px-8 tw-py-4 tw-border-b tw-border-white/5 tw-flex tw-items-center tw-justify-between tw-bg-white/[0.02]">
+          <div className="tw-flex tw-items-center tw-gap-5 tw-flex-1">
              <div className="tw-flex tw-flex-col">
-               <span className="tw-text-[10px] tw-text-slate-500 tw-font-bold tw-uppercase tw-tracking-widest">요청 번호</span>
-               <span className="tw-text-brand-400 tw-font-mono tw-text-lg tw-font-bold">{request.reqNumber}</span>
+               <span className="tw-text-[9px] tw-text-brand-400 tw-font-black tw-uppercase tw-tracking-[0.25em]">Ticket ID</span>
+               <span className="tw-text-white tw-font-mono tw-text-base tw-font-bold">{request.reqNumber}</span>
              </div>
-             <div className="tw-h-8 tw-w-[1px] tw-bg-slate-700"></div>
-             <h2 className="tw-text-xl tw-font-bold tw-text-white tw-flex-1">
+             <div className="tw-h-8 tw-w-[1px] tw-bg-white/10"></div>
+             <div className="tw-flex-1">
                 {isEditing ? (
                   <input 
                     type="text" 
-                    className="tw-input tw-py-2 tw-text-lg tw-w-full"
+                    className="tw-input tw-w-full !tw-py-1 tw-text-lg tw-font-bold tw-bg-white/[0.03]"
                     value={editedData.title}
                     onChange={(e) => setEditedData(d => ({ ...d, title: e.target.value }))}
-                    placeholder="요청 제목을 입력하세요"
                   />
-                ) : request.title}
-             </h2>
+                ) : (
+                  <h2 className="tw-text-lg tw-font-bold tw-text-white tw-line-clamp-1">{request.title}</h2>
+                )}
+             </div>
           </div>
-          <div className="tw-flex tw-items-center tw-gap-2 tw-ml-4">
+          <div className="tw-flex tw-items-center tw-gap-3 tw-ml-6">
             {isAdminOrOperator && (
-              <button 
-                type="button"
-                onClick={(e) => { e.stopPropagation(); setIsConfirmOpen(true); }}
-                className="tw-p-2 tw-rounded-lg hover:tw-bg-red-500/10 tw-text-red-500 tw-transition-colors"
-                title="삭제"
-                disabled={isDeleting}
-              >
-                <Trash2 size={24} />
+              <button onClick={() => setIsConfirmOpen(true)} className="tw-p-2 tw-rounded-xl hover:tw-bg-red-500/10 tw-text-red-500/60 hover:tw-text-red-500 tw-transition-all">
+                <Trash2 size={20} />
               </button>
             )}
-            <button 
-              onClick={onClose}
-              className="tw-p-2 tw-rounded-lg hover:tw-bg-slate-700 tw-text-slate-400 tw-transition-colors"
-              title="닫기"
-            >
+            <button onClick={onClose} className="tw-p-2 tw-rounded-xl hover:tw-bg-white/5 tw-text-slate-500 hover:tw-text-white tw-transition-all">
               <X size={24} />
             </button>
           </div>
         </div>
 
-        {/* Modal Body */}
-        <div className="tw-flex-1 tw-overflow-y-auto tw-p-8 tw-custom-scrollbar">
+        {/* 🕹️ MAIN WORKSPACE */}
+        <div className="tw-flex-1 tw-overflow-hidden tw-flex">
           
-          <div className="tw-mb-10 tw-bg-slate-900/40 tw-p-6 tw-rounded-xl tw-border tw-border-slate-800">
-            <StatusStepper currentStatus={request.status || 'NEW'} />
-          </div>
-
-          <div className="tw-grid tw-grid-cols-12 tw-gap-10">
+          {/* LEFT CONTENT AREA */}
+          <div className="tw-flex-1 tw-overflow-y-auto tw-p-8 tw-custom-scrollbar tw-flex tw-flex-col tw-gap-8">
             
-            <div className="tw-col-span-12 lg:tw-col-span-8 tw-flex tw-flex-col tw-gap-8">
-              
-              <section className="tw-card tw-p-8">
-                <div className="tw-flex tw-items-center tw-gap-3 tw-mb-6 tw-text-brand-400">
-                  <FileText size={20} />
-                  <h3 className="tw-text-sm tw-font-bold tw-uppercase tw-tracking-widest">요청 상세 내용</h3>
-                </div>
-                <div className="tw-space-y-6">
+            {/* Status Flow */}
+            <div className="tw-bg-white/[0.02] tw-p-5 tw-rounded-2xl tw-border tw-border-white/5">
+              <StatusStepper currentStatus={request.status || 'NEW'} />
+            </div>
+
+            {/* Description Card */}
+            <section>
+                <h3 className={SECTION_TITLE_CLASS}><FileText size={14} /> 상세 설명 및 해결 방안</h3>
+                <div className="tw-flex tw-flex-col tw-gap-4">
                   {isEditing ? (
                     <textarea 
-                      className="tw-input tw-w-full tw-min-h-[200px] tw-resize-none tw-leading-relaxed"
+                      className="tw-input tw-w-full tw-min-h-[160px] tw-resize-none tw-bg-white/[0.03] tw-text-sm tw-leading-relaxed"
                       value={editedData.description}
                       onChange={(e) => setEditedData(d => ({ ...d, description: e.target.value }))}
                     />
                   ) : (
-                    <div className="tw-text-slate-300 tw-leading-relaxed tw-text-[15px] tw-bg-slate-900/50 tw-p-6 tw-rounded-xl tw-border tw-border-slate-800/50">
+                    <div className="tw-bg-white/[0.03] tw-p-6 tw-rounded-2xl tw-border tw-border-white/5 tw-text-slate-300 tw-text-sm tw-leading-relaxed">
                       {request.description}
                     </div>
                   )}
-                </div>
-              </section>
 
-              {(isResolved || isClosed || isEditing) && (
-                <section className="tw-card tw-p-8 tw-border-brand-500/20 tw-bg-brand-500/5">
-                  <div className="tw-flex tw-items-center tw-gap-3 tw-mb-6 tw-text-emerald-400">
-                    <Check size={20} />
-                    <h3 className="tw-text-sm tw-font-bold tw-uppercase tw-tracking-widest">해결 및 조치 내용</h3>
-                  </div>
-                  <div className="tw-grid tw-grid-cols-1 tw-gap-6">
-                    <div>
-                      <label className={LABEL_CLASS}>해결 코드</label>
-                      {isEditing ? (
-                        <select 
-                          className="tw-input tw-w-full"
-                          value={editedData.srResolutionCode}
-                          onChange={e => setEditedData(d => ({ ...d, srResolutionCode: e.target.value }))}
-                        >
-                          <option value="">-- 해결 코드 선택 --</option>
-                          {codes.resolutions.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
-                        </select>
-                      ) : (
-                         <div className="tw-text-emerald-400 tw-font-bold tw-mt-1">{request.srResolutionCode || '미입력'}</div>
-                      )}
-                    </div>
-                    <div>
-                      <label className={LABEL_CLASS}>조치 내용 상세</label>
-                      {isEditing ? (
-                        <textarea 
-                          className="tw-input tw-w-full tw-min-h-[120px] tw-resize-none tw-mt-1"
-                          value={editedData.resolutionText}
-                          onChange={e => setEditedData(d => ({ ...d, resolutionText: e.target.value }))}
-                          placeholder="조치 완료 내용을 상세히 입력하세요."
-                        />
-                      ) : (
-                        <div className="tw-text-slate-300 tw-text-sm tw-bg-obsidian tw-p-4 tw-rounded-lg tw-border tw-border-slate-800 tw-mt-1">
-                          {request.resolutionText || '기록된 조치 내용이 없습니다.'}
+                  {(isResolved || isClosed || isEditing) && (
+                    <div className="tw-bg-emerald-500/[0.03] tw-border tw-border-emerald-500/20 tw-p-6 tw-rounded-2xl tw-space-y-4">
+                        <div>
+                            <label className={LABEL_CLASS}>해결 코드 (Resolution Code)</label>
+                            {isEditing ? (
+                                <select className="tw-input tw-w-full tw-text-xs tw-bg-obsidian" value={editedData.srResolutionCode} onChange={e => setEditedData(d => ({ ...d, srResolutionCode: e.target.value }))}>
+                                    <option value="">코드 선택...</option>
+                                    {codes.resolutions.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
+                                </select>
+                            ) : <div className="tw-text-emerald-400 tw-font-bold tw-text-sm">{request.srResolutionCode || '대기 중'}</div>}
                         </div>
-                      )}
+                        <div>
+                            <label className={LABEL_CLASS}>해결 상세 내용</label>
+                            {isEditing ? (
+                                <textarea className="tw-input tw-w-full tw-min-h-[100px] tw-text-xs tw-bg-obsidian" value={editedData.resolutionText} onChange={e => setEditedData(d => ({ ...d, resolutionText: e.target.value }))} placeholder="해결 내용을 입력하세요..." />
+                            ) : <div className="tw-text-slate-300 tw-text-xs tw-leading-relaxed">{request.resolutionText || '해결 정보가 없습니다.'}</div>}
+                        </div>
                     </div>
-                  </div>
-                </section>
-              )}
+                  )}
+                </div>
+            </section>
 
-              <RequestAttachments 
-                attachments={request.attachments}
-                pendingFiles={pendingFiles}
-                onUpload={(file) => setPendingFiles(prev => [...prev, file])}
-                onDelete={() => {}} 
-                onDownload={handleDownload}
-                canEdit={isEditing}
-              />
-
-              <RequestComments 
-                comments={comments}
-                newCommentValue={newComment}
-                onNewCommentChange={setNewComment}
-                onAddComment={handleAddComment}
-                loading={commentLoading}
-              />
-
-              <RequestHistoryList 
-                requestId={requestId} 
-                refreshTrigger={historyRefreshTrigger}
-              />
+            {/* Attachments */}
+            <div className={request.attachments?.length === 0 && !isEditing ? "tw-opacity-50" : ""}>
+                <h3 className={SECTION_TITLE_CLASS}><Hash size={14} /> 첨부 파일</h3>
+                <RequestAttachments attachments={request.attachments} pendingFiles={pendingFiles} onUpload={f => setPendingFiles(p => [...p, f])} onDownload={handleDownload} canEdit={isEditing} />
             </div>
 
-            <div className="tw-col-span-12 lg:tw-col-span-4 tw-flex tw-flex-col tw-gap-8">
-              {request.reopenCount && request.reopenCount > 0 ? (
-                <div className="tw-bg-amber-500/10 tw-border tw-border-amber-500/20 tw-p-4 tw-rounded-xl tw-flex tw-items-center tw-gap-3">
-                  <ShieldAlert className="tw-text-amber-500" size={20} />
-                  <div>
-                    <div className="tw-text-xs tw-font-bold tw-text-amber-500 tw-uppercase">재오픈됨</div>
-                    <div className="tw-text-sm tw-text-slate-300">이 요청은 총 <b>{request.reopenCount}회</b> 재오픈되었습니다.</div>
-                  </div>
-                </div>
-              ) : null}
-
-              <section className="tw-card tw-p-6">
-                <div className="tw-flex tw-items-center tw-gap-2 tw-mb-6 tw-text-brand-400">
-                  <User size={18} />
-                  <h3 className="tw-text-xs tw-font-bold tw-uppercase tw-tracking-widest">배정 및 신청 정보</h3>
-                </div>
-                <div className="tw-space-y-5">
-                  <div className="tw-flex tw-justify-between tw-items-center tw-gap-4">
-                    <span className={LABEL_CLASS}>신청자</span>
-                    {isEditing ? (
-                      <div className="tw-relative tw-w-full">
-                         <input 
-                          type="text"
-                          className="tw-input tw-py-2 tw-text-sm tw-w-full"
-                          placeholder="이름으로 검색..."
-                          value={requesterSearch || editedData.requesterId || ''}
-                          onChange={(e) => {
-                            setRequesterSearch(e.target.value);
-                            setEditedData(prev => ({ ...prev, requesterId: e.target.value }));
-                          }}
-                          onFocus={() => requesterSearch.length >= 2 && setShowRequesterDropdown(true)}
-                         />
-                         {showRequesterDropdown && requesterResults.length > 0 && (
-                           <div className="tw-absolute tw-z-[70] tw-top-full tw-left-0 tw-right-0 tw-mt-1 tw-bg-slate-900 tw-border tw-border-slate-800 tw-rounded-xl tw-shadow-2xl tw-max-h-60 tw-overflow-y-auto">
-                              {requesterResults.map(u => (
-                                <button
-                                  key={u.userId}
-                                  type="button"
-                                  className="tw-w-full tw-px-4 tw-py-2 tw-text-left hover:tw-bg-brand-600/20 tw-text-sm tw-text-slate-200 tw-transition-colors tw-flex tw-flex-col"
-                                  onClick={() => {
-                                    setEditedData(prev => ({ ...prev, requesterId: u.userId }));
-                                    setRequesterSearch(`${u.name} (${u.userId})`);
-                                    setShowRequesterDropdown(false);
-                                  }}
-                                >
-                                  <span className="tw-font-bold">{u.name}</span>
-                                  <span className="tw-text-xs tw-text-slate-500">{u.userId} / {u.companyId}</span>
-                                </button>
-                              ))}
-                           </div>
-                         )}
-                         {isSearchingRequesters && (
-                           <div className="tw-absolute tw-right-3 tw-top-2.5">
-                             <div className="tw-animate-spin tw-rounded-full tw-h-4 tw-w-4 tw-border-b-2 tw-border-brand-500"></div>
-                           </div>
-                         )}
-                      </div>
-                    ) : (
-                      <span className={VALUE_CLASS}>{request.requesterId}</span>
-                    )}
-                  </div>
-                  <div className="tw-flex tw-justify-between tw-items-center tw-gap-4">
-                    <span className={LABEL_CLASS}>담당자</span>
-                    {isEditing && !isClassificationLocked ? (
-                       <select 
-                        className="tw-input tw-py-2 tw-text-sm tw-w-full"
-                        value={editedData.assigneeId || ''}
-                        onChange={e => setEditedData(d => ({ ...d, assigneeId: e.target.value }))}
-                       >
-                         <option value="">담당자 선택</option>
-                         {operators.map(op => (
-                           <option key={op.userId} value={op.userId}>
-                             {op.name} ({op.userId})
-                           </option>
-                         ))}
-                       </select>
-                    ) : (
-                      <span className={VALUE_CLASS}>{request.assigneeId || '미정 (배정 대기)'}</span>
-                    )}
-                  </div>
-                </div>
-              </section>
-
-              <section className="tw-card tw-p-6">
-                <div className="tw-flex tw-items-center tw-gap-2 tw-mb-6 tw-text-brand-400">
-                  <Shield size={18} />
-                  <h3 className="tw-text-xs tw-font-bold tw-uppercase tw-tracking-widest">속성 분류 및 평가</h3>
-                </div>
-                <div className="tw-space-y-6">
-                   <div className="tw-flex tw-justify-between tw-items-center tw-gap-4">
-                     <span className={LABEL_CLASS}>요청 상태</span>
-                     {isEditing ? (
-                       <select className="tw-input tw-py-2 tw-text-sm tw-w-full tw-border-amber-500/30" value={editedData.status} onChange={e => setEditedData(d => ({ ...d, status: e.target.value }))}>
-                         {codes.statuses.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
-                       </select>
-                     ) : <Badge label={request.status || 'NEW'} type="status" />}
-                   </div>
-                  <div className="tw-flex tw-justify-between tw-items-center tw-gap-4">
-                    <span className={LABEL_CLASS}>요청 유형</span>
-                    {isEditing && !isClassificationLocked ? (
-                      <select className="tw-input tw-py-2 tw-text-sm tw-w-full" value={editedData.srTypeCode} onChange={e => setEditedData(d => ({ ...d, srTypeCode: e.target.value }))}>
-                        {codes.types.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
-                      </select>
-                    ) : <Badge label={request.srTypeCode || 'INCIDENT'} type="status" />}
-                  </div>
-                  <div className="tw-flex tw-justify-between tw-items-center tw-gap-4">
-                    <span className={LABEL_CLASS}>서비스 카테고리</span>
-                    {isEditing && !isClassificationLocked ? (
-                      <select className="tw-input tw-py-2 tw-text-sm tw-w-full" value={editedData.srCategoryCode} onChange={e => setEditedData(d => ({ ...d, srCategoryCode: e.target.value }))}>
-                        <option value="">카테고리 선택</option>
-                        {codes.categories.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
-                      </select>
-                    ) : <span className={VALUE_CLASS}>{request.srCategoryCode}</span>}
-                  </div>
-                  <div className="tw-flex tw-justify-between tw-items-center tw-gap-4">
-                    <span className={LABEL_CLASS}>영향도</span>
-                    {isEditing && !isClassificationLocked ? (
-                      <select className="tw-input tw-py-2 tw-text-sm tw-w-full" value={editedData.srImpactCode} onChange={e => setEditedData(d => ({ ...d, srImpactCode: e.target.value }))}>
-                        {codes.impacts.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
-                      </select>
-                    ) : <Badge label={request.srImpactCode || 'LOW'} type="priority" />}
-                  </div>
-                  <div className="tw-flex tw-justify-between tw-items-center tw-gap-4">
-                    <span className={LABEL_CLASS}>긴급도</span>
-                    {isEditing && !isClassificationLocked ? (
-                      <select className="tw-input tw-py-2 tw-text-sm tw-w-full" value={editedData.srUrgencyCode} onChange={e => setEditedData(d => ({ ...d, srUrgencyCode: e.target.value }))}>
-                        {codes.urgencies.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
-                      </select>
-                    ) : <Badge label={request.srUrgencyCode || 'LOW'} type="priority" />}
-                  </div>
-                  <div className="tw-flex tw-justify-between tw-items-center tw-gap-4">
-                    <span className={LABEL_CLASS}>우선순위</span>
-                    <Badge label={request.priority || 'P3'} type="priority" className="tw-scale-110" />
-                  </div>
-                  
-                  <div className="tw-pt-4 tw-border-t tw-border-slate-800">
-                    <label className={LABEL_CLASS}>구성 요소 (CI)</label>
-                    <div className="tw-relative tw-mt-2">
-                      <Hash size={14} className="tw-absolute tw-left-3 tw-top-1/2 tw--translate-y-1/2 tw-text-slate-500" />
-                      <input 
-                        type="text" 
-                        disabled={!isEditing || isClassificationLocked}
-                        className="tw-input tw-w-full tw-pl-10 tw-py-2 tw-text-sm"
-                        value={isEditing ? editedData.ciId || '' : request.ciId || ''}
-                        onChange={e => setEditedData(d => ({ ...d, ciId: e.target.value }))}
-                        placeholder="자산/시스템 코드"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-              <section className="tw-card tw-p-6 tw-bg-gradient-to-br tw-from-slate-800/30 tw-to-transparent">
-                <div className="tw-flex tw-items-center tw-gap-2 tw-mb-6 tw-text-brand-400">
-                  <Calendar size={18} />
-                  <h3 className="tw-text-xs tw-font-bold tw-uppercase tw-tracking-widest">SLA 및 타임라인</h3>
-                </div>
-                <div className="tw-space-y-4">
-                  <div className="tw-bg-obsidian tw-p-4 tw-rounded-xl tw-border tw-border-slate-800">
-                    <div className="tw-flex tw-justify-between tw-mb-2">
-                      <span className="tw-text-[10px] tw-text-slate-500 tw-uppercase">처리 목표 일시 (SLA)</span>
-                      <span className="tw-text-[10px] tw-text-emerald-500 tw-font-bold">정상</span>
-                    </div>
-                    <div className="tw-text-sm tw-text-slate-200 tw-font-mono">
-                      {formatDate(request.slaTargetAt)}
-                    </div>
-                  </div>
-                  
-                  <div className="tw-space-y-4 tw-px-2 tw-pt-2">
-                    <div className="tw-flex tw-justify-between tw-items-center tw-gap-4">
-                      <span className={LABEL_CLASS}>등록 일시</span>
-                      <span className={VALUE_CLASS}>{formatDate(request.createdAt)}</span>
-                    </div>
-                    <div className="tw-flex tw-justify-between tw-items-center tw-gap-4">
-                      <span className={LABEL_CLASS}>희망 완료일</span>
-                      {isEditing ? (
-                         <input 
-                          type="date"
-                          className="tw-input tw-py-2 tw-text-sm tw-w-full"
-                          value={editedData.expectedAt?.substring(0, 10) || ''}
-                          onChange={e => setEditedData(d => ({ ...d, expectedAt: e.target.value }))}
-                         />
-                      ) : (
-                        <span className={VALUE_CLASS}>{formatDate(request.expectedAt)}</span>
-                      )}
-                    </div>
-                    {request.resolvedAt && (
-                      <div className="tw-flex tw-justify-between tw-items-center tw-gap-4">
-                        <span className="tw-text-[12px] tw-font-bold tw-text-emerald-500/70 tw-uppercase tw-tracking-wider tw-whitespace-nowrap">해결 일시</span>
-                        <span className="tw-text-sm tw-text-emerald-500/70 tw-font-medium">{formatDate(request.resolvedAt)}</span>
-                      </div>
-                    )}
-                    {request.closedAt && (
-                      <div className="tw-flex tw-justify-between tw-items-center tw-gap-4">
-                        <span className={LABEL_CLASS}>종료 일시</span>
-                        <span className={VALUE_CLASS}>{formatDate(request.closedAt)}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </section>
-
-              {isEditing && (
-                <div className="tw-p-4 tw-bg-blue-500/5 tw-border tw-border-blue-500/20 tw-rounded-xl tw-flex tw-gap-3">
-                  <Info className="tw-text-blue-500 tw-shrink-0" size={16} />
-                  <p className="tw-text-[11px] tw-text-slate-400 tw-leading-relaxed">
-                    <b>RESOLVED</b> 상태로 변경하려면 해결 코드와 조치 내용을 반드시 입력해야 합니다.
-                  </p>
-                </div>
-              )}
+            {/* Comments */}
+            <div className={comments.length === 0 ? "tw-opacity-50" : ""}>
+                <h3 className={SECTION_TITLE_CLASS}><MapPin size={14} /> 활동 및 댓글</h3>
+                <RequestComments comments={comments} newCommentValue={newComment} onNewCommentChange={setNewComment} onAddComment={handleAddComment} loading={commentLoading} />
             </div>
+
+            {/* History Timeline */}
+            <div className="tw-opacity-80">
+                <h3 className={SECTION_TITLE_CLASS}><Clock size={14} /> 변경 이력 (Audit Trail)</h3>
+                <RequestHistoryList requestId={requestId} refreshTrigger={historyRefreshTrigger} />
+            </div>
+          </div>
+
+          {/* RIGHT SIDEBAR (META INFO) */}
+          <div className="tw-w-[320px] tw-border-l tw-border-white/5 tw-bg-white/[0.01] tw-overflow-y-auto tw-p-6 tw-flex tw-flex-col tw-gap-8 tw-custom-scrollbar">
+            
+            {/* 👥 Stakeholders */}
+            <section>
+                <h3 className={SECTION_TITLE_CLASS}><User size={14} /> 관계자 정보</h3>
+                <div className="tw-flex tw-flex-col tw-gap-2">
+                    <div className={INFO_BOX_CLASS}>
+                        <div className="tw-flex tw-justify-between tw-items-center">
+                            <label className={LABEL_CLASS}>신청자</label>
+                            <div className={VALUE_CLASS}>{request.requesterId}</div>
+                        </div>
+                        <div className="tw-text-[9px] tw-text-slate-500 tw-text-right tw-mt-1">{request.companyId}</div>
+                    </div>
+                    <div className={INFO_BOX_CLASS}>
+                        <div className="tw-flex tw-justify-between tw-items-center">
+                            <label className={LABEL_CLASS}>담당자</label>
+                            {isEditing && !isClassificationLocked ? (
+                                <select className="tw-input tw-w-2/3 tw-text-xs tw-bg-obsidian !tw-py-0.5" value={editedData.assigneeId || ''} onChange={e => setEditedData(d => ({ ...d, assigneeId: e.target.value }))}>
+                                    <option value="">배정 대기</option>
+                                    {operators.map(op => <option key={op.userId} value={op.userId}>{op.name}</option>)}
+                                </select>
+                            ) : <div className={VALUE_CLASS}>{request.assigneeId || '배정 대기'}</div>}
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* 🛡️ Classification */}
+            <section>
+                <h3 className={SECTION_TITLE_CLASS}><Shield size={14} /> 서비스 분류</h3>
+                <div className="tw-flex tw-flex-col tw-gap-2">
+                    <div className="tw-grid tw-grid-cols-2 tw-gap-2">
+                        <div className={`${INFO_BOX_CLASS} tw-flex tw-flex-col tw-items-center tw-justify-center tw-gap-1`}>
+                            <label className={LABEL_CLASS}>우선순위</label>
+                            <Badge label={request.priority || 'P3'} type="priority" />
+                        </div>
+                        <div className={`${INFO_BOX_CLASS} tw-flex tw-flex-col tw-items-center tw-justify-center tw-gap-1`}>
+                            <label className={LABEL_CLASS}>상태</label>
+                            <Badge label={request.status || 'NEW'} type="status" />
+                        </div>
+                    </div>
+                    <div className={INFO_BOX_CLASS}>
+                        <div className="tw-flex tw-justify-between tw-items-center">
+                            <label className={LABEL_CLASS}>서비스 유형</label>
+                            <div className={VALUE_CLASS}>{request.srTypeCode}</div>
+                        </div>
+                    </div>
+                    <div className={INFO_BOX_CLASS}>
+                        <div className="tw-flex tw-justify-between tw-items-center">
+                            <label className={LABEL_CLASS}>시스템 / CI</label>
+                            <div className={VALUE_CLASS}>{request.ciId || 'N/A'}</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* ⏱️ Timeline */}
+            <section>
+                <h3 className={SECTION_TITLE_CLASS}><Clock size={14} /> SLA 및 타임라인</h3>
+                <div className="tw-flex tw-flex-col tw-gap-3">
+                    <div className="tw-bg-brand-500/5 tw-border tw-border-brand-500/20 tw-p-3 tw-rounded-xl">
+                        <label className="tw-text-[9px] tw-font-black tw-text-brand-400 tw-uppercase tw-tracking-widest tw-mb-1 tw-block">처리기한 (SLA Target)</label>
+                        <div className="tw-text-sm tw-font-mono tw-text-slate-200">{formatDate(request.slaTargetAt)}</div>
+                    </div>
+                    <div className="tw-space-y-2 tw-px-1">
+                        <div className="tw-flex tw-justify-between items-center">
+                            <span className="tw-text-[9px] tw-text-slate-500 tw-uppercase tw-tracking-widest">등록 일시</span>
+                            <span className="tw-text-xs tw-text-slate-400">{formatDate(request.createdAt)}</span>
+                        </div>
+                        <div className="tw-flex tw-justify-between items-center">
+                            <span className="tw-text-[9px] tw-text-slate-500 tw-uppercase tw-tracking-widest">희망 완료일</span>
+                            <span className="tw-text-xs tw-text-slate-400">{formatDate(request.expectedAt)}</span>
+                        </div>
+                        {request.resolvedAt && (
+                            <div className="tw-flex tw-justify-between items-center tw-pt-2 tw-border-t tw-border-white/5">
+                                <span className="tw-text-[9px] tw-text-emerald-500 tw-uppercase tw-tracking-widest">해결 일시</span>
+                                <span className="tw-text-xs tw-text-emerald-500/80">{formatDate(request.resolvedAt)}</span>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </section>
           </div>
         </div>
 
-        <div className="tw-p-6 tw-border-t tw-border-slate-800 tw-flex tw-items-center tw-justify-end tw-gap-3 tw-bg-slate-800/30">
-          {canEdit && (
-            !isEditing ? (
-              <button 
-                onClick={() => setIsEditing(true)}
-                className="tw-bg-brand-600 hover:tw-bg-brand-700 tw-text-white tw-px-8 tw-py-2 tw-rounded-xl tw-transition-all tw-flex tw-items-center tw-gap-2 tw-font-bold tw-shadow-lg tw-shadow-brand-600/20"
-              >
-                <Edit2 size={18} />
-                요청 편집
-              </button>
-            ) : (
-              <div className="tw-flex tw-gap-3">
-                <button 
-                  onClick={() => setIsEditing(false)}
-                  className="tw-bg-slate-800 hover:tw-bg-slate-700 tw-text-slate-300 tw-px-6 tw-py-2 tw-rounded-xl tw-transition-all"
-                >
-                  취소
-                </button>
-                <button 
-                  onClick={handleSave}
-                  className="tw-bg-emerald-600 hover:tw-bg-emerald-700 tw-text-white tw-px-8 tw-py-2 tw-rounded-xl tw-transition-all tw-flex tw-items-center tw-gap-2 tw-font-bold tw-shadow-lg tw-shadow-emerald-600/20"
-                >
-                  <Check size={18} />
-                  변경 사항 저장
-                </button>
-              </div>
-            )
-          )}
+        {/* 🏁 FOOTER ACTIONS */}
+        <div className="tw-px-8 tw-py-4 tw-border-t tw-border-white/5 tw-flex tw-items-center tw-justify-between tw-bg-white/[0.02]">
+          <div className="tw-text-[10px] tw-text-slate-500 tw-flex tw-items-center tw-gap-2">
+            <MapPin size={10} /> 로컬 시간: {new Date().toLocaleTimeString()}
+          </div>
+          <div className="tw-flex tw-gap-3">
+             <button onClick={onClose} className="tw-px-6 tw-py-2 tw-rounded-xl tw-text-xs tw-font-bold tw-text-slate-400 hover:tw-text-white tw-transition-all">닫기 (Close)</button>
+             {canEdit && (
+               !isEditing ? (
+                 <button onClick={() => setIsEditing(true)} className="tw-bg-brand-600 hover:tw-bg-brand-500 tw-text-white tw-px-8 tw-py-2 tw-rounded-xl tw-text-xs tw-font-black tw-uppercase tw-tracking-widest tw-transition-all tw-flex tw-items-center tw-gap-2 tw-shadow-lg tw-shadow-brand-600/20">
+                    <Edit2 size={14} /> 요청 편집
+                 </button>
+               ) : (
+                 <button onClick={handleSave} className="tw-bg-emerald-600 hover:tw-bg-emerald-500 tw-text-white tw-px-8 tw-py-2 tw-rounded-xl tw-text-xs tw-font-black tw-uppercase tw-tracking-widest tw-transition-all tw-flex tw-items-center tw-gap-2 tw-shadow-lg tw-shadow-emerald-600/20">
+                    <Check size={14} /> 변경사항 저장
+                 </button>
+               )
+             )}
+          </div>
         </div>
 
-        {/* 삭제 확인 커스텀 레이어 */}
+        {/* Delete Confirmation Overlay */}
         {isConfirmOpen && (
-          <div className="tw-absolute tw-inset-0 tw-z-[60] tw-bg-black/60 tw-backdrop-blur-sm tw-flex tw-items-center tw-justify-center">
-            <div className="tw-bg-slate-900 tw-border tw-border-slate-800 tw-p-8 tw-rounded-2xl tw-w-full tw-max-w-md tw-shadow-2xl tw-text-center tw-animate-scale-in">
+          <div className="tw-absolute tw-inset-0 tw-z-[2100] tw-bg-obsidian/90 tw-backdrop-blur-xl tw-flex tw-items-center tw-justify-center">
+            <div className="tw-bg-slate-900 tw-border tw-border-white/10 tw-p-10 tw-rounded-3xl tw-max-w-md tw-text-center tw-animate-scale-in">
               <div className="tw-w-16 tw-h-16 tw-bg-red-500/10 tw-rounded-full tw-flex tw-items-center tw-justify-center tw-mx-auto tw-mb-6">
                 <Trash2 className="tw-text-red-500" size={32} />
               </div>
-              <h3 className="tw-text-xl tw-font-bold tw-text-white tw-mb-2">정말 삭제하시겠습니까?</h3>
-              <p className="tw-text-slate-400 tw-text-sm tw-mb-8">삭제된 요청 데이터는 복구할 수 없습니다.<br/>신중하게 결정해 주세요.</p>
+              <h3 className="tw-text-xl tw-font-bold tw-text-white tw-mb-2">삭제 확인</h3>
+              <p className="tw-text-slate-400 tw-text-sm tw-mb-8">이 요청을 삭제하시겠습니까? 삭제된 정보는 복구할 수 없습니다.</p>
               <div className="tw-flex tw-gap-3">
-                <button 
-                  onClick={() => setIsConfirmOpen(false)}
-                  className="tw-flex-1 tw-py-3 tw-bg-slate-800 hover:tw-bg-slate-700 tw-text-slate-300 tw-rounded-xl tw-transition-all"
-                  disabled={isDeleting}
-                >
-                  취소
-                </button>
-                <button 
-                  onClick={handleDelete}
-                  className="tw-flex-1 tw-py-3 tw-bg-red-600 hover:tw-bg-red-700 tw-text-white tw-rounded-xl tw-font-bold tw-transition-all tw-shadow-lg tw-shadow-red-600/20"
-                  disabled={isDeleting}
-                >
-                  {isDeleting ? '삭제 중...' : '영구 삭제'}
-                </button>
+                <button onClick={() => setIsConfirmOpen(false)} className="tw-flex-1 tw-py-3 tw-bg-white/5 tw-text-slate-300 tw-rounded-xl hover:tw-bg-white/10 tw-transition-all">취소</button>
+                <button onClick={handleDelete} className="tw-flex-1 tw-py-3 tw-bg-red-600 tw-text-white tw-rounded-xl tw-font-bold hover:tw-bg-red-500 tw-transition-all">삭제 실행</button>
               </div>
             </div>
           </div>

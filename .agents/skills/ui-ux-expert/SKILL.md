@@ -20,6 +20,7 @@ When invoked for a UI/UX or frontend task, strictly follow these steps:
 - **Typography Hierarchy**: Base body text must be `14px`. Secondary/meta text should be `12px`. Headers should start at `16px`.
 - **Layout Grid**: Use `display: grid` (e.g., 2-column or 4-column) for form elements to maintain visual balance. Avoid wasted horizontal whitespace.
 - **Affordance**: Clearly separate Writable elements (using clear borders, deeper backgrounds, focus states) from Read-only elements (plain text with subtle labels, no bounding boxes).
+- Label is written in Korean not English.
 
 ## 4. Anti-Patterns (Strict Constraints)
 - **Never modify business logic**: Do not alter data fetching, API endpoints, or state manipulation logic unless explicitly instructed.
