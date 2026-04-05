@@ -6,10 +6,15 @@ export class LoginPage {
   constructor(private page: Page) {}
 
   async goto() {
-    // CRITICAL: Set sessionStorage BEFORE page load so MSW activates on startup
+    // CRITICAL: Set sessionStorage BEFORE page load so MSW activates on startup.
+    // Use conditional setting to avoid overriding scenario toggles in E2E tests on reload.
     await this.page.addInitScript(() => {
-      window.sessionStorage.setItem('mock-enabled', 'true');
-      window.sessionStorage.setItem('mock-scenario', 'default');
+      if (!window.sessionStorage.getItem('mock-enabled')) {
+        window.sessionStorage.setItem('mock-enabled', 'true');
+      }
+      if (!window.sessionStorage.getItem('mock-scenario')) {
+        window.sessionStorage.setItem('mock-scenario', 'default');
+      }
     });
     await this.page.goto('/');
     await this.page.waitForLoadState('networkidle');

@@ -2,6 +2,8 @@ import { test, expect } from '@playwright/test';
 import { LoginPage } from '../pages/LoginPage';
 
 test.describe('Service Request Management - Complete UI Coverage', () => {
+  // Run tests serially to avoid state pollution between modal interactions
+  test.describe.configure({ mode: 'serial' });
   let loginPage: LoginPage;
 
   test.beforeEach(async ({ page }) => {
@@ -85,19 +87,26 @@ test.describe('Service Request Management - Complete UI Coverage', () => {
     test('TC-4.1 & TC-4.2: 상세 조회, 편집 모드 진입 및 상태 변경', async ({ page }) => {
       // 임의의 ROW 선택
       await page.locator('[data-testid^="req-table-row-"]').first().click();
-      await expect(page.getByTestId('req-detail-edit-btn')).toBeVisible();
 
-      // 편집 모드 전환
-      await page.getByTestId('req-detail-edit-btn').click();
+      // 모달 데이터 로딩 완료 대기 — Ticket ID(reqNumber)가 보이면 API 응답 완료
+      await expect(page.locator('.tw-font-mono.tw-font-bold')).toBeVisible({ timeout: 10000 });
+
+      // 편집/삭제 버튼은 canEdit 조건(ROLE_ADMIN & not CLOSED) 충족 시 표시
+      await expect(page.getByTestId('req-detail-edit-btn')).toBeVisible({ timeout: 10000 });
+
+      // 편집 모드 전환 — 스크롤 후 클릭 (모달 footer 버튼)
+      const editBtn = page.getByTestId('req-detail-edit-btn');
+      await editBtn.scrollIntoViewIfNeeded();
+      await editBtn.click({ force: true });
       
-      // 제목 수정 확인
-      await expect(page.getByTestId('req-detail-title-input')).toBeVisible();
+      // 제목 수정 확인 — React setState 후 DOM 렌더링 대기
+      await expect(page.getByTestId('req-detail-title-input')).toBeVisible({ timeout: 8000 });
       await page.getByTestId('req-detail-title-input').fill('수정된 제목입니다');
 
       // 상태를 해결로 변경 후 해결코드 미입력 제한 확인
       await page.getByTestId('req-detail-status-select').selectOption('RESOLVED');
       
-      // 저장 클릭 시도
+      // 저장 클릭 시도 (alert 발생 시 자동 수락)
       page.on('dialog', dialog => dialog.accept());
       await page.getByTestId('req-detail-save-btn').click();
 
@@ -108,14 +117,18 @@ test.describe('Service Request Management - Complete UI Coverage', () => {
     test('TC-4.3: 삭제 프로세스 테스트', async ({ page }) => {
       // 임의의 ROW 선택
       await page.locator('[data-testid^="req-table-row-"]').first().click();
-      
-      // 삭제 버튼 클릭
+
+      // 모달 데이터 로딩 완료 대기
+      await expect(page.locator('.tw-font-mono.tw-font-bold')).toBeVisible({ timeout: 10000 });
+
+      // 삭제 버튼 클릭 (isAdminOrOperator 조건 필요)
+      await expect(page.getByTestId('req-detail-delete-btn')).toBeVisible({ timeout: 10000 });
       await page.getByTestId('req-detail-delete-btn').click();
       
       // 삭제 확인 팝업 등장 확인
-      await expect(page.getByTestId('req-detail-delete-confirm-btn')).toBeVisible();
+      await expect(page.getByTestId('req-detail-delete-confirm-btn')).toBeVisible({ timeout: 5000 });
 
-      // 취소나 닫기 액션으로 원복
+      // 취소로 원복
       await page.getByText('취소').click();
       await expect(page.getByTestId('req-detail-delete-confirm-btn')).not.toBeVisible();
     });
