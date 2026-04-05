@@ -53,24 +53,37 @@ public class RequestController {
     }
 
     @GetMapping("/{id}")
-    public RequestDTO getRequest(@PathVariable Long id) {
-        return requestService.getRequest(id);
+    public RequestDTO getRequest(
+            @PathVariable Long id,
+            @RequestHeader(value = "X-Company-ID", required = false) String companyId,
+            @RequestHeader(value = "X-MSP-ID", required = false) String mspId) {
+        return requestService.getRequest(id, companyId, mspId);
     }
 
     @PutMapping("/{id}")
-    public RequestDTO updateRequest(@PathVariable Long id, @RequestBody RequestDTO dto) {
-        return requestService.updateRequest(id, dto);
+    public RequestDTO updateRequest(
+            @PathVariable Long id, 
+            @RequestBody RequestDTO dto,
+            @RequestHeader(value = "X-Company-ID", required = false) String companyId,
+            @RequestHeader(value = "X-MSP-ID", required = false) String mspId) {
+        return requestService.updateRequest(id, dto, companyId, mspId);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteRequest(@PathVariable Long id) {
-        requestService.deleteRequest(id);
+    public void deleteRequest(
+            @PathVariable Long id,
+            @RequestHeader(value = "X-Company-ID", required = false) String companyId,
+            @RequestHeader(value = "X-MSP-ID", required = false) String mspId) {
+        requestService.deleteRequest(id, companyId, mspId);
     }
 
     @GetMapping("/{id}/history")
-    public List<com.itsm.request.dto.RequestHistoryDTO> getHistory(@PathVariable Long id) {
-        return requestService.getHistory(id);
+    public List<com.itsm.request.dto.RequestHistoryDTO> getHistory(
+            @PathVariable Long id,
+            @RequestHeader(value = "X-Company-ID", required = false) String companyId,
+            @RequestHeader(value = "X-MSP-ID", required = false) String mspId) {
+        return requestService.getHistory(id, companyId, mspId);
     }
 
     // --- Comments ---

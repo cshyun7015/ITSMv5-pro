@@ -110,17 +110,20 @@ public class RequestServiceImpl implements RequestService {
 
     @Override
     @Transactional(readOnly = true)
-    public RequestDTO getRequest(Long id) {
+    public RequestDTO getRequest(Long id, String companyId, String mspId) {
         Request request = requestRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("Request not found: " + id, HttpStatus.NOT_FOUND));
+        validateAccess(request, companyId, mspId);
         return convertToDTO(request);
     }
 
     @Override
     @Transactional
-    public RequestDTO updateRequest(Long id, RequestDTO dto) {
+    public RequestDTO updateRequest(Long id, RequestDTO dto, String companyId, String mspId) {
         Request request = requestRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("Request not found: " + id, HttpStatus.NOT_FOUND));
+        
+        validateAccess(request, companyId, mspId);
         
         String oldStatus = request.getStatus();
         String newStatus = dto.getStatus();
@@ -197,9 +200,26 @@ public class RequestServiceImpl implements RequestService {
                 .build());
     }
 
+    private void validateAccess(Request request, String companyId, String mspId) {
+        if (companyId != null && !"MSP".equals(companyId)) {
+            if (!companyId.equals(request.getCompanyId())) {
+                throw new BusinessException("Access denied: You do not have permission to access requests from other companies.", HttpStatus.FORBIDDEN);
+            }
+        }
+        if ("MSP".equals(companyId) && mspId != null) {
+            if (!mspId.equals(request.getMspId())) {
+                throw new BusinessException("Access denied: You do not have permission to access requests assigned to other MSPs.", HttpStatus.FORBIDDEN);
+            }
+        }
+    }
+
     @Override
     @Transactional(readOnly = true)
-    public List<RequestHistoryDTO> getHistory(Long requestId) {
+    public List<RequestHistoryDTO> getHistory(Long requestId, String companyId, String mspId) {
+        Request request = requestRepository.findById(requestId)
+                .orElseThrow(() -> new BusinessException("Request not found: " + requestId, HttpStatus.NOT_FOUND));
+        validateAccess(request, companyId, mspId);
+
         return historyRepository.findByRequestIdOrderByCreatedAtDesc(requestId).stream()
                 .map(history -> RequestHistoryDTO.builder()
                         .id(history.getId())
@@ -216,8 +236,11 @@ public class RequestServiceImpl implements RequestService {
 
     @Override
     @Transactional
-    public void deleteRequest(Long id) {
-        requestRepository.deleteById(id);
+    public void deleteRequest(Long id, String companyId, String mspId) {
+        Request request = requestRepository.findById(id)
+                .orElseThrow(() -> new BusinessException("Request not found: " + id, HttpStatus.NOT_FOUND));
+        validateAccess(request, companyId, mspId);
+        requestRepository.delete(request);
     }
 
     @Override
