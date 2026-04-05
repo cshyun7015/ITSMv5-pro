@@ -10,8 +10,10 @@ import org.springframework.stereotype.Repository;
 import java.util.Collection;
 import java.util.Optional;
 
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+
 @Repository
-public interface IncidentRepository extends JpaRepository<Incident, Long> {
+public interface IncidentRepository extends JpaRepository<Incident, Long>, JpaSpecificationExecutor<Incident> {
     Optional<Incident> findByIncidentId(String incidentId);
     Page<Incident> findAllByTenantIdOrderByCreatedAtDesc(String tenantId, Pageable pageable);
     Page<Incident> findByTenantIdAndStatusInOrderByCreatedAtDesc(String tenantId, Collection<IncidentStatus> statuses, Pageable pageable);

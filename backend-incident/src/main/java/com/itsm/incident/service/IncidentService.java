@@ -11,10 +11,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import jakarta.persistence.criteria.Predicate;
+import java.util.ArrayList;
+import java.util.Collection;
 
 @Service
 @RequiredArgsConstructor
@@ -39,6 +43,7 @@ public class IncidentService {
                 .status(IncidentStatus.NEW)
                 .requesterId(dto.getRequesterId())
                 .assignmentGroupId(dto.getAssignmentGroupId())
+                .mspId(dto.getMspId())
                 .traceId(dto.getTraceId())
                 .eventId(dto.getEventId())
                 .build();
@@ -99,18 +104,46 @@ public class IncidentService {
         if (dto.getSubCategoryId() != null) incident.setSubCategoryId(dto.getSubCategoryId());
         if (dto.getServiceId() != null) incident.setServiceId(dto.getServiceId());
         if (dto.getCiId() != null) incident.setCiId(dto.getCiId());
+        if (dto.getMspId() != null) incident.setMspId(dto.getMspId());
         
         return toDTO(repository.save(incident));
     }
 
-    public Page<IncidentDTO> getList(String tenantId, Collection<IncidentStatus> statuses, Pageable pageable) {
-        Page<Incident> page;
-        if (statuses != null && !statuses.isEmpty()) {
-            page = repository.findByTenantIdAndStatusInOrderByCreatedAtDesc(tenantId, statuses, pageable);
-        } else {
-            page = repository.findAllByTenantIdOrderByCreatedAtDesc(tenantId, pageable);
-        }
-        return page.map(this::toDTO);
+    public Page<IncidentDTO> getList(
+            String tenantId, 
+            String mspId,
+            String assignmentGroupId,
+            LocalDateTime startDate, 
+            LocalDateTime endDate,
+            Collection<IncidentStatus> statuses, 
+            Pageable pageable) {
+
+        Specification<Incident> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            if (tenantId != null && !tenantId.isEmpty()) {
+                predicates.add(cb.equal(root.get("tenantId"), tenantId));
+            }
+            if (mspId != null && !mspId.isEmpty()) {
+                predicates.add(cb.equal(root.get("mspId"), mspId));
+            }
+            if (assignmentGroupId != null && !assignmentGroupId.isEmpty()) {
+                predicates.add(cb.equal(root.get("assignmentGroupId"), assignmentGroupId));
+            }
+            if (startDate != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), startDate));
+            }
+            if (endDate != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), endDate));
+            }
+            if (statuses != null && !statuses.isEmpty()) {
+                predicates.add(root.get("status").in(statuses));
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        return repository.findAll(spec, pageable).map(this::toDTO);
     }
 
     public IncidentDTO getById(Long id) {
@@ -139,6 +172,7 @@ public class IncidentService {
                 .subCategoryId(entity.getSubCategoryId())
                 .serviceId(entity.getServiceId())
                 .ciId(entity.getCiId())
+                .mspId(entity.getMspId())
                 .impact(entity.getImpact())
                 .urgency(entity.getUrgency())
                 .priority(entity.getPriority())

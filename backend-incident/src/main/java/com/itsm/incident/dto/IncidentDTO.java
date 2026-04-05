@@ -21,6 +21,7 @@ public class IncidentDTO {
     private String subCategoryId;
     private String serviceId;
     private String ciId;
+    private String mspId;
     
     private IncidentChannel channel;
     private IncidentImpact impact;

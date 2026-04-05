@@ -2,11 +2,13 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { apiIncident, type IncidentDTO } from './api/apiIncident';
 import { useAuth } from '../auth/AuthProvider';
+import CustomerCompany, { type CustomerCompanyDTO, type OperatorCompanyDTO } from '../organization/customercompany/api/CustomerCompany';
 import { 
   AlertTriangle, Plus, Search, 
   Activity, Clock, 
   Trash2, Zap, Database, 
-  Edit2, AlertOctagon
+  Edit2, AlertOctagon,
+  Building2, Users
 } from 'lucide-react';
 import IncidentFormModal from './IncidentFormModal';
 import './Incident.css';
@@ -126,6 +128,31 @@ const IncidentManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
+  // Lists from System
+  const [customerList, setCustomerList] = useState<CustomerCompanyDTO[]>([]);
+  const [mspList, setMspList] = useState<OperatorCompanyDTO[]>([]);
+
+  // Advanced Filters
+  const [filterCustomer, setFilterCustomer] = useState('');
+  const [filterMsp, setFilterMsp] = useState('');
+  const [filterStartDate, setFilterStartDate] = useState('');
+  const [filterEndDate, setFilterEndDate] = useState('');
+  const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
+
+  useEffect(() => {
+    const fetchMetadata = async () => {
+      try {
+        const [customers, msps] = await Promise.all([
+          CustomerCompany.getCustomerCompanies(),
+          CustomerCompany.getOperatorCompanies()
+        ]);
+        setCustomerList(customers);
+        setMspList(msps);
+      } catch (err) { console.error('Metadata fetch failed', err); }
+    };
+    fetchMetadata();
+  }, []);
+
   const fetchIncidents = async (refreshSelectedId?: number) => {
     try {
       let statusParams: string[] = [];
@@ -133,7 +160,16 @@ const IncidentManagement: React.FC = () => {
       else if (activeTab === 'ON_HOLD') statusParams = ['ON_HOLD'];
       else if (activeTab === 'CLOSED') statusParams = ['RESOLVED', 'CLOSED'];
 
-      const res = await apiIncident.list('SYSTEM', statusParams, currentPage - 1, itemsPerPage);
+      const res = await apiIncident.list({
+        tenantId: filterCustomer || undefined,
+        mspId: filterMsp || undefined,
+        startDate: filterStartDate ? `${filterStartDate}T00:00:00` : undefined,
+        endDate: filterEndDate ? `${filterEndDate}T23:59:59` : undefined,
+        status: statusParams,
+        page: currentPage - 1,
+        size: itemsPerPage
+      });
+      
       setIncidents(res.data.content);
       setTotalElements(res.data.totalElements);
       setTotalPages(res.data.totalPages);
@@ -154,14 +190,22 @@ const IncidentManagement: React.FC = () => {
     );
   }, [incidents, searchTerm]);
 
-  // Reset page when tab or search changes (Search is still client-side here for simplicity, 
-  // but status is server-side)
+  // Aggregation per MSP for current view
+  const mspAggregates = useMemo(() => {
+    const counts: Record<string, number> = {};
+    incidents.forEach(inc => {
+      const msp = inc.mspId || 'Unassigned';
+      counts[msp] = (counts[msp] || 0) + 1;
+    });
+    return Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  }, [incidents]);
+
   useEffect(() => { setCurrentPage(1); }, [activeTab]);
 
   const handleAction = async (type: 'create' | 'update', data: IncidentDTO) => {
     try {
       if (type === 'create') {
-        await apiIncident.create({ ...data, tenantId: 'SYSTEM', requesterId: user?.userId || 'admin' });
+        await apiIncident.create({ ...data, tenantId: data.tenantId || 'SYSTEM', requesterId: user?.userId || 'admin' });
         fetchIncidents();
       } else {
         const targetId = editingIncident?.id || selectedIncident?.id;
@@ -187,131 +231,206 @@ const IncidentManagement: React.FC = () => {
 
   return (
     <div className="inc-scoped">
-      <div className="inc-root tw-p-8 tw-bg-slate-950/50 tw-min-h-screen tw-rounded-[40px]">
-        {/* 🚀 Tactical Header */}
-        <header className="tw-flex tw-justify-between tw-items-center tw-mb-10">
-          <div className="tw-flex tw-items-center tw-gap-6">
-            <div className="tw-p-4 tw-bg-blue-600/10 tw-rounded-3xl tw-border tw-border-blue-500/20 tw-shadow-2xl tw-shadow-blue-500/10">
-              <Activity className="tw-text-blue-400" size={32} />
+      <div className="inc-root tw-p-6 tw-bg-slate-950/50 tw-min-h-screen tw-rounded-[32px]">
+        {/* 🚀 Tactical Header - Condensed */}
+        <header className="tw-flex tw-justify-between tw-items-center tw-mb-8">
+          <div className="tw-flex tw-items-center tw-gap-4">
+            <div className="tw-p-3 tw-bg-blue-600/10 tw-rounded-2xl tw-border tw-border-blue-500/20 tw-shadow-blue-500/10">
+              <Activity className="tw-text-blue-400" size={24} />
             </div>
             <div>
-              <h1 className="tw-text-3xl tw-font-black tw-tracking-tight tw-text-white tw-flex tw-items-center tw-gap-2">
-                인시던트 관제 센터 <span className="tw-text-sm tw-font-bold tw-py-1 tw-px-3 tw-bg-white/5 tw-rounded-full tw-text-slate-400 tw-border tw-border-white/10 tw-tracking-widest tw-ml-4">현장 운영 실습</span>
+              <h1 className="tw-text-2xl tw-font-black tw-tracking-tight tw-text-white tw-flex tw-items-center tw-gap-2">
+                인시던트 관제 센터
               </h1>
-              <p className="tw-text-slate-500 tw-font-bold tw-uppercase tw-text-[10px] tw-tracking-widest tw-mt-1">실시간 서비스 복구 및 트리아지 워크스페이스</p>
+              <p className="tw-text-slate-500 tw-font-bold tw-uppercase tw-text-[9px] tw-tracking-widest">Enterprise Incident Triage & Governance</p>
             </div>
           </div>
           <button 
-            className="tw-px-6 tw-py-3 tw-bg-blue-600 hover:tw-bg-blue-500 tw-text-white tw-rounded-2xl tw-font-black tw-flex tw-items-center tw-gap-2 tw-shadow-lg tw-shadow-blue-600/20 tw-transition-all active:tw-scale-95"
+            className="tw-px-5 tw-py-2.5 tw-bg-blue-600 hover:tw-bg-blue-500 tw-text-white tw-rounded-xl tw-text-xs tw-font-black tw-flex tw-items-center tw-gap-2 tw-transition-all active:tw-scale-95"
             onClick={() => { setEditingIncident(null); setIsModalOpen(true); }}
           >
-            <Plus size={20} /> 티켓 생성
+            <Plus size={16} /> 티켓 생성
           </button>
         </header>
 
-        {/* 📈 Bento Stats Ribbon */}
-        <div className="tw-grid tw-grid-cols-4 tw-gap-4 tw-mb-8">
-          {[
-            { label: '전체 로드', value: incidents.length, icon: Database, color: 'tw-text-slate-400' },
-            { label: '심각 장애 (P1)', value: incidents.filter(i => i.priority === 'P1').length, icon: AlertTriangle, color: 'tw-text-rose-500' },
-            { label: '진행 중인 작업', value: incidents.filter(i => i.status !== 'RESOLVED').length, icon: Zap, color: 'tw-text-amber-400' },
-            { label: 'SLA 경고/위반', value: incidents.filter(i => i.isSlaBreached).length, icon: Clock, color: 'tw-text-rose-400' }
-          ].map((stat, idx) => (
-            <div key={idx} className="inc-card tw-p-6">
-              <div className="tw-flex tw-justify-between tw-items-start tw-mb-4">
-                <stat.icon className={stat.color} size={24} />
-                <div className="tw-text-[10px] tw-text-slate-600 tw-font-black tw-uppercase tw-tracking-widest">실시간</div>
-              </div>
-              <div className="tw-text-3xl tw-font-black tw-text-white">{stat.value}</div>
-              <div className="tw-text-[10px] tw-text-slate-500 tw-font-bold tw-uppercase tw-mt-1">{stat.label}</div>
+        {/* 📈 Bento Stats Ribbon - Condensed with MSP Insights */}
+        <div className="tw-grid tw-grid-cols-4 tw-gap-4 tw-mb-6">
+          <div className="inc-card tw-p-4">
+            <div className="tw-flex tw-justify-between tw-items-center tw-mb-2">
+              <Database className="tw-text-slate-400" size={18} />
+              <span className="tw-text-[9px] tw-text-slate-600 tw-font-black tw-uppercase">Load</span>
             </div>
-          ))}
+            <div className="tw-text-2xl tw-font-black tw-text-white">{totalElements}</div>
+            <div className="tw-text-[9px] tw-text-slate-500 tw-font-bold tw-uppercase">전체 인시던트</div>
+          </div>
+          <div className="inc-card tw-p-4">
+            <div className="tw-flex tw-justify-between tw-items-center tw-mb-2">
+              <Clock className="tw-text-emerald-400" size={18} />
+              <span className="tw-text-[9px] tw-text-slate-600 tw-font-black tw-uppercase">Priority</span>
+            </div>
+            <div className="tw-text-2xl tw-font-black tw-text-white">{incidents.filter(i => i.priority === 'P1').length}</div>
+            <div className="tw-text-[9px] tw-text-slate-500 tw-font-bold tw-uppercase">긴급 장애(P1)</div>
+          </div>
+          <div className="inc-card tw-p-4 tw-col-span-2">
+            <div className="tw-flex tw-justify-between tw-items-center tw-mb-2">
+              <Building2 className="tw-text-blue-400" size={18} />
+              <span className="tw-text-[9px] tw-text-slate-600 tw-font-black tw-uppercase">MSP Distribution (Top MSPs)</span>
+            </div>
+            <div className="tw-flex tw-gap-4">
+              {mspAggregates.slice(0, 3).map(([msp, count]) => (
+                <div key={msp} className="tw-flex tw-items-center tw-gap-2">
+                  <div className="tw-text-lg tw-font-black tw-text-white">{count}</div>
+                  <div className="tw-text-[8px] tw-font-black tw-text-slate-400 tw-bg-white/5 tw-px-2 tw-py-1 tw-rounded">{msp}</div>
+                </div>
+              ))}
+              {mspAggregates.length === 0 && <div className="tw-text-xs tw-text-slate-600 tw-py-1">현 페이지 데이터 없음</div>}
+            </div>
+          </div>
         </div>
 
-        <div className="tw-grid tw-grid-cols-12 tw-gap-8">
-          {/* Main List */}
-          <div className="tw-col-span-12 lg:tw-col-span-8">
-            {/* 🏷️ Status Quick-Tabs */}
-            <div className="tw-flex tw-gap-2 tw-mb-6">
-              {[
-                { id: 'ALL', label: '전체 목록' },
-                { id: 'ACTIVE', label: '진행 중' },
-                { id: 'ON_HOLD', label: '보류됨' },
-                { id: 'CLOSED', label: '종료/해결' }
-              ].map(tab => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
-                  className={`tw-px-5 tw-py-2.5 tw-rounded-2xl tw-text-xs tw-font-black tw-transition-all tw-flex tw-items-center tw-gap-2 ${activeTab === tab.id ? 'tw-bg-blue-600 tw-text-white tw-shadow-lg tw-shadow-blue-600/30' : 'tw-bg-white/5 tw-text-slate-500 hover:tw-bg-white/10'}`}
+        <div className="tw-grid tw-grid-cols-12 tw-gap-6">
+          <div className="tw-col-span-12">
+            <div className="tw-flex tw-justify-between tw-items-center tw-mb-4">
+              <div className="tw-flex tw-gap-1.5">
+                {[
+                  { id: 'ALL', label: 'ALL' },
+                  { id: 'ACTIVE', label: 'ACTIVE' },
+                  { id: 'ON_HOLD', label: 'HOLD' },
+                  { id: 'CLOSED', label: 'RESOLVED' }
+                ].map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id as any)}
+                    className={`tw-px-4 tw-py-1.5 tw-rounded-xl tw-text-[10px] tw-font-black tw-transition-all ${activeTab === tab.id ? 'tw-bg-blue-600 tw-text-white' : 'tw-bg-white/5 tw-text-slate-500 hover:tw-bg-white/10'}`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+              <div className="tw-flex tw-gap-3">
+                <button 
+                  onClick={() => setShowAdvancedSearch(!showAdvancedSearch)}
+                  className={`tw-px-3 tw-py-1.5 tw-rounded-xl tw-text-[10px] tw-font-black tw-transition-all tw-flex tw-items-center tw-gap-2 ${showAdvancedSearch ? 'tw-bg-blue-600 tw-text-white' : 'tw-bg-white/5 tw-text-slate-400'}`}
                 >
-                  {tab.label}
-                  {activeTab === tab.id && <span className="tw-px-2 tw-py-0.5 tw-bg-white/20 tw-rounded-lg tw-text-[9px]">{totalElements}</span>}
+                  <Search size={14} /> FILTER
                 </button>
-              ))}
-            </div>
-
-            <div className="tw-flex tw-justify-between tw-items-center tw-mb-6">
-              <div className="tw-text-sm tw-font-black tw-text-slate-400 tw-uppercase tw-tracking-widest">인시던트 ({totalElements})</div>
-              <div className="tw-relative">
-                <Search className="tw-absolute tw-left-4 tw-top-1/2 tw--translate-y-1/2 tw-text-slate-500" size={16} />
-                <input 
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                  className="tw-bg-slate-900/60 tw-border tw-border-white/5 tw-rounded-2xl tw-pl-12 tw-pr-4 tw-py-2 tw-text-sm tw-outline-none tw-w-64 focus:tw-border-blue-500/50" 
-                  placeholder="ID 또는 제목 검색..." 
-                />
+                <div className="tw-relative">
+                  <Search className="tw-absolute tw-left-3 tw-top-1/2 tw--translate-y-1/2 tw-text-slate-600" size={14} />
+                  <input 
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                    className="tw-bg-slate-900/60 tw-border tw-border-white/5 tw-rounded-xl tw-pl-9 tw-pr-3 tw-py-1.5 tw-text-[10px] tw-outline-none tw-w-48" 
+                    placeholder="Search Title/ID..." 
+                  />
+                </div>
               </div>
             </div>
 
-            <div className="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-4">
+            <AnimatePresence>
+              {showAdvancedSearch && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -10, height: 0 }}
+                  animate={{ opacity: 1, y: 0, height: 'auto' }}
+                  exit={{ opacity: 0, y: -10, height: 0 }}
+                  className="tw-mb-4 tw-overflow-visible"
+                >
+                  <div className="tw-p-4 tw-bg-slate-900/80 tw-backdrop-blur-xl tw-border tw-border-white/10 tw-rounded-2xl tw-shadow-2xl">
+                    <div className="tw-flex tw-flex-wrap tw-items-end tw-gap-3">
+                      <div className="tw-flex-1 tw-min-w-[160px] tw-space-y-1.5">
+                        <label className="tw-text-[9px] tw-font-black tw-text-slate-600 tw-uppercase">고객사</label>
+                        <select 
+                          value={filterCustomer}
+                          onChange={e => setFilterCustomer(e.target.value)}
+                          className="tw-w-full tw-bg-slate-800 tw-border tw-border-white/10 tw-rounded-lg tw-px-2 tw-py-1.5 tw-text-[10px] tw-text-white tw-outline-none"
+                        >
+                          <option value="">전체 고객사</option>
+                          {customerList.map(c => (
+                            <option key={c.id} value={c.customerId}>{c.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="tw-flex-1 tw-min-w-[160px] tw-space-y-1.5">
+                        <label className="tw-text-[9px] tw-font-black tw-text-slate-600 tw-uppercase">운영사 (MSP)</label>
+                        <select 
+                          value={filterMsp}
+                          onChange={e => setFilterMsp(e.target.value)}
+                          className="tw-w-full tw-bg-slate-800 tw-border tw-border-white/10 tw-rounded-lg tw-px-2 tw-py-1.5 tw-text-[10px] tw-text-white tw-outline-none"
+                        >
+                          <option value="">전체 운영사</option>
+                          {mspList.map(m => (
+                            <option key={m.id} value={m.operatorCompanyId}>{m.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="tw-flex-[1.2] tw-min-w-[240px] tw-space-y-1.5">
+                        <label className="tw-text-[9px] tw-font-black tw-text-slate-600 tw-uppercase">발생일 범위</label>
+                        <div className="tw-flex tw-items-center tw-gap-2">
+                          <input type="date" value={filterStartDate} onChange={e => setFilterStartDate(e.target.value)} className="tw-flex-1 tw-bg-white/5 tw-border tw-border-white/10 tw-rounded-lg tw-px-2 tw-py-1.5 tw-text-[10px] tw-text-white" />
+                          <span className="tw-text-slate-700 tw-text-[10px]">~</span>
+                          <input type="date" value={filterEndDate} onChange={e => setFilterEndDate(e.target.value)} className="tw-flex-1 tw-bg-white/5 tw-border tw-border-white/10 tw-rounded-lg tw-px-2 tw-py-1.5 tw-text-[10px] tw-text-white" />
+                        </div>
+                      </div>
+                      <div className="tw-flex tw-gap-2 tw-ml-auto">
+                        <button onClick={() => { setFilterCustomer(''); setFilterMsp(''); setFilterStartDate(''); setFilterEndDate(''); fetchIncidents(); }} className="tw-px-3 tw-py-1.5 tw-rounded-lg tw-bg-white/5 tw-text-slate-500 tw-text-[10px] tw-font-bold">Reset</button>
+                        <button onClick={() => { setCurrentPage(1); fetchIncidents(); }} className="tw-px-5 tw-py-1.5 tw-rounded-lg tw-bg-blue-600 tw-text-white tw-text-[10px] tw-font-bold shadow-lg shadow-blue-600/20">Apply Filters</button>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <div className="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 xl:tw-grid-cols-3 tw-gap-4">
               <AnimatePresence>
                 {filteredIncidents.map((inc) => (
                   <motion.div
                     layout
                     key={inc.id}
-                    initial={{ opacity: 0, scale: 0.95 }}
+                    initial={{ opacity: 0, scale: 0.98 }}
                     animate={{ opacity: 1, scale: 1 }}
                     onClick={() => setSelectedIncident(inc)}
-                    className={`inc-card tw-p-6 tw-cursor-pointer tw-relative ${inc.priority === 'P1' ? 'inc-p1-pulse' : ''} ${selectedIncident?.id === inc.id ? 'tw-ring-2 tw-ring-blue-500/50 tw-bg-blue-900/10' : ''}`}
+                    className={`inc-card tw-p-5 tw-cursor-pointer tw-relative tw-duration-300 hover:tw-translate-y-[-2px] ${inc.priority === 'P1' ? 'inc-p1-pulse' : ''} ${selectedIncident?.id === inc.id ? 'tw-ring-1 tw-ring-blue-500/50 tw-bg-blue-900/5' : ''}`}
                   >
-                    <div className="tw-flex tw-justify-between tw-mb-3">
-                      <span className="tw-text-[10px] tw-font-mono tw-text-blue-500 tw-font-bold">{inc.incidentId}</span>
-                      <div className="tw-flex tw-gap-2">
-                        {inc.isMajorIncident && (
-                          <span className="tw-bg-rose-500 tw-text-white tw-text-[9px] tw-font-black tw-px-2 tw-py-0.5 tw-rounded-full tw-animate-pulse">
-                            메이저
+                    <div className="tw-flex tw-justify-between tw-items-start tw-mb-3">
+                      <div className="tw-flex tw-flex-col tw-gap-1">
+                        <span className="tw-text-[9px] tw-font-mono tw-text-blue-500 tw-font-black">{inc.incidentId}</span>
+                        <div className="tw-flex tw-gap-1.5">
+                           <span className={`tw-px-2 tw-py-0.5 tw-rounded tw-text-[8px] tw-font-black ${inc.status === 'NEW' ? 'tw-bg-blue-500/20 tw-text-blue-400' : 'tw-bg-emerald-500/10 tw-text-emerald-500'}`}>
+                            {STATUS_LABELS[inc.status] || inc.status}
                           </span>
-                        )}
-                        <span className={`inc-badge ${inc.status === 'NEW' ? 'tw-bg-blue-500/20 tw-text-blue-400' : 'tw-bg-emerald-500/10 tw-text-emerald-500'}`}>
-                          {STATUS_LABELS[inc.status] || inc.status}
-                        </span>
-                        <span className={`inc-badge ${inc.priority === 'P1' ? 'inc-p1' : 'tw-bg-white/5 tw-text-slate-400'}`}>
-                          {inc.priority}
-                        </span>
+                           {inc.isMajorIncident && (
+                            <span className="tw-bg-rose-600/20 tw-text-rose-500 tw-text-[8px] tw-font-black tw-px-1.5 tw-py-0.5 tw-rounded tw-flex tw-items-center tw-gap-1">
+                               MAJOR
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="tw-bg-white/5 tw-px-2 tw-py-1 tw-rounded-lg tw-text-[10px] tw-font-black tw-text-slate-500">
+                        {inc.priority}
                       </div>
                     </div>
-                    <h3 className="tw-text-base tw-font-bold tw-text-white tw-leading-tight tw-mb-4">{inc.title}</h3>
-                    <SLACountdown dueDate={inc.slaDueDate} isBreached={inc.isSlaBreached} />
+                    <h3 className="tw-text-sm tw-font-black tw-text-white tw-leading-tight tw-mb-4 tw-min-h-[2.5rem] line-clamp-2">{inc.title}</h3>
+                    <div className="tw-pt-3 tw-border-t tw-border-white/5">
+                      <SLACountdown dueDate={inc.slaDueDate} isBreached={inc.isSlaBreached} />
+                    </div>
                   </motion.div>
                 ))}
               </AnimatePresence>
             </div>
 
-            {/* 🔢 Pagination Controls */}
+            {/* 🔢 Pagination Controls - Compact */}
             {totalPages > 1 && (
-              <div className="tw-flex tw-justify-center tw-mt-8 tw-gap-2">
+              <div className="tw-flex tw-justify-center tw-mt-6 tw-gap-2">
                 <button 
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage(p => p - 1)}
-                  className="tw-p-2 tw-rounded-xl tw-bg-white/5 tw-text-slate-400 disabled:tw-opacity-30 hover:tw-bg-white/10 transition-all"
-                >
-                  ◀
-                </button>
+                  className="tw-p-1.5 tw-rounded-lg tw-bg-white/5 tw-text-slate-500 disabled:opacity-30"
+                >◀</button>
                 {Array.from({ length: totalPages }).map((_, i) => (
                   <button
                     key={i}
                     onClick={() => setCurrentPage(i + 1)}
-                    className={`tw-w-10 tw-h-10 tw-rounded-xl tw-text-xs tw-font-black tw-transition-all ${currentPage === i + 1 ? 'tw-bg-blue-600 tw-text-white tw-shadow-lg tw-shadow-blue-600/30' : 'tw-bg-white/5 tw-text-slate-500 hover:tw-bg-white/10'}`}
+                    className={`tw-w-7 tw-h-7 tw-rounded-lg tw-text-[10px] tw-font-black ${currentPage === i + 1 ? 'tw-bg-blue-600 tw-text-white' : 'tw-bg-white/5 tw-text-slate-500'}`}
                   >
                     {i + 1}
                   </button>
@@ -319,161 +438,94 @@ const IncidentManagement: React.FC = () => {
                 <button 
                   disabled={currentPage === totalPages}
                   onClick={() => setCurrentPage(p => p + 1)}
-                  className="tw-p-2 tw-rounded-xl tw-bg-white/5 tw-text-slate-400 disabled:tw-opacity-30 hover:tw-bg-white/10 transition-all"
-                >
-                  ▶
-                </button>
+                  className="tw-p-1.5 tw-rounded-lg tw-bg-white/5 tw-text-slate-500 disabled:opacity-30"
+                >▶</button>
               </div>
             )}
           </div>
+        </div>
 
-          {/* Sidebar Detail */}
-          <AnimatePresence>
-            {selectedIncident && (
+        {/* 🚀 Slide-in Detail Drawer */}
+        <AnimatePresence>
+          {selectedIncident && (
+            <>
               <motion.div 
-                initial={{ x: 30, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                className="tw-col-span-12 lg:tw-col-span-4"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setSelectedIncident(null)}
+                className="tw-fixed tw-inset-0 tw-bg-slate-950/60 tw-backdrop-blur-sm tw-z-[90]"
+              />
+              <motion.div
+                initial={{ x: '100%' }}
+                animate={{ x: 0 }}
+                exit={{ x: '100%' }}
+                transition={{ type: 'spring', damping: 30, stiffness: 200 }}
+                className="tw-fixed tw-right-0 tw-top-0 tw-bottom-0 tw-w-full md:tw-w-[480px] tw-bg-slate-900/98 tw-backdrop-blur-3xl tw-border-l tw-border-white/10 tw-shadow-2xl tw-z-[100] tw-p-8 tw-overflow-y-auto"
               >
-                <div className="tw-bg-slate-900/80 tw-backdrop-blur-2xl tw-rounded-[32px] tw-p-8 tw-border tw-border-white/10 tw-sticky tw-top-8">
-                  <div className="tw-flex tw-justify-between tw-mb-8">
-                     <div>
-                       <span className="tw-text-xs tw-font-mono tw-text-blue-400 tw-font-bold">{selectedIncident.incidentId}</span>
-                       <h2 className="tw-text-xl tw-font-black tw-text-white tw-mt-2">{selectedIncident.title}</h2>
-                     </div>
-                     <div className="tw-flex tw-gap-2">
-                       <button 
-                         onClick={() => { setEditingIncident(selectedIncident); setIsModalOpen(true); }}
-                         className="tw-p-2 hover:tw-bg-blue-500/10 tw-rounded-full tw-text-blue-400 transition-colors"
-                       >
-                         <Edit2 size={18}/>
-                       </button>
-                       <button 
-                         onClick={() => selectedIncident.id && setDeletingId(selectedIncident.id)}
-                         className="tw-p-2 hover:tw-bg-rose-500/10 tw-rounded-full tw-text-rose-500 transition-colors"
-                        >
-                          <Trash2 size={18}/>
-                       </button>
-                     </div>
+                <div className="tw-flex tw-justify-between tw-items-center tw-mb-8">
+                  <div className="tw-text-[10px] tw-font-black tw-text-blue-500 tw-font-mono">{selectedIncident.incidentId}</div>
+                  <div className="tw-flex tw-gap-2">
+                    <button onClick={() => { setEditingIncident(selectedIncident); setIsModalOpen(true); }} className="tw-p-2 tw-bg-white/5 hover:tw-bg-blue-600 tw-text-slate-400 tw-rounded-lg"><Edit2 size={16} /></button>
+                    <button onClick={() => setDeletingId(selectedIncident.id!)} className="tw-p-2 tw-bg-white/5 hover:tw-bg-rose-600 tw-text-slate-400 tw-rounded-lg"><Trash2 size={16} /></button>
+                    <button onClick={() => setSelectedIncident(null)} className="tw-w-8 tw-h-8 tw-bg-white/5 tw-text-white tw-rounded-lg tw-ml-2">✕</button>
+                  </div>
+                </div>
+
+                <div className="tw-space-y-8">
+                  <div>
+                    <h2 className="tw-text-2xl tw-font-black tw-text-white tw-leading-tight">{selectedIncident.title}</h2>
+                    <div className="tw-flex tw-items-center tw-gap-3 tw-mt-4">
+                      <span className={`tw-py-1 tw-px-3 tw-rounded-lg tw-text-[10px] tw-font-black ${selectedIncident.status === 'RESOLVED' ? 'tw-bg-emerald-500/20 tw-text-emerald-500' : 'tw-bg-blue-500/20 tw-text-blue-500'}`}>
+                        {STATUS_LABELS[selectedIncident.status] || selectedIncident.status}
+                      </span>
+                      <span className="tw-py-1 tw-px-3 tw-bg-white/5 tw-text-slate-400 tw-rounded-lg tw-text-[10px] tw-font-black">
+                        {selectedIncident.priority}
+                      </span>
+                    </div>
                   </div>
 
-                  <div className="tw-space-y-8">
-                    <div className="tw-p-6 tw-bg-white/5 tw-rounded-[24px] tw-border tw-border-white/5">
-                       <span className="tw-text-[10px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest">티켓 상세 내용</span>
-                       <p className="tw-text-sm tw-text-slate-300 tw-mt-3 tw-leading-relaxed">{selectedIncident.description}</p>
-                    </div>
+                  <div className="tw-p-6 tw-bg-white/2 tw-rounded-2xl tw-border tw-border-white/5">
+                    <div className="tw-text-[9px] tw-text-slate-600 tw-font-black tw-uppercase tw-tracking-widest tw-mb-2">Description</div>
+                    <p className="tw-text-xs tw-text-slate-300 tw-leading-relaxed tw-whitespace-pre-wrap">{selectedIncident.description}</p>
+                  </div>
 
-                    <div className="tw-grid tw-grid-cols-2 tw-gap-4">
-                       <div className="tw-p-4 tw-bg-white/2 tw-rounded-2xl tw-border tw-border-white/5">
-                         <span className="tw-text-[10px] tw-font-black tw-text-slate-600 tw-uppercase">인시던트 상태</span>
-                         <div className="tw-text-xs tw-font-bold tw-text-blue-400 tw-mt-1 inc-sidebar-status">{STATUS_LABELS[selectedIncident.status] || selectedIncident.status}</div>
-                       </div>
-                       <div className="tw-p-4 tw-bg-white/2 tw-rounded-2xl tw-border tw-border-white/5">
-                         <span className="tw-text-[10px] tw-font-black tw-text-slate-600 tw-uppercase">영향도</span>
-                         <div className="tw-text-xs tw-font-bold tw-text-white tw-mt-1">
-                           {selectedIncident.isMajorIncident ? (
-                             <span className="tw-text-rose-500 tw-font-black">대형 장애</span>
-                           ) : (
-                             selectedIncident.impact
-                           )}
-                         </div>
-                       </div>
-                       <div className="tw-p-4 tw-bg-white/2 tw-rounded-2xl tw-border tw-border-white/5">
-                         <span className="tw-text-[10px] tw-font-black tw-text-slate-600 tw-uppercase">접수 채널</span>
-                         <div className="tw-text-xs tw-font-bold tw-text-white tw-mt-1">{selectedIncident.channel || '기타'}</div>
-                       </div>
-                       <div className="tw-p-4 tw-bg-white/2 tw-rounded-2xl tw-border tw-border-white/5">
-                         <span className="tw-text-[10px] tw-font-black tw-text-slate-600 tw-uppercase">영향 사용자</span>
-                         <div className="tw-text-xs tw-font-bold tw-text-white tw-mt-1">{selectedIncident.affectedUserId || selectedIncident.requesterId}</div>
-                       </div>
+                  <div className="tw-grid tw-grid-cols-2 tw-gap-4">
+                    <div className="tw-p-4 tw-bg-white/5 tw-rounded-xl tw-border tw-border-white/5">
+                      <div className="tw-text-[9px] tw-text-slate-600 tw-font-black tw-uppercase tw-mb-1">Customer</div>
+                      <div className="tw-text-xs tw-font-bold tw-text-white">{selectedIncident.tenantId}</div>
                     </div>
-
-                    <div>
-                      <span className="tw-text-[10px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest tw-mb-4 tw-block">운영 타임라인</span>
-                      <div className="inc-timeline-item">
-                        <div className="inc-timeline-dot" />
-                        <span className="tw-text-[10px] tw-text-slate-500">실시간 처리 피드</span>
-                        <p className="tw-text-xs tw-text-slate-300 tw-mt-1">
-                          {selectedIncident.isMajorIncident ? '중요: 대형 장애에 대한 우선순위 처리가 진행 중입니다. ' : ''}
-                          인시던트의 원인 분석 및 해결 방안을 검토하고 있습니다.
-                        </p>
-                      </div>
+                    <div className="tw-p-4 tw-bg-white/5 tw-rounded-xl tw-border tw-border-white/5">
+                      <div className="tw-text-[9px] tw-text-slate-600 tw-font-black tw-uppercase tw-mb-1">MSP</div>
+                      <div className="tw-text-xs tw-font-bold tw-text-white">{selectedIncident.mspId || 'N/A'}</div>
                     </div>
+                  </div>
 
-                    {/* 🛡️ Status Action Control */}
-                    <div className="tw-pt-6 tw-border-t tw-border-white/5">
-                      <span className="tw-text-[10px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest tw-mb-4 tw-block">워크플로우 조치</span>
-                      <div className="tw-flex tw-flex-col tw-gap-3">
-                        {selectedIncident.status === 'NEW' && (
-                          <button 
-                            onClick={() => handleAction('update', { ...selectedIncident, status: 'ASSIGNED' as any })}
-                            className="tw-w-full tw-py-4 tw-bg-blue-600 hover:tw-bg-blue-500 tw-text-white tw-rounded-2xl tw-text-[10px] tw-font-black shadow-lg tw-shadow-blue-500/20 transition-all active:tw-scale-95"
-                          >
-                            운영자 배정 및 승인
-                          </button>
-                        )}
-                        {(selectedIncident.status === 'ASSIGNED' || selectedIncident.status === 'ON_HOLD') && (
-                          <button 
-                            onClick={() => handleAction('update', { ...selectedIncident, status: 'IN_PROGRESS' as any })}
-                            className="tw-w-full tw-py-4 tw-bg-amber-600 hover:tw-bg-amber-500 tw-text-white tw-rounded-2xl tw-text-[10px] tw-font-black shadow-lg tw-shadow-amber-500/20 transition-all active:tw-scale-95"
-                          >
-                            조치 시작
-                          </button>
-                        )}
-                        {selectedIncident.status === 'IN_PROGRESS' && (
-                          <button 
-                            onClick={() => handleAction('update', { ...selectedIncident, status: 'RESOLVED' as any })}
-                            className="tw-w-full tw-py-4 tw-bg-emerald-600 hover:tw-bg-emerald-500 tw-text-white tw-rounded-2xl tw-text-[10px] tw-font-black shadow-lg tw-shadow-emerald-500/20 transition-all active:tw-scale-95"
-                          >
-                            조치 완료 및 해결
-                          </button>
-                        )}
-                        {['NEW', 'ASSIGNED', 'IN_PROGRESS'].includes(selectedIncident.status) && (
-                          <button 
-                            onClick={() => handleAction('update', { ...selectedIncident, status: 'ON_HOLD' as any })}
-                            className="tw-w-full tw-py-3 tw-bg-slate-800 hover:tw-bg-slate-700 tw-text-slate-300 tw-rounded-2xl tw-text-[10px] tw-font-black transition-all active:tw-scale-95"
-                          >
-                            일시 중단 (Hold)
-                          </button>
-                        )}
-                        {selectedIncident.status === 'RESOLVED' && (
-                          <div className="tw-flex tw-gap-3">
-                            <button 
-                              onClick={() => handleAction('update', { ...selectedIncident, status: 'IN_PROGRESS' as any })}
-                              className="tw-flex-1 tw-py-4 tw-bg-rose-600 hover:tw-bg-rose-500 tw-text-white tw-rounded-2xl tw-text-[10px] tw-font-black transition-all active:tw-scale-95"
-                            >
-                              재오픈 (Re-open)
-                            </button>
-                            <button 
-                              onClick={() => handleAction('update', { ...selectedIncident, status: 'CLOSED' as any })}
-                              className="tw-flex-1 tw-py-4 tw-bg-blue-900 hover:tw-bg-blue-800 tw-text-white tw-rounded-2xl tw-text-[10px] tw-font-black transition-all active:tw-scale-95"
-                            >
-                              최종 종료 처리
-                            </button>
-                          </div>
-                        )}
-                        {selectedIncident.status !== 'CLOSED' && selectedIncident.status !== 'RESOLVED' && (
-                          <button 
-                            onClick={() => handleAction('update', { ...selectedIncident, status: 'CLOSED' as any })}
-                            className="tw-w-full tw-py-3 tw-bg-white/5 hover:tw-bg-white/10 tw-text-rose-500/70 tw-rounded-2xl tw-text-[10px] tw-font-black transition-all active:tw-scale-95"
-                          >
-                            인시던트 취소
-                          </button>
-                        )}
-                        {selectedIncident.status === 'CLOSED' && (
-                          <div className="tw-p-6 tw-bg-white/5 tw-rounded-2xl tw-text-center tw-border tw-border-white/5">
-                            <p className="tw-text-[10px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest">인시던트 종료됨</p>
-                            <p className="tw-text-xs tw-text-slate-500 tw-mt-2">ITIL 데이터 관리 지침에 의해 레코드가 잠겼습니다.</p>
-                          </div>
-                        )}
-                      </div>
+                  <SLACountdown dueDate={selectedIncident.slaDueDate} isBreached={selectedIncident.isSlaBreached} />
+
+                  <div className="tw-p-6 tw-bg-blue-600/5 tw-rounded-2xl tw-border tw-border-blue-500/10">
+                    <div className="tw-text-[10px] tw-font-black tw-text-blue-500 tw-uppercase tw-mb-4">Workflow Actions</div>
+                    <div className="tw-grid tw-grid-cols-2 tw-gap-3">
+                      {['ASSIGNED', 'IN_PROGRESS', 'ON_HOLD', 'RESOLVED', 'CLOSED'].map(s => {
+                         const isCurrent = selectedIncident.status === s;
+                         return (
+                           <button
+                             key={s}
+                             disabled={isCurrent}
+                             onClick={() => handleAction('update', { ...selectedIncident, status: s as any })}
+                             className={`tw-px-3 tw-py-3 tw-rounded-xl tw-text-[9px] tw-font-black ${isCurrent ? 'tw-bg-blue-600 tw-text-white shadow-lg shadow-blue-600/20' : 'tw-bg-white/5 tw-text-slate-500 hover:tw-bg-white/10 opacity-70'}`}
+                           >
+                             {STATUS_LABELS[s] || s}
+                           </button>
+                         );
+                      })}
                     </div>
                   </div>
                 </div>
               </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+            </>
+          )}
+        </AnimatePresence>
       </div>
 
       <AnimatePresence>
@@ -486,12 +538,11 @@ const IncidentManagement: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* 🛡️ Custom Tactical Confirm Modal */}
       <ConfirmModal 
         isOpen={deletingId !== null}
-        title="레코드 영구 삭제"
-        message="이 인시던트를 영구적으로 삭제하시겠습니까? 이 작업은 즉시 실행되며 ITIL 감사 로그에서 복구할 수 없습니다."
-        confirmLabel="지금 삭제"
+        title="Delete Record"
+        message="Permanently remove this incident? This action cannot be undone."
+        confirmLabel="Delete Now"
         onConfirm={confirmDelete}
         onCancel={() => setDeletingId(null)}
       />

@@ -40,6 +40,7 @@ public class Incident {
     private String subCategoryId;
     private String serviceId;
     private String ciId;
+    private String mspId;
 
     @Enumerated(EnumType.STRING)
     private IncidentChannel channel;

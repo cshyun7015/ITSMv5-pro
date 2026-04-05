@@ -24,6 +24,7 @@ export interface IncidentDTO {
   affectedUserId?: string;
   assigneeId?: string;
   assignmentGroupId?: string;
+  mspId?: string;
   createdAt?: string;
   updatedAt?: string;
   resolvedAt?: string;
@@ -46,15 +47,29 @@ export interface PaginatedResponse<T> {
 
 export const apiIncident = {
   create: (data: IncidentDTO) => axios.post<IncidentDTO>(API_BASE_URL, data),
-  list: (tenantId: string, status?: string[], page: number = 0, size: number = 10) => {
-    const params = new URLSearchParams();
-    params.append('tenantId', tenantId);
-    if (status && status.length > 0) {
-      status.forEach(s => params.append('status', s));
+  list: (params: {
+    tenantId?: string;
+    mspId?: string;
+    assignmentGroupId?: string;
+    startDate?: string;
+    endDate?: string;
+    status?: string[];
+    page?: number;
+    size?: number;
+  }) => {
+    const query = new URLSearchParams();
+    if (params.tenantId) query.append('tenantId', params.tenantId);
+    if (params.mspId) query.append('mspId', params.mspId);
+    if (params.assignmentGroupId) query.append('assignmentGroupId', params.assignmentGroupId);
+    if (params.startDate) query.append('startDate', params.startDate);
+    if (params.endDate) query.append('endDate', params.endDate);
+    
+    if (params.status && params.status.length > 0) {
+      params.status.forEach(s => query.append('status', s));
     }
-    params.append('page', page.toString());
-    params.append('size', size.toString());
-    return axios.get<PaginatedResponse<IncidentDTO>>(`${API_BASE_URL}?${params.toString()}`);
+    query.append('page', (params.page || 0).toString());
+    query.append('size', (params.size || 10).toString());
+    return axios.get<PaginatedResponse<IncidentDTO>>(`${API_BASE_URL}?${query.toString()}`);
   },
   get: (id: number) => axios.get<IncidentDTO>(`${API_BASE_URL}/${id}`),
   update: (id: number, data: Partial<IncidentDTO>, userId: string) => 
