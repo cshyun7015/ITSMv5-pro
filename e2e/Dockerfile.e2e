@@ -19,5 +19,4 @@ ENV DB_USER=root
 ENV DB_PASSWORD=itsmpass
 
 # Run playwright tests by default
-# Using --workers=1 for stability in container environment
-CMD ["npx", "playwright", "test", "--workers=1"]
+CMD ["npx", "playwright", "test"]

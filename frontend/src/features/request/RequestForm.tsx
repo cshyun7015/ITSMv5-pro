@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Send, Plus, AlertCircle, Calendar, Hash, User, FileText, Shield, Info, Activity, Monitor } from 'lucide-react';
+import { X, Send, Plus, Calendar, Hash, User, FileText, Shield, Info, Monitor } from 'lucide-react';
 import requestApi from './api/requestApi';
 import { apiCommonCode, type CommonCode } from '../code/api/apiCommonCode';
 import RequestAttachments from './components/RequestAttachments';
@@ -130,7 +130,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onClose }) => {
                 <h2 className="tw-text-lg tw-font-bold tw-text-white">신규 서비스 요청 등록</h2>
              </div>
           </div>
-          <button onClick={onClose} className="tw-p-2 tw-rounded-xl hover:tw-bg-white/5 tw-text-slate-500 hover:tw-text-white tw-transition-all">
+          <button onClick={onClose} className="tw-p-2 tw-rounded-xl hover:tw-bg-white/5 tw-text-slate-500 hover:tw-text-white tw-transition-all" data-testid="req-form-close-btn">
             <X size={24} />
           </button>
         </div>
@@ -151,6 +151,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onClose }) => {
                             value={formData.title}
                             onChange={e => setFormData(f => ({ ...f, title: e.target.value }))}
                             required
+                            data-testid="req-form-title-input"
                         />
                     </div>
                     <div>
@@ -161,6 +162,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onClose }) => {
                             value={formData.description}
                             onChange={e => setFormData(f => ({ ...f, description: e.target.value }))}
                             required
+                            data-testid="req-form-desc-input"
                         />
                     </div>
                 </div>
@@ -185,32 +187,32 @@ const RequestForm: React.FC<RequestFormProps> = ({ onClose }) => {
                 <div className="tw-flex tw-flex-col tw-gap-2">
                     <div className={INFO_BOX_CLASS}>
                         <label className={LABEL_CLASS}>요청 유형</label>
-                        <select className="tw-input tw-w-full tw-text-xs tw-bg-obsidian !tw-py-0.5" value={formData.srTypeCode} onChange={e => setFormData(f => ({ ...f, srTypeCode: e.target.value }))}>
+                        <select className="tw-input tw-w-full tw-text-xs tw-bg-obsidian !tw-py-0.5" value={formData.srTypeCode} onChange={e => setFormData(f => ({ ...f, srTypeCode: e.target.value }))} data-testid="req-form-type-select">
                             {codes.types.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
                         </select>
                     </div>
                     <div className={INFO_BOX_CLASS}>
                         <label className={LABEL_CLASS}>서비스 카테고리</label>
-                        <select className="tw-input tw-w-full tw-text-xs tw-bg-obsidian !tw-py-0.5" value={formData.srCategoryCode} onChange={e => setFormData(f => ({ ...f, srCategoryCode: e.target.value }))}>
+                        <select className="tw-input tw-w-full tw-text-xs tw-bg-obsidian !tw-py-0.5" value={formData.srCategoryCode} onChange={e => setFormData(f => ({ ...f, srCategoryCode: e.target.value }))} data-testid="req-form-category-select">
                             {codes.categories.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
                         </select>
                     </div>
                     <div className={INFO_BOX_CLASS}>
                         <label className={LABEL_CLASS}>유입 경로 (Source)</label>
-                        <select className="tw-input tw-w-full tw-text-xs tw-bg-obsidian !tw-py-0.5" value={formData.srSourceCode} onChange={e => setFormData(f => ({ ...f, srSourceCode: e.target.value }))}>
+                        <select className="tw-input tw-w-full tw-text-xs tw-bg-obsidian !tw-py-0.5" value={formData.srSourceCode} onChange={e => setFormData(f => ({ ...f, srSourceCode: e.target.value }))} data-testid="req-form-source-select">
                             {codes.sources.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
                         </select>
                     </div>
                     <div className="tw-grid tw-grid-cols-2 tw-gap-2">
                         <div className={INFO_BOX_CLASS}>
                             <label className={LABEL_CLASS}>영향도</label>
-                            <select className="tw-input tw-w-full tw-text-xs tw-bg-obsidian !tw-py-0.5" value={formData.srImpactCode} onChange={e => setFormData(f => ({ ...f, srImpactCode: e.target.value }))}>
+                            <select className="tw-input tw-w-full tw-text-xs tw-bg-obsidian !tw-py-0.5" value={formData.srImpactCode} onChange={e => setFormData(f => ({ ...f, srImpactCode: e.target.value }))} data-testid="req-form-impact-select">
                                 {codes.impacts.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
                             </select>
                         </div>
                         <div className={INFO_BOX_CLASS}>
                             <label className={LABEL_CLASS}>긴급도</label>
-                            <select className="tw-input tw-w-full tw-text-xs tw-bg-obsidian !tw-py-0.5" value={formData.srUrgencyCode} onChange={e => setFormData(f => ({ ...f, srUrgencyCode: e.target.value }))}>
+                            <select className="tw-input tw-w-full tw-text-xs tw-bg-obsidian !tw-py-0.5" value={formData.srUrgencyCode} onChange={e => setFormData(f => ({ ...f, srUrgencyCode: e.target.value }))} data-testid="req-form-urgency-select">
                                 {codes.urgencies.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
                             </select>
                         </div>
@@ -225,14 +227,14 @@ const RequestForm: React.FC<RequestFormProps> = ({ onClose }) => {
                         <label className={LABEL_CLASS}>대상 시스템 (CI)</label>
                         <div className="tw-relative">
                             <Info size={12} className="tw-absolute tw-left-2.5 tw-top-1/2 tw--translate-y-1/2 tw-text-slate-500" />
-                            <input type="text" placeholder="시스템/자산명..." className="tw-input tw-w-full tw-pl-8 tw-text-xs tw-bg-obsidian !tw-py-0.5" value={formData.ciId} onChange={e => setFormData(f => ({ ...f, ciId: e.target.value }))} />
+                            <input type="text" placeholder="시스템/자산명..." className="tw-input tw-w-full tw-pl-8 tw-text-xs tw-bg-obsidian !tw-py-0.5" value={formData.ciId} onChange={e => setFormData(f => ({ ...f, ciId: e.target.value }))} data-testid="req-form-ci-input" />
                         </div>
                     </div>
                     <div className={INFO_BOX_CLASS}>
                         <label className={LABEL_CLASS}>희망 완료일</label>
                         <div className="tw-relative">
                             <Calendar size={12} className="tw-absolute tw-left-2.5 tw-top-1/2 tw--translate-y-1/2 tw-text-slate-500" />
-                            <input type="date" className="tw-input tw-w-full tw-pl-8 tw-text-xs tw-bg-obsidian !tw-py-0.5" value={formData.expectedAt} onChange={e => setFormData(f => ({ ...f, expectedAt: e.target.value }))} min={new Date().toISOString().split('T')[0]} />
+                            <input type="date" className="tw-input tw-w-full tw-pl-8 tw-text-xs tw-bg-obsidian !tw-py-0.5" value={formData.expectedAt} onChange={e => setFormData(f => ({ ...f, expectedAt: e.target.value }))} min={new Date().toISOString().split('T')[0]} data-testid="req-form-expected-date" />
                         </div>
                     </div>
                 </div>
@@ -270,8 +272,8 @@ const RequestForm: React.FC<RequestFormProps> = ({ onClose }) => {
             * '서비스 요청 등록' 클릭 시 프로세스가 즉시 시작됩니다.
           </div>
           <div className="tw-flex tw-gap-3">
-             <button type="button" onClick={onClose} className="tw-px-6 tw-py-2 tw-rounded-xl tw-text-xs tw-font-bold tw-text-slate-400 hover:tw-text-white tw-transition-all">취소</button>
-             <button form="requestForm" type="submit" disabled={loading} className="tw-bg-brand-600 hover:tw-bg-brand-500 tw-text-white tw-px-10 tw-py-2 tw-rounded-xl tw-text-xs tw-font-black tw-uppercase tw-tracking-widest tw-transition-all tw-flex tw-items-center tw-gap-2 tw-shadow-lg tw-shadow-brand-600/20 disabled:tw-opacity-50">
+             <button type="button" onClick={onClose} className="tw-px-6 tw-py-2 tw-rounded-xl tw-text-xs tw-font-bold tw-text-slate-400 hover:tw-text-white tw-transition-all" data-testid="req-form-cancel-btn">취소</button>
+             <button form="requestForm" type="submit" disabled={loading} className="tw-bg-brand-600 hover:tw-bg-brand-500 tw-text-white tw-px-10 tw-py-2 tw-rounded-xl tw-text-xs tw-font-black tw-uppercase tw-tracking-widest tw-transition-all tw-flex tw-items-center tw-gap-2 tw-shadow-lg tw-shadow-brand-600/20 disabled:tw-opacity-50" data-testid="req-form-submit-btn">
                 {loading ? <div className="tw-animate-spin tw-rounded-full tw-h-4 tw-w-4 tw-border-b-2 tw-border-white"></div> : <Send size={16} />}
                 서비스 요청 등록 실행
              </button>

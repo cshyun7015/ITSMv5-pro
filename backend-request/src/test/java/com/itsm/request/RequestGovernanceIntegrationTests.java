@@ -43,7 +43,6 @@ public class RequestGovernanceIntegrationTests {
     private static final String USER_A2 = "user_a2";
     private static final String USER_B1 = "user_b1";
     private static final String OPER_ALPHA1 = "oper_alpha1";
-    private static final String OPER_BETA1 = "oper_beta1";
     private static final String ADMIN_USER = "admin_user";
 
     @Test

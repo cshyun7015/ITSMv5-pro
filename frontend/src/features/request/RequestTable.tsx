@@ -51,6 +51,7 @@ const RequestTable: React.FC<RequestTableProps> = ({
                   key={h.field}
                   onClick={() => onSort(h.field)}
                   className="tw-p-4 tw-text-xs tw-font-bold tw-text-slate-400 tw-uppercase tw-cursor-pointer hover:tw-text-brand-400 tw-transition-colors"
+                  data-testid={`req-table-header-${h.field}`}
                 >
                   <div className="tw-flex tw-items-center tw-gap-1">
                     {h.label}
@@ -66,6 +67,7 @@ const RequestTable: React.FC<RequestTableProps> = ({
                 key={req.id} 
                 onClick={() => onRowClick(req.id!)}
                 className="tw-border-b tw-border-slate-800/50 hover:tw-bg-slate-800/20 tw-cursor-pointer tw-transition-colors"
+                data-testid={`req-table-row-${req.id}`}
               >
                 <td className="tw-p-4 tw-text-sm tw-text-slate-400">
                   {req.createdAt?.split('T')[0]}
@@ -104,6 +106,7 @@ const RequestTable: React.FC<RequestTableProps> = ({
             disabled={currentPage === 0}
             onClick={() => onPageChange(currentPage - 1)}
             className="tw-p-1.5 tw-rounded-lg tw-border tw-border-slate-800 hover:tw-bg-slate-800 disabled:tw-opacity-30 disabled:tw-cursor-not-allowed tw-transition-all"
+            data-testid="req-table-page-prev"
           >
             <ChevronLeft size={16} className="tw-text-white" />
           </button>
@@ -118,6 +121,7 @@ const RequestTable: React.FC<RequestTableProps> = ({
                     ? 'tw-bg-brand-600 tw-text-white' 
                     : 'tw-text-slate-500 hover:tw-text-slate-200 hover:tw-bg-slate-800'
                 }`}
+                data-testid={`req-table-page-${i + 1}`}
               >
                 {i + 1}
               </button>
@@ -128,6 +132,7 @@ const RequestTable: React.FC<RequestTableProps> = ({
             disabled={currentPage >= totalPages - 1}
             onClick={() => onPageChange(currentPage + 1)}
             className="tw-p-1.5 tw-rounded-lg tw-border tw-border-slate-800 hover:tw-bg-slate-800 disabled:tw-opacity-30 disabled:tw-cursor-not-allowed tw-transition-all"
+            data-testid="req-table-page-next"
           >
             <ChevronRight size={16} className="tw-text-white" />
           </button>

@@ -43,6 +43,7 @@ const RequestSearch: React.FC<RequestSearchProps> = ({ filters, onFilterChange, 
                         className="tw-input tw-w-full tw-pl-10 !tw-py-1.5 !tw-text-xs tw-appearance-none"
                         value={filters.companyId}
                         onChange={(e) => onFilterChange({ ...filters, companyId: e.target.value })}
+                        data-testid="req-search-client-select"
                     >
                         <option value="">전체 고객사</option>
                         {customers.map(c => <option key={c.id} value={c.customerId}>{c.name}</option>)}
@@ -61,6 +62,7 @@ const RequestSearch: React.FC<RequestSearchProps> = ({ filters, onFilterChange, 
                         className="tw-input tw-w-full tw-pl-10 !tw-py-1.5 !tw-text-xs tw-appearance-none"
                         value={filters.mspId}
                         onChange={(e) => onFilterChange({ ...filters, mspId: e.target.value })}
+                        data-testid="req-search-msp-select"
                     >
                         <option value="">전체 운영사</option>
                         {operators.map(o => <option key={o.id} value={o.operatorCompanyId}>{o.name}</option>)}
@@ -79,6 +81,7 @@ const RequestSearch: React.FC<RequestSearchProps> = ({ filters, onFilterChange, 
                     className="tw-input tw-w-full tw-pl-10 !tw-py-1.5 !tw-text-xs"
                     value={filters.fromDate}
                     onChange={(e) => onFilterChange({ ...filters, fromDate: e.target.value })}
+                    data-testid="req-search-from-date"
                 />
                 <Calendar className="tw-absolute tw-left-3 tw-top-2.5 tw-text-brand-400" size={14} />
             </div>
@@ -93,6 +96,7 @@ const RequestSearch: React.FC<RequestSearchProps> = ({ filters, onFilterChange, 
                     className="tw-input tw-w-full tw-pl-10 !tw-py-1.5 !tw-text-xs"
                     value={filters.toDate}
                     onChange={(e) => onFilterChange({ ...filters, toDate: e.target.value })}
+                    data-testid="req-search-to-date"
                 />
                 <Calendar className="tw-absolute tw-left-3 tw-top-2.5 tw-text-brand-400" size={14} />
             </div>
@@ -108,6 +112,7 @@ const RequestSearch: React.FC<RequestSearchProps> = ({ filters, onFilterChange, 
                     className="tw-input tw-w-full tw-pl-10 !tw-py-1.5 !tw-text-xs"
                     value={filters.title}
                     onChange={(e) => onFilterChange({ ...filters, title: e.target.value })}
+                    data-testid="req-search-query-input"
                 />
                 <Search className="tw-absolute tw-left-3 tw-top-2.5 tw-text-slate-500" size={14} />
             </div>
@@ -117,6 +122,7 @@ const RequestSearch: React.FC<RequestSearchProps> = ({ filters, onFilterChange, 
         <button 
           onClick={onSearch}
           className="tw-bg-brand-600 hover:tw-bg-brand-500 tw-text-white tw-px-8 tw-py-1.5 tw-rounded-lg tw-text-xs tw-font-black tw-uppercase tw-tracking-widest tw-transition-all tw-shadow-lg tw-shadow-brand-600/20"
+          data-testid="req-search-submit-btn"
         >
           검색
         </button>

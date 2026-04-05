@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   X, Edit2, Shield, User, 
-  FileText, Check, Calendar, Hash, ShieldAlert, Info, Trash2, Clock, MapPin, Activity
+  FileText, Check, Hash, Trash2, Clock, MapPin
 } from 'lucide-react';
 import requestApi from './api/requestApi';
 import apiUser, { type UserDTO } from '../../api/apiUser';
@@ -53,7 +53,6 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => 
     sources: []
   });
 
-  const [isDeleting, setIsDeleting] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   // Requester Search States
@@ -144,13 +143,11 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => 
 
   const handleDelete = async () => {
     try {
-      setIsDeleting(true);
       await requestApi.deleteRequest(requestId);
       onClose();
     } catch (err) {
       console.error('Delete request failed:', err);
     } finally {
-      setIsDeleting(false);
       setIsConfirmOpen(false);
     }
   };
@@ -243,6 +240,7 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => 
                     className="tw-input tw-w-full !tw-py-1 tw-text-lg tw-font-bold tw-bg-white/[0.03]"
                     value={editedData.title}
                     onChange={(e) => setEditedData(d => ({ ...d, title: e.target.value }))}
+                    data-testid="req-detail-title-input"
                   />
                 ) : (
                   <h2 className="tw-text-lg tw-font-bold tw-text-white tw-line-clamp-1">{request.title}</h2>
@@ -251,11 +249,11 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => 
           </div>
           <div className="tw-flex tw-items-center tw-gap-3 tw-ml-6">
             {isAdminOrOperator && (
-              <button onClick={() => setIsConfirmOpen(true)} className="tw-p-2 tw-rounded-xl hover:tw-bg-red-500/10 tw-text-red-500/60 hover:tw-text-red-500 tw-transition-all">
+              <button onClick={() => setIsConfirmOpen(true)} className="tw-p-2 tw-rounded-xl hover:tw-bg-red-500/10 tw-text-red-500/60 hover:tw-text-red-500 tw-transition-all" data-testid="req-detail-delete-btn">
                 <Trash2 size={20} />
               </button>
             )}
-            <button onClick={onClose} className="tw-p-2 tw-rounded-xl hover:tw-bg-white/5 tw-text-slate-500 hover:tw-text-white tw-transition-all">
+            <button onClick={onClose} className="tw-p-2 tw-rounded-xl hover:tw-bg-white/5 tw-text-slate-500 hover:tw-text-white tw-transition-all" data-testid="req-detail-close-btn">
               <X size={24} />
             </button>
           </div>
@@ -277,6 +275,7 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => 
                       className="tw-input tw-w-full tw-min-h-[160px] tw-resize-none tw-bg-white/[0.03] tw-text-sm tw-leading-relaxed"
                       value={editedData.description}
                       onChange={(e) => setEditedData(d => ({ ...d, description: e.target.value }))}
+                      data-testid="req-detail-desc-input"
                     />
                   ) : (
                     <div className="tw-bg-white/[0.03] tw-p-6 tw-rounded-2xl tw-border tw-border-white/5 tw-text-slate-300 tw-text-sm tw-leading-relaxed">
@@ -289,7 +288,7 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => 
                         <div>
                             <label className={LABEL_CLASS}>해결 코드 (Resolution Code)</label>
                             {isEditing ? (
-                                <select className="tw-input tw-w-full tw-text-xs tw-bg-obsidian" value={editedData.srResolutionCode} onChange={e => setEditedData(d => ({ ...d, srResolutionCode: e.target.value }))}>
+                                <select className="tw-input tw-w-full tw-text-xs tw-bg-obsidian" value={editedData.srResolutionCode} onChange={e => setEditedData(d => ({ ...d, srResolutionCode: e.target.value }))} data-testid="req-detail-resolution-code">
                                     <option value="">코드 선택...</option>
                                     {codes.resolutions.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
                                 </select>
@@ -298,7 +297,7 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => 
                         <div>
                             <label className={LABEL_CLASS}>해결 상세 내용</label>
                             {isEditing ? (
-                                <textarea className="tw-input tw-w-full tw-min-h-[100px] tw-text-xs tw-bg-obsidian" value={editedData.resolutionText} onChange={e => setEditedData(d => ({ ...d, resolutionText: e.target.value }))} placeholder="해결 내용을 입력하세요..." />
+                                <textarea className="tw-input tw-w-full tw-min-h-[100px] tw-text-xs tw-bg-obsidian" value={editedData.resolutionText} onChange={e => setEditedData(d => ({ ...d, resolutionText: e.target.value }))} placeholder="해결 내용을 입력하세요..." data-testid="req-detail-resolution-text" />
                             ) : <div className="tw-text-slate-300 tw-text-xs tw-leading-relaxed">{request.resolutionText || '해결 정보가 없습니다.'}</div>}
                         </div>
                     </div>
@@ -339,7 +338,7 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => 
                         <div className="tw-flex tw-justify-between tw-items-center">
                             <label className={LABEL_CLASS}>담당자</label>
                             {isEditing && !isClassificationLocked ? (
-                                <select className="tw-input tw-w-2/3 tw-text-xs tw-bg-obsidian !tw-py-0.5" value={editedData.assigneeId || ''} onChange={e => setEditedData(d => ({ ...d, assigneeId: e.target.value }))}>
+                                <select className="tw-input tw-w-2/3 tw-text-xs tw-bg-obsidian !tw-py-0.5" value={editedData.assigneeId || ''} onChange={e => setEditedData(d => ({ ...d, assigneeId: e.target.value }))} data-testid="req-detail-assignee-select">
                                     <option value="">배정 대기</option>
                                     {operators.map(op => <option key={op.userId} value={op.userId}>{op.name}</option>)}
                                 </select>
@@ -356,7 +355,7 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => 
                         <div className={`${INFO_BOX_CLASS} tw-flex tw-flex-col tw-items-center tw-justify-center tw-gap-1`}>
                             <label className={LABEL_CLASS}>우선순위</label>
                             {isEditing ? (
-                                <select className="tw-input tw-w-full tw-text-[10px] tw-bg-obsidian !tw-p-0" value={editedData.priority || ''} onChange={e => setEditedData(d => ({ ...d, priority: e.target.value }))}>
+                                <select className="tw-input tw-w-full tw-text-[10px] tw-bg-obsidian !tw-p-0" value={editedData.priority || ''} onChange={e => setEditedData(d => ({ ...d, priority: e.target.value }))} data-testid="req-detail-priority-select">
                                     {codes.urgencies.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
                                 </select>
                             ) : <Badge label={request.priority || 'P3'} type="priority" />}
@@ -364,7 +363,7 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => 
                         <div className={`${INFO_BOX_CLASS} tw-flex tw-flex-col tw-items-center tw-justify-center tw-gap-1`}>
                             <label className={LABEL_CLASS}>상태</label>
                             {isEditing ? (
-                                <select className="tw-input tw-w-full tw-text-[10px] tw-bg-obsidian !tw-p-0" value={editedData.status || ''} onChange={e => setEditedData(d => ({ ...d, status: e.target.value }))}>
+                                <select className="tw-input tw-w-full tw-text-[10px] tw-bg-obsidian !tw-p-0" value={editedData.status || ''} onChange={e => setEditedData(d => ({ ...d, status: e.target.value }))} data-testid="req-detail-status-select">
                                     {codes.statuses.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
                                 </select>
                             ) : <Badge label={request.status || 'NEW'} type="status" />}
@@ -375,7 +374,7 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => 
                         <div className="tw-flex tw-justify-between tw-items-center">
                             <label className={LABEL_CLASS}>요청 유형</label>
                             {isEditing ? (
-                                <select className="tw-input tw-w-2/3 tw-text-xs tw-bg-obsidian !tw-py-0.5" value={editedData.srTypeCode || ''} onChange={e => setEditedData(d => ({ ...d, srTypeCode: e.target.value }))}>
+                                <select className="tw-input tw-w-2/3 tw-text-xs tw-bg-obsidian !tw-py-0.5" value={editedData.srTypeCode || ''} onChange={e => setEditedData(d => ({ ...d, srTypeCode: e.target.value }))} data-testid="req-detail-type-select">
                                     {codes.types.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
                                 </select>
                             ) : <div className={VALUE_CLASS}>{currentType}</div>}
@@ -386,7 +385,7 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => 
                         <div className="tw-flex tw-justify-between tw-items-center">
                             <label className={LABEL_CLASS}>카테고리</label>
                             {isEditing ? (
-                                <select className="tw-input tw-w-2/3 tw-text-xs tw-bg-obsidian !tw-py-0.5" value={editedData.srCategoryCode || ''} onChange={e => setEditedData(d => ({ ...d, srCategoryCode: e.target.value }))}>
+                                <select className="tw-input tw-w-2/3 tw-text-xs tw-bg-obsidian !tw-py-0.5" value={editedData.srCategoryCode || ''} onChange={e => setEditedData(d => ({ ...d, srCategoryCode: e.target.value }))} data-testid="req-detail-category-select">
                                     {codes.categories.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
                                 </select>
                             ) : <div className={VALUE_CLASS}>{currentCategory}</div>}
@@ -397,7 +396,7 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => 
                         <div className="tw-flex tw-justify-between tw-items-center">
                             <label className={LABEL_CLASS}>영향도</label>
                             {isEditing ? (
-                                <select className="tw-input tw-w-2/3 tw-text-xs tw-bg-obsidian !tw-py-0.5" value={editedData.srImpactCode || ''} onChange={e => setEditedData(d => ({ ...d, srImpactCode: e.target.value }))}>
+                                <select className="tw-input tw-w-2/3 tw-text-xs tw-bg-obsidian !tw-py-0.5" value={editedData.srImpactCode || ''} onChange={e => setEditedData(d => ({ ...d, srImpactCode: e.target.value }))} data-testid="req-detail-impact-select">
                                     {codes.impacts.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
                                 </select>
                             ) : <div className={VALUE_CLASS}>{codes.impacts.find(c => c.codeId === request.srImpactCode)?.codeName || request.srImpactCode}</div>}
@@ -408,7 +407,7 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => 
                         <div className="tw-flex tw-justify-between tw-items-center">
                             <label className={LABEL_CLASS}>긴급도</label>
                             {isEditing ? (
-                                <select className="tw-input tw-w-2/3 tw-text-xs tw-bg-obsidian !tw-py-0.5" value={editedData.srUrgencyCode || ''} onChange={e => setEditedData(d => ({ ...d, srUrgencyCode: e.target.value }))}>
+                                <select className="tw-input tw-w-2/3 tw-text-xs tw-bg-obsidian !tw-py-0.5" value={editedData.srUrgencyCode || ''} onChange={e => setEditedData(d => ({ ...d, srUrgencyCode: e.target.value }))} data-testid="req-detail-urgency-select">
                                     {codes.urgencies.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
                                 </select>
                             ) : <div className={VALUE_CLASS}>{codes.urgencies.find(c => c.codeId === request.srUrgencyCode)?.codeName || request.srUrgencyCode}</div>}
@@ -419,7 +418,7 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => 
                         <div className="tw-flex tw-justify-between tw-items-center">
                             <label className={LABEL_CLASS}>유입 경로</label>
                             {isEditing ? (
-                                <select className="tw-input tw-w-2/3 tw-text-xs tw-bg-obsidian !tw-py-0.5" value={editedData.srSourceCode || ''} onChange={e => setEditedData(d => ({ ...d, srSourceCode: e.target.value }))}>
+                                <select className="tw-input tw-w-2/3 tw-text-xs tw-bg-obsidian !tw-py-0.5" value={editedData.srSourceCode || ''} onChange={e => setEditedData(d => ({ ...d, srSourceCode: e.target.value }))} data-testid="req-detail-source-select">
                                     {codes.sources.map(c => <option key={c.codeId} value={c.codeId}>{c.codeName}</option>)}
                                 </select>
                             ) : <div className={VALUE_CLASS}>{currentSource}</div>}
@@ -435,7 +434,7 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => 
                         <div className="tw-flex tw-justify-between tw-items-center">
                             <label className={LABEL_CLASS}>시스템 / CI</label>
                             {isEditing ? (
-                                <input type="text" className="tw-input tw-w-2/3 tw-text-xs tw-bg-obsidian !tw-py-0.5" value={editedData.ciId || ''} onChange={e => setEditedData(d => ({ ...d, ciId: e.target.value }))} />
+                                <input type="text" className="tw-input tw-w-2/3 tw-text-xs tw-bg-obsidian !tw-py-0.5" value={editedData.ciId || ''} onChange={e => setEditedData(d => ({ ...d, ciId: e.target.value }))} data-testid="req-detail-ci-input" />
                             ) : <div className={VALUE_CLASS}>{request.ciId || 'N/A'}</div>}
                         </div>
                     </div>
@@ -451,7 +450,7 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => 
                         <div className="tw-flex tw-justify-between items-center">
                             <span className="tw-text-[9px] tw-text-slate-500 tw-uppercase tw-tracking-widest">희망 완료일</span>
                             {isEditing ? (
-                                <input type="date" className="tw-input tw-w-2/3 tw-text-xs tw-bg-obsidian !tw-py-0" value={editedData.expectedAt?.substring(0, 10) || ''} onChange={e => setEditedData(d => ({ ...d, expectedAt: e.target.value }))} />
+                                <input type="date" className="tw-input tw-w-2/3 tw-text-xs tw-bg-obsidian !tw-py-0" value={editedData.expectedAt?.substring(0, 10) || ''} onChange={e => setEditedData(d => ({ ...d, expectedAt: e.target.value }))} data-testid="req-detail-expected-date" />
                             ) : <span className="tw-text-xs tw-text-slate-400">{formatDate(request.expectedAt)}</span>}
                         </div>
                     </div>
@@ -469,11 +468,11 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => 
              <button onClick={onClose} className="tw-px-6 tw-py-2 tw-rounded-xl tw-text-xs tw-font-bold tw-text-slate-400 hover:tw-text-white tw-transition-all">닫기</button>
              {canEdit && (
                !isEditing ? (
-                 <button onClick={() => setIsEditing(true)} className="tw-bg-brand-600 hover:tw-bg-brand-500 tw-text-white tw-px-8 tw-py-2 tw-rounded-xl tw-text-xs tw-font-black tw-uppercase tw-tracking-widest tw-transition-all tw-flex tw-items-center tw-gap-2 tw-shadow-lg tw-shadow-brand-600/20">
+                 <button onClick={() => setIsEditing(true)} className="tw-bg-brand-600 hover:tw-bg-brand-500 tw-text-white tw-px-8 tw-py-2 tw-rounded-xl tw-text-xs tw-font-black tw-uppercase tw-tracking-widest tw-transition-all tw-flex tw-items-center tw-gap-2 tw-shadow-lg tw-shadow-brand-600/20" data-testid="req-detail-edit-btn">
                     <Edit2 size={14} /> 요청 편집
                  </button>
                ) : (
-                 <button onClick={handleSave} className="tw-bg-emerald-600 hover:tw-bg-emerald-500 tw-text-white tw-px-8 tw-py-2 tw-rounded-xl tw-text-xs tw-font-black tw-uppercase tw-tracking-widest tw-transition-all tw-flex tw-items-center tw-gap-2 tw-shadow-lg tw-shadow-emerald-600/20">
+                 <button onClick={handleSave} className="tw-bg-emerald-600 hover:tw-bg-emerald-500 tw-text-white tw-px-8 tw-py-2 tw-rounded-xl tw-text-xs tw-font-black tw-uppercase tw-tracking-widest tw-transition-all tw-flex tw-items-center tw-gap-2 tw-shadow-lg tw-shadow-emerald-600/20" data-testid="req-detail-save-btn">
                     <Check size={14} /> 변경사항 저장
                  </button>
                )
@@ -492,7 +491,7 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => 
               <p className="tw-text-slate-400 tw-text-sm tw-mb-8">이 요청을 삭제하시겠습니까? 삭제된 정보는 복구할 수 없습니다.</p>
               <div className="tw-flex tw-gap-3">
                 <button onClick={() => setIsConfirmOpen(false)} className="tw-flex-1 tw-py-3 tw-bg-white/5 tw-text-slate-300 tw-rounded-xl hover:tw-bg-white/10 tw-transition-all">취소</button>
-                <button onClick={handleDelete} className="tw-flex-1 tw-py-3 tw-bg-red-600 tw-text-white tw-rounded-xl tw-font-bold hover:tw-bg-red-500 tw-transition-all">삭제 실행</button>
+                <button onClick={handleDelete} className="tw-flex-1 tw-py-3 tw-bg-red-600 tw-text-white tw-rounded-xl tw-font-bold hover:tw-bg-red-500 tw-transition-all" data-testid="req-detail-delete-confirm-btn">삭제 실행</button>
               </div>
             </div>
           </div>

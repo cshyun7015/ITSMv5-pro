@@ -23,26 +23,18 @@ import Dashboard from './features/dashboard/Dashboard';
 import IncidentManagement from './features/incident/IncidentManagement';
 import { AuthProvider, useAuth } from './features/auth/AuthProvider';
 import ProtectedRoute from './components/common/ProtectedRoute';
+import { MockController } from './components/MockController';
 import './App.css';
 
 function AppContent() {
   const [currentView, setCurrentView] = useState('dashboard');
-  const [scale, setScale] = useState(1);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [menuSearch, setMenuSearch] = useState('');
   const { user, logout } = useAuth();
   const isAdmin = user?.role === 'ROLE_ADMIN' || user?.role === 'ROLE_OPER';
 
   useEffect(() => {
-    const handleResize = () => {
-      const baseWidth = 1280;
-      const windowWidth = window.innerWidth;
-      const newScale = Math.min(windowWidth / baseWidth, 1);
-      setScale(newScale);
-    };
-    window.addEventListener('resize', handleResize);
-    handleResize();
-    return () => window.removeEventListener('resize', handleResize);
+    // Scaling handled natively via responsive CSS (100% width on #root and .app-container)
   }, []);
 
   const menuItems = useMemo(() => [
@@ -96,8 +88,7 @@ function AppContent() {
 
   return (
     <div 
-      className={`app-container ${isCollapsed ? 'sidebar-collapsed' : ''}`} 
-      style={{ transform: `scale(${scale})` }}
+      className={`app-container ${isCollapsed ? 'sidebar-collapsed' : ''}`}
     >
       <aside className={`sidebar glass ${isCollapsed ? 'collapsed' : ''}`}>
         {/* Toggle Button */}
@@ -230,7 +221,10 @@ function App() {
   return (
     <AuthProvider>
       <ProtectedRoute>
-        <AppContent />
+        <>
+          <AppContent />
+          <MockController />
+        </>
       </ProtectedRoute>
     </AuthProvider>
   );

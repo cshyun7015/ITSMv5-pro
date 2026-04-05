@@ -48,16 +48,33 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=http://localhost:8000
+        - VITE_ENABLE_MOCKS=true
     container_name: portal-ui
     ports:
       - "3000:80"
     environment:
       - VITE_API_URL=http://localhost:8000
+      - VITE_ENABLE_MOCKS=true
       - TZ=Asia/Seoul
       - OTEL_RESOURCE_ATTRIBUTES=companyId=MSP,service.version=1.0.0
     depends_on:
       api-gateway:
         condition: service_started
+    networks:
+      - itsm-network
+    labels:
+      - "companyId=MSP"
+
+  # Frontend Unit Tests (Vitest)
+  portal-ui-test:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: build
+    container_name: portal-ui-test
+    command: ["npm", "run", "test"]
     networks:
       - itsm-network
     labels:

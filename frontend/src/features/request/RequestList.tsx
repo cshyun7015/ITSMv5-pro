@@ -80,6 +80,7 @@ const RequestList: React.FC = () => {
         <button 
           onClick={() => setIsCreateModalOpen(true)}
           className="tw-btn-primary"
+          data-testid="req-list-new-btn"
         >
           <Plus size={18} />
           신규 요청

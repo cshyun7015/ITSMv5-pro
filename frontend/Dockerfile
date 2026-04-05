@@ -4,6 +4,10 @@ WORKDIR /app
 
 # OTel 관련 패키지 설치를 위해 package.json 복사 후 설치
 COPY package.json package-lock.json* ./
+ARG VITE_API_URL
+ARG VITE_ENABLE_MOCKS
+ENV VITE_API_URL=$VITE_API_URL
+ENV VITE_ENABLE_MOCKS=$VITE_ENABLE_MOCKS
 RUN npm install
 
 # 소스 복사 및 빌드 (COPY 명령어 수정)

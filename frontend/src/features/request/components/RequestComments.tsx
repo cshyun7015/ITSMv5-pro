@@ -58,12 +58,14 @@ const RequestComments: React.FC<RequestCommentsProps> = ({
             className="tw-input tw-w-full tw-min-h-[80px] tw-pr-12 tw-resize-none tw-text-sm"
             value={newCommentValue}
             onChange={(e) => onNewCommentChange(e.target.value)}
+            data-testid="req-detail-comment-input"
           />
           <button 
             type="button"
             onClick={onAddComment}
             disabled={!newCommentValue.trim() || loading}
             className="tw-absolute tw-bottom-3 tw-right-3 tw-p-2 tw-bg-brand-600 hover:tw-bg-brand-700 tw-text-white tw-rounded-lg tw-transition-all disabled:tw-opacity-50 disabled:tw-hover:tw-bg-brand-600"
+            data-testid="req-detail-comment-submit"
           >
             {loading ? (
               <div className="tw-animate-spin tw-rounded-full tw-h-4 tw-w-4 tw-border-b-2 tw-border-white"></div>
