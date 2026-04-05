@@ -36,9 +36,26 @@ export interface IncidentDTO {
   workaround?: string;
 }
 
+export interface PaginatedResponse<T> {
+  content: T[];
+  totalPages: number;
+  totalElements: number;
+  size: number;
+  number: number;
+}
+
 export const apiIncident = {
   create: (data: IncidentDTO) => axios.post<IncidentDTO>(API_BASE_URL, data),
-  list: (tenantId: string) => axios.get<IncidentDTO[]>(`${API_BASE_URL}?tenantId=${tenantId}`),
+  list: (tenantId: string, status?: string[], page: number = 0, size: number = 10) => {
+    const params = new URLSearchParams();
+    params.append('tenantId', tenantId);
+    if (status && status.length > 0) {
+      status.forEach(s => params.append('status', s));
+    }
+    params.append('page', page.toString());
+    params.append('size', size.toString());
+    return axios.get<PaginatedResponse<IncidentDTO>>(`${API_BASE_URL}?${params.toString()}`);
+  },
   get: (id: number) => axios.get<IncidentDTO>(`${API_BASE_URL}/${id}`),
   update: (id: number, data: Partial<IncidentDTO>, userId: string) => 
     axios.put<IncidentDTO>(`${API_BASE_URL}/${id}?userId=${userId}`, data),

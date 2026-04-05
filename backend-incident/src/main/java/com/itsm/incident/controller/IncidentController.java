@@ -10,6 +10,10 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import com.itsm.incident.domain.types.IncidentStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.data.domain.Sort;
 
 @RestController
 @RequestMapping("/api/v1/incident")
@@ -24,8 +28,11 @@ public class IncidentController {
     }
 
     @GetMapping
-    public ResponseEntity<List<IncidentDTO>> list(@RequestParam String tenantId) {
-        return ResponseEntity.ok(service.getList(tenantId));
+    public ResponseEntity<Page<IncidentDTO>> list(
+            @RequestParam String tenantId,
+            @RequestParam(required = false) List<IncidentStatus> status,
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(service.getList(tenantId, status, pageable));
     }
 
     @GetMapping("/{id}")

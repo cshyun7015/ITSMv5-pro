@@ -115,58 +115,48 @@ const STATUS_LABELS: Record<string, string> = {
 const IncidentManagement: React.FC = () => {
   const { user } = useAuth();
   const [incidents, setIncidents] = useState<IncidentDTO[]>([]);
+  const [totalElements, setTotalElements] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [activeTab, setActiveTab] = useState<'ALL' | 'ACTIVE' | 'ON_HOLD' | 'CLOSED'>('ALL');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
   const [selectedIncident, setSelectedIncident] = useState<IncidentDTO | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingIncident, setEditingIncident] = useState<IncidentDTO | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  
-  // Pagination & Filtering State
-  const [activeTab, setActiveTab] = useState<'ALL' | 'ACTIVE' | 'ON_HOLD' | 'CLOSED'>('ALL');
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 8;
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const fetchIncidents = async (refreshSelectedId?: number) => {
     try {
-      const res = await apiIncident.list('SYSTEM');
-      setIncidents(res.data);
+      let statusParams: string[] = [];
+      if (activeTab === 'ACTIVE') statusParams = ['NEW', 'ASSIGNED', 'IN_PROGRESS'];
+      else if (activeTab === 'ON_HOLD') statusParams = ['ON_HOLD'];
+      else if (activeTab === 'CLOSED') statusParams = ['RESOLVED', 'CLOSED'];
+
+      const res = await apiIncident.list('SYSTEM', statusParams, currentPage - 1, itemsPerPage);
+      setIncidents(res.data.content);
+      setTotalElements(res.data.totalElements);
+      setTotalPages(res.data.totalPages);
+
       if (refreshSelectedId) {
-        const updated = res.data.find(i => i.id === refreshSelectedId);
+        const updated = res.data.content.find(i => i.id === refreshSelectedId);
         if (updated) setSelectedIncident(updated);
       }
     } catch (err) { console.error(err); }
   };
 
-  useEffect(() => { fetchIncidents(); }, []);
+  useEffect(() => { fetchIncidents(); }, [activeTab, currentPage]);
 
   const filteredIncidents = useMemo(() => {
-    let result = incidents;
-
-    // Phase 1: Tab Filtering
-    if (activeTab === 'ACTIVE') {
-      result = result.filter(i => ['NEW', 'ASSIGNED', 'IN_PROGRESS'].includes(i.status));
-    } else if (activeTab === 'ON_HOLD') {
-      result = result.filter(i => i.status === 'ON_HOLD');
-    } else if (activeTab === 'CLOSED') {
-      result = result.filter(i => ['RESOLVED', 'CLOSED'].includes(i.status));
-    }
-
-    // Phase 2: Search Filtering
-    return result.filter(i => 
+    return incidents.filter(i => 
       i.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
       i.incidentId?.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [incidents, searchTerm, activeTab]);
+  }, [incidents, searchTerm]);
 
-  // Phase 3: Pagination
-  const totalPages = Math.ceil(filteredIncidents.length / itemsPerPage);
-  const paginatedIncidents = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredIncidents.slice(start, start + itemsPerPage);
-  }, [filteredIncidents, currentPage]);
-
-  // Reset page when tab or search changes
-  useEffect(() => { setCurrentPage(1); }, [searchTerm, activeTab]);
+  // Reset page when tab or search changes (Search is still client-side here for simplicity, 
+  // but status is server-side)
+  useEffect(() => { setCurrentPage(1); }, [activeTab]);
 
   const handleAction = async (type: 'create' | 'update', data: IncidentDTO) => {
     try {
@@ -244,10 +234,10 @@ const IncidentManagement: React.FC = () => {
             {/* 🏷️ Status Quick-Tabs */}
             <div className="tw-flex tw-gap-2 tw-mb-6">
               {[
-                { id: 'ALL', label: '전체 목록', count: incidents.length },
-                { id: 'ACTIVE', label: '진행 중', count: incidents.filter(i => ['NEW', 'ASSIGNED', 'IN_PROGRESS'].includes(i.status)).length },
-                { id: 'ON_HOLD', label: '보류됨', count: incidents.filter(i => i.status === 'ON_HOLD').length },
-                { id: 'CLOSED', label: '종료/해결', count: incidents.filter(i => ['RESOLVED', 'CLOSED'].includes(i.status)).length }
+                { id: 'ALL', label: '전체 목록' },
+                { id: 'ACTIVE', label: '진행 중' },
+                { id: 'ON_HOLD', label: '보류됨' },
+                { id: 'CLOSED', label: '종료/해결' }
               ].map(tab => (
                 <button
                   key={tab.id}
@@ -255,13 +245,13 @@ const IncidentManagement: React.FC = () => {
                   className={`tw-px-5 tw-py-2.5 tw-rounded-2xl tw-text-xs tw-font-black tw-transition-all tw-flex tw-items-center tw-gap-2 ${activeTab === tab.id ? 'tw-bg-blue-600 tw-text-white tw-shadow-lg tw-shadow-blue-600/30' : 'tw-bg-white/5 tw-text-slate-500 hover:tw-bg-white/10'}`}
                 >
                   {tab.label}
-                  <span className={`tw-px-2 tw-py-0.5 tw-rounded-lg tw-text-[9px] ${activeTab === tab.id ? 'tw-bg-white/20' : 'tw-bg-white/5'}`}>{tab.count}</span>
+                  {activeTab === tab.id && <span className="tw-px-2 tw-py-0.5 tw-bg-white/20 tw-rounded-lg tw-text-[9px]">{totalElements}</span>}
                 </button>
               ))}
             </div>
 
             <div className="tw-flex tw-justify-between tw-items-center tw-mb-6">
-              <div className="tw-text-sm tw-font-black tw-text-slate-400 tw-uppercase tw-tracking-widest">인시던트 ({filteredIncidents.length})</div>
+              <div className="tw-text-sm tw-font-black tw-text-slate-400 tw-uppercase tw-tracking-widest">인시던트 ({totalElements})</div>
               <div className="tw-relative">
                 <Search className="tw-absolute tw-left-4 tw-top-1/2 tw--translate-y-1/2 tw-text-slate-500" size={16} />
                 <input 
@@ -275,7 +265,7 @@ const IncidentManagement: React.FC = () => {
 
             <div className="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-4">
               <AnimatePresence>
-                {paginatedIncidents.map((inc) => (
+                {filteredIncidents.map((inc) => (
                   <motion.div
                     layout
                     key={inc.id}

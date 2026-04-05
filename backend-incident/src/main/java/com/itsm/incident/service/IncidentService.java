@@ -11,9 +11,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.Collection;
 import java.util.UUID;
-import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Service
 @RequiredArgsConstructor
@@ -102,8 +103,14 @@ public class IncidentService {
         return toDTO(repository.save(incident));
     }
 
-    public List<IncidentDTO> getList(String tenantId) {
-        return repository.findAllByTenantIdOrderByCreatedAtDesc(tenantId).stream().map(this::toDTO).collect(Collectors.toList());
+    public Page<IncidentDTO> getList(String tenantId, Collection<IncidentStatus> statuses, Pageable pageable) {
+        Page<Incident> page;
+        if (statuses != null && !statuses.isEmpty()) {
+            page = repository.findByTenantIdAndStatusInOrderByCreatedAtDesc(tenantId, statuses, pageable);
+        } else {
+            page = repository.findAllByTenantIdOrderByCreatedAtDesc(tenantId, pageable);
+        }
+        return page.map(this::toDTO);
     }
 
     public IncidentDTO getById(Long id) {
