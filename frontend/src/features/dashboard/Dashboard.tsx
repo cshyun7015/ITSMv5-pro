@@ -6,7 +6,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid
 } from 'recharts';
 import { Clock, AlertCircle, RefreshCw } from 'lucide-react';
-import apiCompany, { type CompanyDTO } from '../../api/apiCompany';
+import CustomerCompany, { type CustomerCompanyDTO } from '../organization/customercompany/api/CustomerCompany';
 import './Dashboard.css';
 
 const Dashboard: React.FC = () => {
@@ -15,7 +15,7 @@ const Dashboard: React.FC = () => {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [companies, setCompanies] = useState<CompanyDTO[]>([]);
+  const [companies, setCompanies] = useState<CustomerCompanyDTO[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const [fromDate, setFromDate] = useState(() => {
@@ -62,7 +62,7 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     if (!authLoading && user) {
       fetchStats();
-      apiCompany.list({ size: 1000 }).then(res => setCompanies(res.content)).catch(console.error);
+      CustomerCompany.getCustomerCompanies().then(res => setCompanies(res)).catch(console.error);
     } else if (!authLoading && !user) {
       setLoading(false);
     }
@@ -135,13 +135,13 @@ const Dashboard: React.FC = () => {
           {isAdmin ? (
             <select value={selectedCompany} onChange={(e) => setSelectedCompany(e.target.value)}>
               <option value="SYSTEM">전체 고객사</option>
-              {companies.map((c: CompanyDTO) => (
-                <option key={c.companyId} value={c.companyId}>{c.name}</option>
+              {companies.map((c: CustomerCompanyDTO) => (
+                <option key={c.customerId} value={c.customerId}>{c.name}</option>
               ))}
             </select>
           ) : (
             <div className="company-badge">
-              {companies.find(c => c.companyId === user?.companyId)?.name || user?.companyId}
+              {companies.find(c => c.customerId === user?.companyId)?.name || user?.companyId}
             </div>
           )}
         </div>

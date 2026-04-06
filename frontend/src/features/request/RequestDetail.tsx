@@ -4,7 +4,7 @@ import {
   FileText, Check, Hash, Trash2, Clock, MapPin
 } from 'lucide-react';
 import requestApi from './api/requestApi';
-import apiUser, { type UserDTO } from '../../api/apiUser';
+import OperatorCompany, { type OperatorDTO } from '../organization/operatorcompany/api/OperatorCompany';
 import type { RequestDTO, RequestCommentDTO } from './api/requestApi';
 import { apiCommonCode, type CommonCode } from '../code/api/apiCommonCode';
 import { useAuth } from '../auth/AuthProvider';
@@ -33,7 +33,7 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => 
   const [editedData, setEditedData] = useState<Partial<RequestDTO>>({});
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [commentLoading, setCommentLoading] = useState(false);
-  const [operators, setOperators] = useState<UserDTO[]>([]);
+  const [operators, setOperators] = useState<OperatorDTO[]>([]);
   const [historyRefreshTrigger, setHistoryRefreshTrigger] = useState(0);
   const [codes, setCodes] = useState<{
     types: CommonCode[];
@@ -55,12 +55,6 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => 
 
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
-  // Requester Search States
-  const [requesterSearch, setRequesterSearch] = useState('');
-  const [requesterResults, setRequesterResults] = useState<UserDTO[]>([]);
-  const [isSearchingRequesters, setIsSearchingRequesters] = useState(false);
-  const [showRequesterDropdown, setShowRequesterDropdown] = useState(false);
-
   const isAdminOrOperator = user?.role === 'ROLE_ADMIN' || user?.role === 'ROLE_OPER';
 
   const fetchDetail = async () => {
@@ -79,7 +73,7 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => 
 
   const fetchMetadata = async () => {
     try {
-      const [types, categories, impacts, urgencies, resolutions, statuses, sources, admins, ops] = await Promise.all([
+      const [types, categories, impacts, urgencies, resolutions, statuses, sources, opsList] = await Promise.all([
         apiCommonCode.getCodesByGroup('SR_TYPE'),
         apiCommonCode.getCodesByGroup('SR_CATEGORY'),
         apiCommonCode.getCodesByGroup('SR_IMPACT'),
@@ -87,8 +81,7 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => 
         apiCommonCode.getCodesByGroup('SR_RESOLUTION'),
         apiCommonCode.getCodesByGroup('SR_STATUS'),
         apiCommonCode.getCodesByGroup('SR_SOURCE'),
-        apiUser.list({ role: 'ROLE_ADMIN', size: 100 }),
-        apiUser.list({ role: 'ROLE_OPER', size: 100 })
+        OperatorCompany.getAllOperators()
       ]);
 
       setCodes({
@@ -101,7 +94,7 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => 
         sources: sources.data
       });
 
-      setOperators([...admins.content, ...ops.content]);
+      setOperators(opsList || []);
     } catch (err) {
       console.error('Failed to fetch metadata', err);
     }
@@ -152,24 +145,7 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ requestId, onClose }) => 
     }
   };
 
-  useEffect(() => {
-    if (!isEditing) return;
-    const timer = setTimeout(async () => {
-      if (requesterSearch.trim().length >= 2) {
-        setIsSearchingRequesters(true);
-        try {
-          const res = await apiUser.list({ name: requesterSearch, size: 20 });
-          setRequesterResults(res.content);
-          setShowRequesterDropdown(true);
-        } catch (err) {
-          console.error("Search failed", err);
-        } finally {
-          setIsSearchingRequesters(false);
-        }
-      }
-    }, 400);
-    return () => clearTimeout(timer);
-  }, [requesterSearch, isEditing]);
+
 
   const handleAddComment = async () => {
     if (!newComment.trim()) return;

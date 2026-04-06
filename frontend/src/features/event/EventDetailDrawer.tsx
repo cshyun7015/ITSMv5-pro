@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, ExternalLink, ShieldAlert, CheckCircle, Eye, Info, Clock, Server, Terminal, UserPlus } from 'lucide-react';
 import apiEvent from './api/apiEvent';
 import type { EventItem } from './api/apiEvent';
-import apiUser, { type UserDTO } from '../../api/apiUser';
+import OperatorCompany, { type OperatorDTO } from '../organization/operatorcompany/api/OperatorCompany';
 
 interface Props {
     event: EventItem | null;
@@ -13,18 +13,16 @@ interface Props {
 }
 
 const EventDetailDrawer: React.FC<Props> = ({ event, onClose, onUpdated, codes }) => {
-    const [operators, setOperators] = useState<UserDTO[]>([]);
+    const [operators, setOperators] = useState<OperatorDTO[]>([]);
     const [selectedOp, setSelectedOp] = useState<string>('');
     const userCompanyId = localStorage.getItem('companyId');
 
     useEffect(() => {
         if (event) {
             // Fetch potential assignees (Operators from the same company)
-            apiUser.list({ 
-                companyId: userCompanyId || undefined, 
-                size: 100 
-            }).then(res => {
-                setOperators(res.content);
+            // Fetch potential assignees (Operators)
+            OperatorCompany.getAllOperators().then(res => {
+                setOperators(res || []);
             });
             setSelectedOp(event.assigneeId || '');
         }

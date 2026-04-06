@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from './AuthProvider';
-import apiCompany, { type CompanyDTO } from '../../api/apiCompany';
+import CustomerCompany, { type CustomerCompanyDTO } from '../organization/customercompany/api/CustomerCompany';
 import './Auth.css';
 
 const SignupPage: React.FC = () => {
@@ -11,7 +11,7 @@ const SignupPage: React.FC = () => {
         email: '',
         companyId: ''
     });
-    const [companies, setCompanies] = useState<CompanyDTO[]>([]);
+    const [companies, setCompanies] = useState<CustomerCompanyDTO[]>([]);
     const [search, setSearch] = useState('');
     const [error, setError] = useState('');
     const { signup } = useAuth();
@@ -19,8 +19,8 @@ const SignupPage: React.FC = () => {
     useEffect(() => {
         const fetchCompanies = async () => {
             try {
-                const res = await apiCompany.list({ size: 1000 });
-                setCompanies(res.content);
+                const res = await CustomerCompany.getCustomerCompanies();
+                setCompanies(res);
             } catch (err) {
                 console.error('Failed to load companies');
             }
@@ -30,7 +30,7 @@ const SignupPage: React.FC = () => {
 
     const filteredCompanies = companies.filter(c => 
         c.name.toLowerCase().includes(search.toLowerCase()) || 
-        c.companyId.toLowerCase().includes(search.toLowerCase())
+        c.customerId.toLowerCase().includes(search.toLowerCase())
     );
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -72,8 +72,8 @@ const SignupPage: React.FC = () => {
                             required
                         >
                             {filteredCompanies.map(c => (
-                                <option key={c.companyId} value={c.companyId} style={{ background: '#121214', padding: '8px' }}>
-                                    {c.name} ({c.companyId})
+                                <option key={c.customerId} value={c.customerId} style={{ background: '#121214', padding: '8px' }}>
+                                    {c.name} ({c.customerId})
                                 </option>
                             ))}
                         </select>
