@@ -7,30 +7,51 @@ scrape_configs:
     metrics_path: '/actuator/prometheus'
     static_configs:
       - targets: ['request-service:8080']
+        labels:
+          companyId: 'MSP'  # 여기에 고객사 식별 정보(예: MSP 또는 고객사코드)를 넣습니다.
+          service_type: 'was'
 
   - job_name: 'system-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
       - targets: ['system-service:8080']
+        labels:
+          companyId: 'MSP'  # 여기에 고객사 식별 정보(예: MSP 또는 고객사코드)를 넣습니다.
+          service_type: 'was'
 
   - job_name: 'event-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
       - targets: ['event-service:8080']
+        labels:
+          companyId: 'MSP'  # 여기에 고객사 식별 정보(예: MSP 또는 고객사코드)를 넣습니다.
+          service_type: 'was'
 
   - job_name: 'dashboard-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
       - targets: ['dashboard-service:8080']
+        labels:
+          companyId: 'MSP'  # 여기에 고객사 식별 정보(예: MSP 또는 고객사코드)를 넣습니다.
+          service_type: 'was'
 
   - job_name: 'api-gateway'
     static_configs:
       - targets: ['nginx-gateway-exporter:9113']
+        labels:
+          companyId: 'MSP'  # 여기에 고객사 식별 정보(예: MSP 또는 고객사코드)를 넣습니다.
+          service_type: 'apim'
 
   - job_name: 'portal-ui'
     static_configs:
       - targets: ['nginx-frontend-exporter:9113']
+        labels:
+          companyId: 'MSP'  # 여기에 고객사 식별 정보(예: MSP 또는 고객사코드)를 넣습니다.
+          service_type: 'web'
 
   - job_name: 'itsm-db'
     static_configs:
       - targets: ['mysqld-exporter:9104']
+        labels:
+          companyId: 'MSP'  # 여기에 고객사 식별 정보(예: MSP 또는 고객사코드)를 넣습니다.
+          service_type: 'db'

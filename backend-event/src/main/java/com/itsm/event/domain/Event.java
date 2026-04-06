@@ -52,6 +52,21 @@ public class Event {
     @Column(name = "fingerprint")
     private String fingerprint;
 
+    @Column(name = "occurrence_count")
+    private Integer occurrenceCount;
+
+    @Column(name = "first_occurred_at")
+    private LocalDateTime firstOccurredAt;
+
+    @Column(name = "last_occurred_at")
+    private LocalDateTime lastOccurredAt;
+
+    @Column(name = "assignee_id")
+    private String assigneeId;
+
+    @Column(name = "acknowledged_at")
+    private LocalDateTime acknowledgedAt;
+
     @Column(name = "related_request_id")
     private String relatedRequestId;
 

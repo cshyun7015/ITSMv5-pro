@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { apiCommonCode } from '../../api/apiCommonCode';
-import type { CodeGroup } from '../../api/apiCommonCode';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Shield, X, Save, AlertTriangle } from 'lucide-react';
+import { apiCommonCode } from './api/apiCommonCode';
+import type { CodeGroup } from './api/apiCommonCode';
 
 interface Props {
     isOpen: boolean;
@@ -52,77 +54,113 @@ const CodeGroupModal: React.FC<Props> = ({ isOpen, onClose, onSaved, initialData
     if (!isOpen) return null;
 
     return (
-        <div className="modal-overlay animate-fade-in" style={{ zIndex: 2000 }}>
-            <div className="modal-content glass-card animate-scale-in" style={{ width: '550px' }}>
-                <header className="modal-header">
-                    <div>
-                        <span style={{ fontSize: '10px', color: 'var(--brand-primary)', fontWeight: 800 }}>CODE MANAGEMENT</span>
-                        <h2 style={{ fontSize: '18px', fontWeight: 800 }}>{initialData ? '코드 그룹 수정' : '신규 코드 그룹 등록'}</h2>
-                    </div>
-                    <button className="btn-close" onClick={onClose} style={{ background: 'none', border: 'none', color: 'white', fontSize: '24px', cursor: 'pointer', opacity: 0.5 }}>&times;</button>
-                </header>
+        <div className="tw-fixed tw-inset-0 tw-z-[3000] tw-flex tw-items-start tw-justify-center tw-p-6 tw-pt-32">
+            <motion.div 
+                className="tw-absolute tw-inset-0 tw-bg-black/90 tw-backdrop-blur-md"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={onClose}
+            />
+            <motion.div 
+                className="tw-relative tw-bg-[#0f172a] tw-border tw-border-white/10 tw-w-full tw-max-w-xl tw-rounded-[40px] tw-shadow-2xl tw-overflow-hidden"
+                initial={{ scale: 0.95, opacity: 0, y: 0 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.95, opacity: 0, y: 0 }}
+                transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            >
+                <div className="tw-absolute tw-top-0 tw-left-0 tw-w-full tw-h-1.5 tw-bg-slate-500" />
                 
-                <form onSubmit={handleSubmit} style={{ padding: '40px' }}>
-                    <div className="form-group">
-                        <label>그룹 ID (Unique ID)</label>
+                <header className="tw-p-8 tw-border-b tw-border-white/5 tw-flex tw-justify-between tw-items-center tw-bg-white/[0.02]">
+                    <div className="tw-flex tw-items-center tw-gap-4">
+                        <div className="tw-p-3 tw-bg-slate-800 tw-rounded-2xl tw-text-slate-400">
+                            <Shield size={24} />
+                        </div>
+                        <div>
+                            <span className="tw-text-xs tw-font-semibold tw-text-slate-400 tw-uppercase tw-tracking-widest">코드그룹 / 코드 관리</span>
+                            <h2 className="tw-text-xl tw-font-bold tw-text-white">{initialData ? '코드그룹 수정' : '코드그룹 등록'}</h2>
+                        </div>
+                    </div>
+                    <button className="tw-p-3 hover:tw-bg-white/5 tw-rounded-2xl tw-text-slate-500 hover:tw-text-white tw-transition-all" onClick={onClose}>
+                        <X size={24} />
+                    </button>
+                </header>
+
+                <form onSubmit={handleSubmit} className="tw-p-10 tw-grid tw-gap-8">
+                    <div className="tw-grid tw-gap-2">
+                        <label className="tw-text-xs tw-font-semibold tw-text-slate-400 tw-uppercase tw-tracking-widest tw-px-1">코드그룹 ID</label>
                         <input 
                             type="text"
                             value={formData.groupId}
                             onChange={e => setFormData({...formData, groupId: e.target.value.toUpperCase()})}
                             disabled={!!initialData}
-                            placeholder="예: REQUEST_STATUS"
+                            placeholder="고유 마스터 ID (예: ERR_LEVEL)"
+                            className="tw-w-full tw-bg-white/[0.03] tw-border tw-border-white/5 tw-px-4 tw-py-3 tw-rounded-xl tw-text-slate-100 tw-font-mono tw-text-sm tw-placeholder-slate-700 focus:tw-bg-white/[0.05] focus:tw-border-slate-500 tw-transition-all outline-none"
                             required
-                            style={{ fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '1px' }}
+                            data-testid="group-id-input"
                         />
                     </div>
 
-                    <div className="form-group">
-                        <label>그룹명 (Display Name)</label>
+                    <div className="tw-grid tw-gap-2">
+                        <label className="tw-text-xs tw-font-semibold tw-text-slate-400 tw-uppercase tw-tracking-widest tw-px-1">코드그룹 명</label>
                         <input 
                             type="text"
                             value={formData.name}
                             onChange={e => setFormData({...formData, name: e.target.value})}
-                            placeholder="예: 요청 상태 코드"
+                            placeholder="운영자에게 표시될 이름"
+                            className="tw-w-full tw-bg-white/[0.03] tw-border tw-border-white/5 tw-px-4 tw-py-3 tw-rounded-xl tw-text-slate-100 tw-text-sm tw-placeholder-slate-700 focus:tw-bg-white/[0.05] focus:tw-border-slate-500 tw-transition-all outline-none"
                             required
+                            data-testid="group-name-input"
                         />
                     </div>
 
-                    <div className="form-group">
-                        <label>설명</label>
+                    <div className="tw-grid tw-gap-2">
+                        <label className="tw-text-xs tw-font-semibold tw-text-slate-400 tw-uppercase tw-tracking-widest tw-px-1">상세 설명</label>
                         <textarea 
                             value={formData.description}
                             onChange={e => setFormData({...formData, description: e.target.value})}
-                            placeholder="해당 코드 그룹의 용도에 대해 설명력을 높여주세요."
-                            style={{ height: '100px', resize: 'none' }}
+                            placeholder="코드 그룹에 대한 상세 설명을 입력하세요."
+                            className="tw-w-full tw-bg-white/[0.03] tw-border tw-border-white/10 tw-px-4 tw-py-3 tw-rounded-xl tw-text-slate-300 tw-text-sm tw-h-32 tw-resize-none tw-placeholder-slate-700 focus:tw-bg-white/[0.05] focus:tw-border-slate-500 tw-transition-all outline-none"
+                            data-testid="group-desc-input"
                         />
                     </div>
 
-                    <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(0,0,0,0.1)', padding: '16px', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
+                    <div className="tw-p-6 tw-bg-slate-800/50 tw-border tw-border-white/5 tw-rounded-3xl tw-flex tw-items-center tw-gap-4">
                         <input 
                             type="checkbox"
                             id="isSystem"
                             checked={formData.isSystem}
                             onChange={e => setFormData({...formData, isSystem: e.target.checked})}
-                            style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+                            className="tw-w-6 tw-h-6 tw-rounded-lg tw-bg-slate-900 tw-border tw-border-white/10 tw-accent-slate-500 tw-cursor-pointer"
+                            data-testid="group-system-checkbox"
                         />
-                        <label htmlFor="isSystem" style={{ margin: 0, cursor: 'pointer', fontSize: '13px', color: 'white' }}>시스템 보호 그룹 (삭제 불가)</label>
+                        <div className="tw-flex tw-items-center tw-gap-3">
+                            <AlertTriangle size={18} className="tw-text-amber-500/50" />
+                            <label htmlFor="isSystem" className="tw-text-xs tw-font-semibold tw-text-slate-400 tw-cursor-pointer">
+                                시스템 보호 모드 활성화 (삭제 제한)
+                            </label>
+                        </div>
                     </div>
 
-                    <div className="modal-footer" style={{ marginTop: '32px', padding: '0' }}>
-                        <button type="button" className="btn-secondary" onClick={onClose} style={{ minWidth: '120px', height: '44px', borderRadius: '12px', fontWeight: 700 }}>취소</button>
-                        <button type="submit" className="btn-primary" disabled={isSaving} style={{ minWidth: '120px', height: '44px', borderRadius: '12px', fontWeight: 700 }}>
-                            {isSaving ? '보내는 중...' : (initialData ? '수정 완료' : '등록 확인')}
+                    <div className="tw-pt-6 tw-flex tw-gap-4">
+                        <button 
+                            type="button" 
+                            className="tw-flex-1 tw-py-4 tw-bg-white/5 hover:tw-bg-white/10 tw-text-slate-300 hover:tw-text-white tw-rounded-2xl tw-text-sm tw-font-bold tw-transition-all"
+                            onClick={onClose}
+                        >
+                            취소
+                        </button>
+                        <button 
+                            type="submit" 
+                            className="tw-flex-1 tw-py-4 tw-bg-slate-100 hover:tw-bg-white tw-text-slate-900 tw-rounded-2xl tw-text-sm tw-font-bold tw-transition-all tw-flex tw-items-center tw-justify-center tw-gap-2"
+                            disabled={isSaving}
+                            data-testid="group-submit-btn"
+                        >
+                            <Save size={16} /> {isSaving ? '처리 중...' : (initialData ? '정보 수정' : '정보 등록')}
                         </button>
                     </div>
                 </form>
-            </div>
-            <style>{`
-                .btn-secondary { background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: white; cursor: pointer; transition: all 0.2s; }
-                .btn-secondary:hover { background: rgba(255,255,255,0.1); }
-                .btn-primary { background: linear-gradient(135deg, hsl(var(--brand-primary)), hsl(var(--brand-secondary))); border: none; color: white; cursor: pointer; transition: all 0.2s; }
-                .btn-primary:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
-                .btn-primary:disabled { opacity: 0.3; cursor: not-allowed; }
-            `}</style>
+            </motion.div>
         </div>
     );
 };

@@ -25,10 +25,18 @@ public class EventController {
 
     @GetMapping
     public Page<EventDTO> getEvents(
-            @RequestHeader(value = "X-Company-ID", required = false) String companyId,
+            @RequestHeader(value = "X-Company-ID", required = false) String headerCompanyId,
+            @RequestParam(value = "companyId", required = false) String queryCompanyId,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        if (companyId == null) companyId = "MSP"; // Fallback
-        return eventService.getEvents(companyId, pageable);
+        
+        if (queryCompanyId != null) {
+            // Case 1: Explicit filter provided (Filter by this specific company only)
+            return eventService.getEventsByCompany(queryCompanyId, pageable);
+        }
+        
+        // Case 2: No filter (Show everything in the user's scope)
+        String scopeCompanyId = headerCompanyId != null ? headerCompanyId : "MSP";
+        return eventService.getEventsInScope(scopeCompanyId, pageable);
     }
 
     @GetMapping("/{id}")
@@ -39,6 +47,21 @@ public class EventController {
     @PutMapping("/{id}")
     public EventDTO updateEvent(@PathVariable Long id, @RequestBody EventDTO dto) {
         return eventService.updateEvent(id, dto);
+    }
+
+    @PostMapping("/{id}/acknowledge")
+    public EventDTO acknowledgeEvent(
+            @PathVariable Long id,
+            @RequestHeader(value = "X-User-ID", required = false) String userId) {
+        String effectiveUserId = userId != null ? userId : "anonymous";
+        return eventService.acknowledgeEvent(id, effectiveUserId);
+    }
+
+    @PostMapping("/{id}/assign")
+    public EventDTO assignEvent(
+            @PathVariable Long id,
+            @RequestParam String assigneeId) {
+        return eventService.acknowledgeEvent(id, assigneeId);
     }
 
     @PostMapping("/{id}/promote")

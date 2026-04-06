@@ -5,6 +5,9 @@ export default {
     "./src/features/request/**/*.{js,jsx,ts,tsx}",
     "./src/features/request/components/**/*.{js,jsx,ts,tsx}",
     "./src/features/event/**/*.{js,jsx,ts,tsx}",
+    "./src/features/organization/**/*.{js,jsx,ts,tsx}",
+    "./src/features/code/**/*.{js,jsx,ts,tsx}",
+    "./src/features/incident/**/*.{js,jsx,ts,tsx}",
   ],
   important: true,
   theme: {

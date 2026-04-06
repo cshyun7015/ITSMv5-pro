@@ -25,3 +25,12 @@ dist-ssr
 
 infra/tempo/data/
 e2e/playwright-report/data/
+backend-system/bin/
+backend-dashboard/bin/
+backend-incident/.gradle/
+tmp/
+docker-compose.yml
+e2e/test-results/
+backend-incident/gradlew
+backend-request/bin/
+**/bin/

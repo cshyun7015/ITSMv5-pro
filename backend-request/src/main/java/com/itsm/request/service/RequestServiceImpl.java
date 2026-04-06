@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.itsm.request.dto.RequestHistoryDTO;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,6 +30,7 @@ public class RequestServiceImpl implements RequestService {
     private final RequestRepository requestRepository;
     private final RequestCommentRepository commentRepository;
     private final com.itsm.request.domain.AttachmentRepository attachmentRepository;
+    private final com.itsm.request.domain.RequestHistoryRepository historyRepository;
 
     @Override
     @Transactional
@@ -39,6 +41,7 @@ public class RequestServiceImpl implements RequestService {
         Request request = Request.builder()
                 .reqNumber(reqNumber)
                 .companyId(dto.getCompanyId())
+                .mspId(dto.getMspId())
                 .title(dto.getTitle())
                 .description(dto.getDescription())
                 .status("OPEN")
@@ -60,13 +63,18 @@ public class RequestServiceImpl implements RequestService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<RequestDTO> getRequests(String companyId, String fromDate, String toDate, String title, String requesterId, Pageable pageable) {
+    public Page<RequestDTO> getRequests(String companyId, String mspId, String fromDate, String toDate, String title, String requesterId, Pageable pageable) {
         Specification<Request> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             
-            // Company Isolation (unless MSP operator)
-            if (companyId != null && !"MSP".equalsIgnoreCase(companyId.trim())) {
+            // Company Isolation & Customer Filter
+            if (companyId != null && !companyId.trim().isEmpty()) {
                 predicates.add(cb.equal(root.get("companyId"), companyId.trim()));
+            }
+
+            // MSP Isolation
+            if (mspId != null && !mspId.isEmpty()) {
+                predicates.add(cb.equal(root.get("mspId"), mspId));
             }
             
             if (fromDate != null && !fromDate.isEmpty()) {
@@ -102,17 +110,20 @@ public class RequestServiceImpl implements RequestService {
 
     @Override
     @Transactional(readOnly = true)
-    public RequestDTO getRequest(Long id) {
+    public RequestDTO getRequest(Long id, String companyId, String mspId) {
         Request request = requestRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("Request not found: " + id, HttpStatus.NOT_FOUND));
+        validateAccess(request, companyId, mspId);
         return convertToDTO(request);
     }
 
     @Override
     @Transactional
-    public RequestDTO updateRequest(Long id, RequestDTO dto) {
+    public RequestDTO updateRequest(Long id, RequestDTO dto, String companyId, String mspId) {
         Request request = requestRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("Request not found: " + id, HttpStatus.NOT_FOUND));
+        
+        validateAccess(request, companyId, mspId);
         
         String oldStatus = request.getStatus();
         String newStatus = dto.getStatus();
@@ -132,6 +143,7 @@ public class RequestServiceImpl implements RequestService {
 
         // 3. Status Lifecycle & Reopen Logic
         if (newStatus != null && !newStatus.equals(oldStatus)) {
+            logHistory(request, "STATUS_CHANGE", "status", oldStatus, newStatus, dto.getUpdatedBy());
             request.setStatus(newStatus);
             
             if ("RESOLVED".equals(newStatus) && request.getResolvedAt() == null) {
@@ -147,44 +159,88 @@ public class RequestServiceImpl implements RequestService {
             }
         }
         
-        // 4. Field Control based on RESOLVED status (Typo exception)
-        if ("RESOLVED".equals(oldStatus)) {
-             // Only allow title, description, and resolution info updates
-             request.setTitle(dto.getTitle());
-             request.setDescription(dto.getDescription());
-             request.setSrResolutionCode(dto.getSrResolutionCode());
-             request.setResolutionText(dto.getResolutionText());
-             request.setRequesterId(dto.getRequesterId());
-             // Other fields are NOT updated here in RESOLVED state
-        } else {
-             // Normal Update Flow
-             request.setTitle(dto.getTitle());
-             request.setDescription(dto.getDescription());
-             
-             // Priority can be re-calculated if impact/urgency changed
-             request.setSrImpactCode(dto.getSrImpactCode());
-             request.setSrUrgencyCode(dto.getSrUrgencyCode());
-             request.setPriority(calculatePriority(dto.getSrImpactCode(), dto.getSrUrgencyCode()));
-             
-             request.setSrTypeCode(dto.getSrTypeCode());
-             request.setSrCategoryCode(dto.getSrCategoryCode());
-             request.setSrSourceCode(dto.getSrSourceCode());
-             request.setSrResolutionCode(dto.getSrResolutionCode());
-             request.setResolutionText(dto.getResolutionText());
-             request.setAssigneeId(dto.getAssigneeId());
-             request.setServiceId(dto.getServiceId());
-             request.setCiId(dto.getCiId());
-             request.setExpectedAt(dto.getExpectedAt());
-             request.setRequesterId(dto.getRequesterId());
+        // 4. Field Control & Change Logging
+        if (!"RESOLVED".equals(oldStatus)) {
+            if (dto.getAssigneeId() != null && !dto.getAssigneeId().equals(request.getAssigneeId())) {
+                logHistory(request, "FIELD_UPDATE", "assigneeId", request.getAssigneeId(), dto.getAssigneeId(), dto.getUpdatedBy());
+                request.setAssigneeId(dto.getAssigneeId());
+            }
+            if (dto.getSrImpactCode() != null && !dto.getSrImpactCode().equals(request.getSrImpactCode())) {
+                logHistory(request, "FIELD_UPDATE", "srImpactCode", request.getSrImpactCode(), dto.getSrImpactCode(), dto.getUpdatedBy());
+                request.setSrImpactCode(dto.getSrImpactCode());
+            }
+            if (dto.getSrUrgencyCode() != null && !dto.getSrUrgencyCode().equals(request.getSrUrgencyCode())) {
+                logHistory(request, "FIELD_UPDATE", "srUrgencyCode", request.getSrUrgencyCode(), dto.getSrUrgencyCode(), dto.getUpdatedBy());
+                request.setSrUrgencyCode(dto.getSrUrgencyCode());
+            }
+            request.setPriority(calculatePriority(request.getSrImpactCode(), request.getSrUrgencyCode()));
         }
+
+        // Common Updates
+        request.setTitle(dto.getTitle());
+        request.setDescription(dto.getDescription());
+        request.setSrResolutionCode(dto.getSrResolutionCode());
+        request.setResolutionText(dto.getResolutionText());
+        request.setRequesterId(dto.getRequesterId());
+        request.setServiceId(dto.getServiceId());
+        request.setCiId(dto.getCiId());
+        request.setExpectedAt(dto.getExpectedAt());
         
         return convertToDTO(requestRepository.save(request));
     }
 
+    private void logHistory(Request request, String action, String field, String oldVal, String newVal, String changedBy) {
+        historyRepository.save(com.itsm.request.domain.RequestHistory.builder()
+                .request(request)
+                .action(action)
+                .fieldName(field)
+                .oldValue(oldVal)
+                .newValue(newVal)
+                .changedBy(changedBy != null ? changedBy : "SYSTEM")
+                .build());
+    }
+
+    private void validateAccess(Request request, String companyId, String mspId) {
+        if (companyId != null && !"MSP".equals(companyId)) {
+            if (!companyId.equals(request.getCompanyId())) {
+                throw new BusinessException("Access denied: You do not have permission to access requests from other companies.", HttpStatus.FORBIDDEN);
+            }
+        }
+        if ("MSP".equals(companyId) && mspId != null) {
+            if (!mspId.equals(request.getMspId())) {
+                throw new BusinessException("Access denied: You do not have permission to access requests assigned to other MSPs.", HttpStatus.FORBIDDEN);
+            }
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<RequestHistoryDTO> getHistory(Long requestId, String companyId, String mspId) {
+        Request request = requestRepository.findById(requestId)
+                .orElseThrow(() -> new BusinessException("Request not found: " + requestId, HttpStatus.NOT_FOUND));
+        validateAccess(request, companyId, mspId);
+
+        return historyRepository.findByRequestIdOrderByCreatedAtDesc(requestId).stream()
+                .map(history -> RequestHistoryDTO.builder()
+                        .id(history.getId())
+                        .requestId(history.getRequest().getId())
+                        .fieldName(history.getFieldName())
+                        .oldValue(history.getOldValue())
+                        .newValue(history.getNewValue())
+                        .action(history.getAction())
+                        .changedBy(history.getChangedBy())
+                        .createdAt(history.getCreatedAt())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
     @Override
     @Transactional
-    public void deleteRequest(Long id) {
-        requestRepository.deleteById(id);
+    public void deleteRequest(Long id, String companyId, String mspId) {
+        Request request = requestRepository.findById(id)
+                .orElseThrow(() -> new BusinessException("Request not found: " + id, HttpStatus.NOT_FOUND));
+        validateAccess(request, companyId, mspId);
+        requestRepository.delete(request);
     }
 
     @Override
@@ -283,6 +339,7 @@ public class RequestServiceImpl implements RequestService {
                 .id(req.getId())
                 .reqNumber(req.getReqNumber())
                 .companyId(req.getCompanyId())
+                .mspId(req.getMspId())
                 .title(req.getTitle())
                 .description(req.getDescription())
                 .status(req.getStatus())

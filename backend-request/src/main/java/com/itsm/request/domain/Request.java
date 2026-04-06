@@ -27,6 +27,9 @@ public class Request {
     @Column(name = "company_id", nullable = false, length = 50)
     private String companyId;
 
+    @Column(name = "msp_id", length = 50)
+    private String mspId;
+
     @Column(name = "title", nullable = false, length = 200)
     private String title;
 

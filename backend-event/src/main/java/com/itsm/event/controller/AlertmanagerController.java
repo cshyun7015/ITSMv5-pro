@@ -80,11 +80,14 @@ public class AlertmanagerController {
 
                     String fullMessage = String.format("[%s] %s %s", alertName, summary, description).trim();
 
-                    // 3. Store full payload as details
+                    // 3. Extract Company ID from labels (Default to MSP if missing)
+                    String companyId = labels != null ? labels.getOrDefault("companyId", "MSP") : "MSP";
+
+                    // 4. Store full payload as details
                     String eventDetails = objectMapper.writeValueAsString(alert);
 
                     EventDTO dto = EventDTO.builder()
-                            .companyId("MSP") 
+                            .companyId(companyId) 
                             .sourceCode(source)
                             .categoryCode(categoryCode)
                             .node(node)

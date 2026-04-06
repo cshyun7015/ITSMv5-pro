@@ -23,11 +23,22 @@ export default defineConfig({
       }
     }
   },
-  test: {
-    globals: true,
-    environment: 'jsdom',
-    setupFiles: './src/__tests__/setup.ts',
-  },
+    test: {
+        globals: true,
+        environment: 'jsdom',
+        setupFiles: './src/__tests__/setup.ts',
+        pool: 'threads',
+        poolOptions: {
+            threads: {
+                isolate: true, // Isolation for high-quality M4 performance
+            },
+        },
+        reporters: ['default', 'html'],
+        coverage: {
+            provider: 'v8', // For Vitest 2.x
+            reporter: ['text', 'json', 'html'],
+        },
+    },
 })
 
 

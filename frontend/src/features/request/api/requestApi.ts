@@ -90,6 +90,10 @@ const requestApi = {
     return apiClient.get(`${API_PATH}/attachments/${attachmentId}/download`, {
       responseType: 'blob'
     });
+  },
+
+  getHistory: (id: number) => {
+    return apiClient.get(`${API_PATH}/${id}/history`);
   }
 };
 

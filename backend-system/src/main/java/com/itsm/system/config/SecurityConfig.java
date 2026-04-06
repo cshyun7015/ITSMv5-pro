@@ -44,8 +44,11 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/health").permitAll()
                 .requestMatchers("/api/v1/auth/**").permitAll()
-                .requestMatchers("/api/v1/system/companies/**").permitAll() // For Signup searchable list
+                .requestMatchers("/api/v1/system/**").permitAll() 
+                .requestMatchers("/api/v1/organization/**").permitAll() // TEMPORARY: Unblock for dev
+                .requestMatchers("/api/v1/customer-governance/**").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
                 .anyRequest().authenticated()
             )

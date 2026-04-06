@@ -28,7 +28,9 @@ const RequestList: React.FC = () => {
       fromDate: oneMonthAgo.toISOString().split('T')[0],
       toDate: today.toISOString().split('T')[0],
       title: '',
-      requesterId: ''
+      requesterId: '',
+      companyId: '',
+      mspId: ''
     };
   });
 
@@ -53,7 +55,7 @@ const RequestList: React.FC = () => {
 
   useEffect(() => {
     fetchRequests();
-  }, [filters.fromDate, filters.toDate, filters.requesterId, currentPage, sortConfig]);
+  }, [filters.fromDate, filters.toDate, filters.requesterId, filters.companyId, filters.mspId, currentPage, sortConfig]);
 
   const handleSort = (field: string) => {
     setSortConfig(prev => ({
@@ -78,6 +80,7 @@ const RequestList: React.FC = () => {
         <button 
           onClick={() => setIsCreateModalOpen(true)}
           className="tw-btn-primary"
+          data-testid="req-list-new-btn"
         >
           <Plus size={18} />
           신규 요청

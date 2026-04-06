@@ -28,29 +28,62 @@ public class RequestController {
 
     @GetMapping
     public Page<RequestDTO> getRequests(
-            @RequestHeader(value = "X-Company-ID", required = false) String companyId,
+            @RequestHeader(value = "X-Company-ID", required = false) String contextCompanyId,
+            @RequestHeader(value = "X-User-Role", required = false) String userRole,
+            @RequestHeader(value = "X-MSP-ID", required = false) String contextMspId,
+            @RequestParam(required = false) String companyId, 
+            @RequestParam(required = false) String mspId,
             @RequestParam(required = false) String fromDate,
             @RequestParam(required = false) String toDate,
             @RequestParam(required = false) String title,
             @RequestParam(required = false) String requesterId,
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return requestService.getRequests(companyId, fromDate, toDate, title, requesterId, pageable);
+        
+        // 1. Tenant Isolation (Customer vs MSP)
+        String targetCompanyId = ("MSP".equalsIgnoreCase(contextCompanyId)) ? companyId : contextCompanyId;
+        
+        // 2. MSP Isolation for Operators (non-admins)
+        String targetMspId = mspId;
+        if ("ROLE_OPER".equalsIgnoreCase(userRole) && !"ROLE_ADMIN".equalsIgnoreCase(userRole)) {
+            // Force his own MSP ID
+            targetMspId = contextMspId;
+        }
+        
+        return requestService.getRequests(targetCompanyId, targetMspId, fromDate, toDate, title, requesterId, pageable);
     }
 
     @GetMapping("/{id}")
-    public RequestDTO getRequest(@PathVariable Long id) {
-        return requestService.getRequest(id);
+    public RequestDTO getRequest(
+            @PathVariable Long id,
+            @RequestHeader(value = "X-Company-ID", required = false) String companyId,
+            @RequestHeader(value = "X-MSP-ID", required = false) String mspId) {
+        return requestService.getRequest(id, companyId, mspId);
     }
 
     @PutMapping("/{id}")
-    public RequestDTO updateRequest(@PathVariable Long id, @RequestBody RequestDTO dto) {
-        return requestService.updateRequest(id, dto);
+    public RequestDTO updateRequest(
+            @PathVariable Long id, 
+            @RequestBody RequestDTO dto,
+            @RequestHeader(value = "X-Company-ID", required = false) String companyId,
+            @RequestHeader(value = "X-MSP-ID", required = false) String mspId) {
+        return requestService.updateRequest(id, dto, companyId, mspId);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteRequest(@PathVariable Long id) {
-        requestService.deleteRequest(id);
+    public void deleteRequest(
+            @PathVariable Long id,
+            @RequestHeader(value = "X-Company-ID", required = false) String companyId,
+            @RequestHeader(value = "X-MSP-ID", required = false) String mspId) {
+        requestService.deleteRequest(id, companyId, mspId);
+    }
+
+    @GetMapping("/{id}/history")
+    public List<com.itsm.request.dto.RequestHistoryDTO> getHistory(
+            @PathVariable Long id,
+            @RequestHeader(value = "X-Company-ID", required = false) String companyId,
+            @RequestHeader(value = "X-MSP-ID", required = false) String mspId) {
+        return requestService.getHistory(id, companyId, mspId);
     }
 
     // --- Comments ---

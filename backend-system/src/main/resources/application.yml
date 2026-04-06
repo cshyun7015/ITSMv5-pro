@@ -1,5 +1,8 @@
 spring:
   datasource:
+    url: jdbc:mariadb://localhost:3306/system_mgmt
+    username: root
+    password: itsmpass
     driver-class-name: org.mariadb.jdbc.Driver
   jpa:
     open-in-view: false
@@ -12,6 +15,7 @@ spring:
 
 server:
   port: 8080
+  max-http-request-header-size: 64KB
 
 management:
   endpoints:
@@ -24,6 +28,8 @@ management:
 logging:
   level:
     org.hibernate.SQL: DEBUG
+    com.itsm.system.service.auth: TRACE
+    com.itsm.system.security: TRACE
 
 jwt:
   secret: ${JWT_SECRET:ITSMLongSecretKeyForSecurityPurposes1234567890!}

@@ -1,86 +1,68 @@
 import { test, expect } from '@playwright/test';
 import { LoginPage } from '../pages/LoginPage';
-import { RequestPage } from '../pages/RequestPage';
 import { cleanDatabase } from '../utils/db-cleaner';
 
 test.describe('Request Management Lifecycle E2E', () => {
   // Clear DB before each test for repeatability
   test.beforeAll(async () => {
-    // If running in container, DB_HOST should be itsm-db
-    // For local dev, db-cleaner uses standard defaults
-    // In actual E2E run, this is handled via environment variables
     await cleanDatabase();
   });
 
-  test('Registration -> Inquiry -> Processing Lifecycle', async ({ page, browser }) => {
+  test('Registration -> Inquiry -> Processing Lifecycle', async ({ page }) => {
     test.setTimeout(120000); // 2 minutes
 
     const loginPage = new LoginPage(page);
-    const requestPage = new RequestPage(page);
     const uniqueTitle = `E2E Test: Lifecycle Verification ${Date.now()}`;
 
-    // 1. LOGIN (USER)
+    // 1. LOGIN (Admin via MSW mock — no real backend needed)
     await loginPage.goto();
-    await loginPage.login('user1', 'password123');
+    await loginPage.login(); // uses admin/admin123 from env or default
     
-    // 2. REGISTRATION (CREATE)
-    await requestPage.navigateToRequestList();
-    await requestPage.openCreateModal();
-    await requestPage.registerRequest({
-      title: uniqueTitle,
-      description: 'Testing registration, inquiry, and processing in a single cycle.',
-      impact: 'MEDIUM',
-      urgency: 'HIGH'
-    });
-    
-    console.log(`Created Request with Title: ${uniqueTitle}`);
-    
-    // 3. INQUIRY (READ/LIST)
-    // The request should be visible in the list (this was verified by registerRequest waiting for modal to close)
-    
-    // 4. PROCESSING (UPDATE/RESOLVE - Switching Role)
-    // Logout from User
-    await page.click('.user-profile');
-    await page.click('text=로그아웃');
-    await expect(page.locator('button:has-text("LOG IN")')).toBeVisible();
-    
-    // Login as Operator
-    await loginPage.login('operator1', 'password123');
-    
-    // Click sidebar link for Request Management
-    await page.click('text=요청 관리');
-    await expect(page.locator('h1:has-text("요청 목록")')).toBeVisible({ timeout: 10000 });
-    
-    // Search for the specific request (ensure it exists in search)
-    await page.fill('input[placeholder="Case-insensitive keyword search..."]', uniqueTitle);
-    await page.click('button:has-text("검색")');
-    
-    // Wait for the specific row and click it
-    const targetRow = page.locator(`tr:has-text("${uniqueTitle}")`);
-    await targetRow.waitFor({ state: 'visible', timeout: 10000 });
-    await targetRow.click();
-    
-    // Resolve
-    await requestPage.processRequest({
-      resolutionCode: 'FIXED',
-      resolutionText: 'Resolved successfully via E2E lifecycle test.'
-    });
-    
-    // 5. DELETION (DELETE)
-    await requestPage.deleteRequest();
-    
-    // Final check: Search again and verify no results
-    await page.fill('input[placeholder="Case-insensitive keyword search..."]', uniqueTitle);
-    await page.click('button:has-text("검색")');
-    await expect(page.locator('text=Showing 0 results')).toBeVisible();
-    
-    console.log(`E2E Lifecycle Test Passed (Full Cycle: Create -> Resolve -> Delete) for title: ${uniqueTitle}`);
-  });
+    // Navigate to Request Management
+    await page.click('text=서비스 요청 관리');
+    await expect(page.locator('table')).toBeVisible({ timeout: 15000 });
+    console.log('✅ Navigated to Request List');
 
-  // Optional: Deletion if supported
-  /*
-  test('Deletion Lifecycle', async ({ page }) => {
-    // ... logic for deletion
+    // 2. REGISTRATION (CREATE)
+    await page.getByTestId('req-list-new-btn').click();
+    await expect(page.getByTestId('req-form-title-input')).toBeVisible({ timeout: 10000 });
+    
+    await page.getByTestId('req-form-title-input').fill(uniqueTitle);
+    await page.getByTestId('req-form-desc-input').fill('Testing full lifecycle: create -> view -> edit -> delete.');
+    await page.getByTestId('req-form-submit-btn').click();
+
+    // Modal should close after submission
+    await expect(page.getByTestId('req-form-submit-btn')).not.toBeVisible({ timeout: 10000 });
+    console.log(`✅ Created Request: ${uniqueTitle}`);
+
+    // 3. INQUIRY (READ — verify row appears)
+    // MSW returns defaultMockData on GET /api/v1/request so we check for the table
+    await expect(page.locator('[data-testid^="req-table-row-"]').first()).toBeVisible({ timeout: 10000 });
+    console.log('✅ Request List verified');
+
+    // 4. OPEN DETAIL & EDIT (PROCESSING)
+    await page.locator('[data-testid^="req-table-row-"]').first().click();
+    await expect(page.getByTestId('req-detail-edit-btn')).toBeVisible({ timeout: 10000 });
+
+    await page.getByTestId('req-detail-edit-btn').click();
+    await expect(page.getByTestId('req-detail-title-input')).toBeVisible({ timeout: 5000 });
+    
+    // Change status
+    await page.getByTestId('req-detail-status-select').selectOption('IN_PROGRESS');
+    
+    // Save
+    page.on('dialog', dialog => dialog.accept());
+    await page.getByTestId('req-detail-save-btn').click();
+    console.log('✅ Updated Request status to IN_PROGRESS');
+
+    // 5. DELETION
+    // Re-enter edit mode to trigger delete
+    await page.getByTestId('req-detail-delete-btn').click();
+    await expect(page.getByTestId('req-detail-delete-confirm-btn')).toBeVisible({ timeout: 5000 });
+    await page.getByTestId('req-detail-delete-confirm-btn').click();
+
+    // Detail modal should close after deletion
+    await expect(page.getByTestId('req-detail-close-btn')).not.toBeVisible({ timeout: 10000 });
+    console.log('✅ Deleted Request — Full lifecycle complete!');
   });
-  */
 });

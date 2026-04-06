@@ -19,6 +19,8 @@ services:
       retries: 5
     networks:
       - itsm-network
+    labels:
+      - "companyId=MSP"
 
   # API Gateway: OTel 모듈이 포함된 Nginx 이미지 사용 권장
   api-gateway:
@@ -30,6 +32,7 @@ services:
       - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     environment:
       - TZ=Asia/Seoul
+      - OTEL_RESOURCE_ATTRIBUTES=companyId=MSP,service.version=1.0.0
     depends_on:
       itsm-db:
         condition: service_healthy
@@ -37,23 +40,45 @@ services:
         condition: service_started
     networks:
       - itsm-network
+    labels:
+      - "companyId=MSP"
 
   # Frontend
   portal-ui:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=http://localhost:8000
+        - VITE_ENABLE_MOCKS=true
     container_name: portal-ui
     ports:
       - "3000:80"
     environment:
       - VITE_API_URL=http://localhost:8000
+      - VITE_ENABLE_MOCKS=true
       - TZ=Asia/Seoul
+      - OTEL_RESOURCE_ATTRIBUTES=companyId=MSP,service.version=1.0.0
     depends_on:
       api-gateway:
         condition: service_started
     networks:
       - itsm-network
+    labels:
+      - "companyId=MSP"
+
+  # Frontend Unit Tests (Vitest)
+  portal-ui-test:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: build
+    container_name: portal-ui-test
+    command: ["npm", "run", "test"]
+    networks:
+      - itsm-network
+    labels:
+      - "companyId=MSP"
 
   # Backend Services (Common Configuration 적용)
   request-service: &backend-template
@@ -73,13 +98,18 @@ services:
       - OTEL_SERVICE_NAME=request-service
       - OTEL_LOGS_EXPORTER=none
       - OTEL_METRICS_EXPORTER=none # 트레이싱에 집중하기 위해 메트릭은 일단 제외
+      - OTEL_RESOURCE_ATTRIBUTES=companyId=MSP,service.version=1.0.0
     depends_on:
       itsm-db:
         condition: service_healthy
       otel-collector:
         condition: service_started
+      api-gateway:
+        condition: service_started
     networks:
       - itsm-network
+    labels:
+      - "companyId=MSP"
 
   system-service:
     <<: *backend-template
@@ -96,6 +126,12 @@ services:
       - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
       - OTEL_LOGS_EXPORTER=none
       - OTEL_SERVICE_NAME=system-service
+      - OTEL_RESOURCE_ATTRIBUTES=companyId=MSP,service.version=1.0.0
+    depends_on:
+      api-gateway:
+        condition: service_started
+    labels:
+      - "companyId=MSP"
 
   dashboard-service:
     <<: *backend-template
@@ -114,6 +150,12 @@ services:
       - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
       - OTEL_LOGS_EXPORTER=none
       - OTEL_SERVICE_NAME=dashboard-service
+      - OTEL_RESOURCE_ATTRIBUTES=companyId=MSP,service.version=1.0.0
+    depends_on:
+      api-gateway:
+        condition: service_started
+    labels:
+      - "companyId=MSP"
 
   event-service:
     <<: *backend-template
@@ -130,6 +172,34 @@ services:
       - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
       - OTEL_LOGS_EXPORTER=none
       - OTEL_SERVICE_NAME=event-service
+      - OTEL_RESOURCE_ATTRIBUTES=companyId=MSP,service.version=1.0.0
+    depends_on:
+      api-gateway:
+        condition: service_started
+    labels:
+      - "companyId=MSP"
+
+  incident-service:
+    <<: *backend-template
+    build:
+      context: ./backend-incident
+    container_name: incident-service
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://itsm-db:3306/incident_mgmt?createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=itsmpass
+      - TZ=Asia/Seoul
+      - JAVA_TOOL_OPTIONS=-javaagent:/app/opentelemetry-javaagent.jar
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
+      - OTEL_LOGS_EXPORTER=none
+      - OTEL_SERVICE_NAME=incident-service
+      - OTEL_RESOURCE_ATTRIBUTES=companyId=MSP,service.version=1.0.0
+    depends_on:
+      api-gateway:
+        condition: service_started
+    labels:
+      - "companyId=MSP"
 
   # --- Observability Stack ---
 
@@ -141,6 +211,8 @@ services:
       - ./infra/otel/otel-collector-config.yaml:/etc/otel-collector-config.yaml
     networks:
       - itsm-network
+    labels:
+      - "companyId=MSP"
 
   tempo:
     image: grafana/tempo:2.4.1
@@ -152,6 +224,8 @@ services:
       - ./infra/tempo/data:/var/tempo
     networks:
       - itsm-network
+    labels:
+      - "companyId=MSP"
 
   prometheus:
     image: prom/prometheus:latest
@@ -171,6 +245,8 @@ services:
       - "9090:9090"
     networks:
       - itsm-network
+    labels:
+      - "companyId=MSP"
 
   grafana:
     image: grafana/grafana:latest
@@ -192,6 +268,8 @@ services:
       - loki
     networks:
       - itsm-network
+    labels:
+      - "companyId=MSP"
 
   loki:
     image: grafana/loki:latest
@@ -203,6 +281,8 @@ services:
       - ./infra/loki/loki-config.yaml:/etc/loki/loki-config.yaml
     networks:
       - itsm-network
+    labels:
+      - "companyId=MSP"
 
   promtail:
     image: grafana/promtail:latest
@@ -216,6 +296,8 @@ services:
     command: -config.file=/etc/promtail/config.yaml
     networks:
       - itsm-network
+    labels:
+      - "companyId=MSP"
 
   # --- Infrastructure Exporters ---
   nginx-gateway-exporter:
@@ -227,6 +309,8 @@ services:
       - api-gateway
     networks:
       - itsm-network
+    labels:
+      - "companyId=MSP"
 
   nginx-frontend-exporter:
     image: nginx/nginx-prometheus-exporter:latest
@@ -237,6 +321,8 @@ services:
       - portal-ui
     networks:
       - itsm-network
+    labels:
+      - "companyId=MSP"
 
   mysqld-exporter:
     image: prom/mysqld-exporter:latest
@@ -250,6 +336,8 @@ services:
         condition: service_healthy
     networks:
       - itsm-network
+    labels:
+      - "companyId=MSP"
 
   # E2E Test: Dedicated Playwright container
   itsm-test-e2e:
@@ -263,6 +351,8 @@ services:
       - DB_PORT=3306
       - DB_USER=root
       - DB_PASSWORD=itsmpass
+      - ADMIN_ID=admin
+      - ADMIN_PASSWORD=admin123
       - TZ=Asia/Seoul
     depends_on:
       portal-ui:
@@ -280,6 +370,8 @@ services:
       - ./e2e/playwright-report:/app/playwright-report
       - ./e2e/test-results:/app/test-results
     # Use 'docker-compose run itsm-test-e2e' to execute tests manually
+    labels:
+      - "companyId=MSP"
 
 networks:
   itsm-network:

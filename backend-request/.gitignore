@@ -46,3 +46,7 @@ coverage/
 
 # Backup Files
 *.bak
+
+bin/
+gradle/
+logs    
