@@ -138,7 +138,7 @@ public class OperatorService {
             throw new IllegalArgumentException("Password is mandatory for new operator registration.");
         }
         
-        if (operatorRepository.existsByUserId(dto.getUserId())) {
+        if (operatorRepository.findByUserId(dto.getUserId()).isPresent()) {
             throw new IllegalArgumentException("User ID already exists: " + dto.getUserId());
         }
         

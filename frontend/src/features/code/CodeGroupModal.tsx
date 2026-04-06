@@ -97,6 +97,7 @@ const CodeGroupModal: React.FC<Props> = ({ isOpen, onClose, onSaved, initialData
                             placeholder="고유 마스터 ID (예: ERR_LEVEL)"
                             className="tw-w-full tw-bg-white/[0.03] tw-border tw-border-white/5 tw-px-4 tw-py-3 tw-rounded-xl tw-text-slate-100 tw-font-mono tw-text-sm tw-placeholder-slate-700 focus:tw-bg-white/[0.05] focus:tw-border-slate-500 tw-transition-all outline-none"
                             required
+                            data-testid="group-id-input"
                         />
                     </div>
 
@@ -109,6 +110,7 @@ const CodeGroupModal: React.FC<Props> = ({ isOpen, onClose, onSaved, initialData
                             placeholder="운영자에게 표시될 이름"
                             className="tw-w-full tw-bg-white/[0.03] tw-border tw-border-white/5 tw-px-4 tw-py-3 tw-rounded-xl tw-text-slate-100 tw-text-sm tw-placeholder-slate-700 focus:tw-bg-white/[0.05] focus:tw-border-slate-500 tw-transition-all outline-none"
                             required
+                            data-testid="group-name-input"
                         />
                     </div>
 
@@ -119,6 +121,7 @@ const CodeGroupModal: React.FC<Props> = ({ isOpen, onClose, onSaved, initialData
                             onChange={e => setFormData({...formData, description: e.target.value})}
                             placeholder="코드 그룹에 대한 상세 설명을 입력하세요."
                             className="tw-w-full tw-bg-white/[0.03] tw-border tw-border-white/10 tw-px-4 tw-py-3 tw-rounded-xl tw-text-slate-300 tw-text-sm tw-h-32 tw-resize-none tw-placeholder-slate-700 focus:tw-bg-white/[0.05] focus:tw-border-slate-500 tw-transition-all outline-none"
+                            data-testid="group-desc-input"
                         />
                     </div>
 
@@ -129,6 +132,7 @@ const CodeGroupModal: React.FC<Props> = ({ isOpen, onClose, onSaved, initialData
                             checked={formData.isSystem}
                             onChange={e => setFormData({...formData, isSystem: e.target.checked})}
                             className="tw-w-6 tw-h-6 tw-rounded-lg tw-bg-slate-900 tw-border tw-border-white/10 tw-accent-slate-500 tw-cursor-pointer"
+                            data-testid="group-system-checkbox"
                         />
                         <div className="tw-flex tw-items-center tw-gap-3">
                             <AlertTriangle size={18} className="tw-text-amber-500/50" />
@@ -150,6 +154,7 @@ const CodeGroupModal: React.FC<Props> = ({ isOpen, onClose, onSaved, initialData
                             type="submit" 
                             className="tw-flex-1 tw-py-4 tw-bg-slate-100 hover:tw-bg-white tw-text-slate-900 tw-rounded-2xl tw-text-sm tw-font-bold tw-transition-all tw-flex tw-items-center tw-justify-center tw-gap-2"
                             disabled={isSaving}
+                            data-testid="group-submit-btn"
                         >
                             <Save size={16} /> {isSaving ? '처리 중...' : (initialData ? '정보 수정' : '정보 등록')}
                         </button>

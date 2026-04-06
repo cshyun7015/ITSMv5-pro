@@ -103,6 +103,7 @@ const CodeModal: React.FC<Props> = ({ isOpen, onClose, onSaved, groupId, initial
                                 placeholder="고유 하위 ID"
                                 className="tw-w-full tw-bg-white/[0.03] tw-border tw-border-white/5 tw-px-4 tw-py-3 tw-rounded-xl tw-text-slate-100 tw-font-mono tw-text-sm focus:tw-bg-white/[0.05] focus:tw-border-slate-500 tw-transition-all outline-none"
                                 required
+                                data-testid="code-id-input"
                             />
                         </div>
                         <div className="tw-grid tw-gap-2">
@@ -113,6 +114,7 @@ const CodeModal: React.FC<Props> = ({ isOpen, onClose, onSaved, groupId, initial
                                 onChange={e => setFormData({...formData, sortOrder: parseInt(e.target.value) || 0})}
                                 className="tw-w-full tw-bg-white/[0.03] tw-border tw-border-white/5 tw-px-4 tw-py-3 tw-rounded-xl tw-text-slate-100 tw-text-sm focus:tw-bg-white/[0.05] focus:tw-border-slate-500 tw-transition-all outline-none"
                                 required
+                                data-testid="code-sort-input"
                             />
                         </div>
                     </div>
@@ -126,6 +128,7 @@ const CodeModal: React.FC<Props> = ({ isOpen, onClose, onSaved, groupId, initial
                             placeholder="화면 표시 이름"
                             className="tw-w-full tw-bg-white/[0.03] tw-border tw-border-white/5 tw-px-4 tw-py-3 tw-rounded-xl tw-text-slate-100 tw-text-sm focus:tw-bg-white/[0.05] focus:tw-border-slate-500 tw-transition-all outline-none"
                             required
+                            data-testid="code-name-input"
                         />
                     </div>
 
@@ -136,6 +139,7 @@ const CodeModal: React.FC<Props> = ({ isOpen, onClose, onSaved, groupId, initial
                             onChange={e => setFormData({...formData, description: e.target.value})}
                             placeholder="코드 항목의 용도와 의미를 입력하세요."
                             className="tw-w-full tw-bg-white/[0.03] tw-border tw-border-white/10 tw-px-4 tw-py-3 tw-rounded-xl tw-text-slate-300 tw-text-sm tw-h-24 tw-resize-none focus:tw-bg-white/[0.05] focus:tw-border-slate-500 tw-transition-all outline-none"
+                            data-testid="code-desc-input"
                         />
                     </div>
 
@@ -146,6 +150,7 @@ const CodeModal: React.FC<Props> = ({ isOpen, onClose, onSaved, groupId, initial
                             checked={formData.isActive}
                             onChange={e => setFormData({...formData, isActive: e.target.checked})}
                             className="tw-w-6 tw-h-6 tw-rounded-lg tw-bg-slate-900 tw-border tw-border-white/10 tw-accent-slate-500 tw-cursor-pointer"
+                            data-testid="code-active-checkbox"
                         />
                         <div className="tw-flex tw-items-center tw-gap-3">
                             <Settings size={18} className="tw-text-slate-500" />
@@ -167,6 +172,7 @@ const CodeModal: React.FC<Props> = ({ isOpen, onClose, onSaved, groupId, initial
                             type="submit" 
                             className="tw-flex-1 tw-py-4 tw-bg-slate-100 hover:tw-bg-white tw-text-slate-900 tw-rounded-2xl tw-text-sm tw-font-bold tw-transition-all tw-flex tw-items-center tw-justify-center tw-gap-2"
                             disabled={isSaving}
+                            data-testid="code-submit-btn"
                         >
                             <Save size={16} /> {isSaving ? '동기화 중...' : (initialData ? '변경 사항 저장' : '신규 등록')}
                         </button>

@@ -20,12 +20,12 @@ test.describe('Common Code Management E2E', () => {
     const codePage = new CommonCodePage(page);
     const timestamp = Date.now();
     const group = {
-       id: `GRP_${timestamp}`, 
+       id: `GRP_E2E_${timestamp}`, 
        name: `E2E GROUP ${timestamp}`, 
        description: 'Common code group via E2E' 
     };
     const code = { 
-       id: `CODE_${timestamp}`, 
+       id: `CODE_E2E_${timestamp}`, 
        name: `E2E CODE ${timestamp}`, 
        description: 'Code item via E2E', 
        sortOrder: 10 
@@ -39,7 +39,7 @@ test.describe('Common Code Management E2E', () => {
     await expect(page.locator(`tr:has-text("${group.name}")`)).toBeVisible();
 
     // 2. Enter Group and Create Code
-    await codePage.navigateToCodesByGroupName(group.name);
+    await codePage.navigateToCodesByGroupName(group.id);
     await codePage.openCreateCodeModal();
     await codePage.registerCode(code);
     await expect(page.locator(`tr:has-text("${code.name}")`)).toBeVisible();

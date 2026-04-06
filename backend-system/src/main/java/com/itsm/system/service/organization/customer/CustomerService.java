@@ -143,7 +143,7 @@ public class CustomerService {
             throw new IllegalArgumentException("Password is mandatory for new customer user registration.");
         }
         
-        if (userRepository.existsByUserId(dto.getUserId())) {
+        if (userRepository.findByUserId(dto.getUserId()).isPresent()) {
             throw new IllegalArgumentException("User ID already exists: " + dto.getUserId());
         }
         

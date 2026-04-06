@@ -154,6 +154,7 @@ const CodeManagement: React.FC = () => {
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="tw-bg-black/20 tw-border tw-border-white/5 tw-pl-12 tw-pr-6 tw-py-3 tw-rounded-[18px] tw-text-sm tw-text-white tw-w-60 focus:tw-border-slate-500 tw-transition-all outline-none tw-placeholder-slate-700"
+                                data-testid="code-search-input"
                             />
                         </div>
                         
@@ -161,6 +162,7 @@ const CodeManagement: React.FC = () => {
                             <button 
                                 className="tw-bg-slate-50 hover:tw-bg-white tw-text-slate-900 tw-px-6 tw-py-3.5 tw-rounded-2xl tw-text-xs tw-font-black tw-flex tw-items-center tw-gap-2 tw-transition-all tw-shadow-xl tw-whitespace-nowrap"
                                 onClick={() => { setEditingGroup(undefined); setIsGroupModalOpen(true); }}
+                                data-testid="create-group-btn"
                             >
                                 <Plus size={18} /> 코드 그룹 등록
                             </button>
@@ -168,6 +170,7 @@ const CodeManagement: React.FC = () => {
                             <button 
                                 className="tw-bg-indigo-500 hover:tw-bg-indigo-400 tw-text-white tw-px-6 tw-py-3.5 tw-rounded-2xl tw-text-xs tw-font-black tw-flex tw-items-center tw-gap-2 tw-transition-all tw-shadow-xl tw-shadow-indigo-500/20 tw-whitespace-nowrap"
                                 onClick={() => { setEditingCode(undefined); setIsCodeModalOpen(true); }}
+                                data-testid="create-code-btn"
                             >
                                 <Plus size={18} /> 코드 추가
                             </button>
@@ -218,7 +221,7 @@ const CodeManagement: React.FC = () => {
                                     <tbody className="tw-divide-y tw-divide-white/5">
                                         {level === 'group' ? (
                                             (paginatedItems as CodeGroup[]).map((g) => (
-                                                <tr key={g.groupId} className="group hover:tw-bg-white/[0.02] tw-transition-all">
+                                                <tr key={g.groupId} className="group hover:tw-bg-white/[0.02] tw-transition-all" data-testid={`group-row-${g.groupId}`}>
                                                     <td className="tw-px-6 tw-py-4">
                                                         <span className="tw-text-xs tw-font-bold tw-font-mono tw-text-slate-500">
                                                             {g.groupId}
@@ -242,6 +245,7 @@ const CodeManagement: React.FC = () => {
                                                             <button 
                                                                 className="tw-flex tw-items-center tw-gap-2 tw-bg-white/5 hover:tw-bg-white/10 tw-text-white tw-px-5 tw-py-2.5 tw-rounded-xl tw-text-xs tw-font-semibold tw-transition-all"
                                                                 onClick={() => handleEnterGroup(g)}
+                                                                data-testid={`view-codes-btn-${g.groupId}`}
                                                             >
                                                                 코드 보기 <ChevronRight size={14} />
                                                             </button>
@@ -259,7 +263,7 @@ const CodeManagement: React.FC = () => {
                                             ))
                                         ) : (
                                             (paginatedItems as CommonCode[]).map((c) => (
-                                                <tr key={c.id} className="hover:tw-bg-white/[0.01] tw-transition-all">
+                                                <tr key={c.id} className="hover:tw-bg-white/[0.01] tw-transition-all" data-testid={`code-row-${c.codeId}`}>
                                                     <td className="tw-px-6 tw-py-4 tw-text-xs tw-font-mono tw-text-slate-500">#{c.sortOrder.toString().padStart(2, '0')}</td>
                                                     <td className="tw-px-6 tw-py-4">
                                                         <span className="tw-text-xs tw-font-bold tw-font-mono tw-text-slate-500">
