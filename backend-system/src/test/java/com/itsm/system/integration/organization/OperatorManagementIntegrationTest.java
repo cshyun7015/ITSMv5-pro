@@ -114,6 +114,7 @@ class OperatorManagementIntegrationTest {
         
         OperatorDTO dto = OperatorDTO.builder()
                 .userId(userId)
+                .name("Duplicate Oper")
                 .password("pass")
                 .role("ROLE_OPER")
                 .build();

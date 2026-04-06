@@ -108,7 +108,7 @@ public class OperatorOrgTests {
                 .build();
         ResponseEntity<Object> failResponse = restTemplate.postForEntity(
                 "/api/v1/organization/operators/teams/" + teamId + "/operators", noPassDto, Object.class);
-        assertThat(failResponse.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(failResponse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
 
         // 3. Validate role existence (Failure Test)
         OperatorDTO invalidRoleDto = OperatorDTO.builder()
@@ -119,7 +119,7 @@ public class OperatorOrgTests {
                 .build();
         ResponseEntity<Object> roleFailResponse = restTemplate.postForEntity(
                 "/api/v1/organization/operators/teams/" + teamId + "/operators", invalidRoleDto, Object.class);
-        assertThat(roleFailResponse.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(roleFailResponse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
 
     @Test

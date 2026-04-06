@@ -12,4 +12,5 @@ public interface CustomerUserRepository extends JpaRepository<CustomerUser, Long
     Optional<CustomerUser> findByUserId(String userId);
     List<CustomerUser> findByCustomerTeamId(Long customerTeamId);
     boolean existsByUserId(String userId);
+    long countByCustomerTeamCustomerCompanyCustomerId(String customerId);
 }

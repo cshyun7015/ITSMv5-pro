@@ -129,6 +129,7 @@ class CustomerManagementIntegrationTest {
         
         CustomerUserDTO userDto = CustomerUserDTO.builder()
                 .userId(userId)
+                .name("Duplicate Tester")
                 .password("pass")
                 .role("ROLE_CUS_ADMIN")
                 .build();
