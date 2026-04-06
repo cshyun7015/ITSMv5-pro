@@ -62,7 +62,10 @@ const IncidentFormModal: React.FC<Props> = ({ incident, onClose, onSubmit }) => 
 
   return (
     <div className="inc-scoped">
-      <div className="tw-fixed tw-inset-0 tw-z-[9999] tw-flex tw-items-center tw-justify-center tw-p-4 tw-bg-slate-950/70 tw-backdrop-blur-xl">
+      <div 
+        data-testid="incident-modal-container"
+        className="tw-fixed tw-inset-0 tw-z-[9999] tw-flex tw-items-center tw-justify-center tw-p-4 tw-bg-slate-950/70 tw-backdrop-blur-xl"
+      >
         <motion.div 
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -98,6 +101,7 @@ const IncidentFormModal: React.FC<Props> = ({ incident, onClose, onSubmit }) => 
                   <label className="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer">
                     <input 
                       type="checkbox" 
+                      data-testid="input-is-major-incident"
                       className="tw-w-4 tw-h-4 tw-accent-rose-500" 
                       checked={formData.isMajorIncident}
                       disabled={!isEditable('isMajorIncident')}
@@ -107,6 +111,7 @@ const IncidentFormModal: React.FC<Props> = ({ incident, onClose, onSubmit }) => 
                   </label>
                 </div>
                 <input 
+                  data-testid="input-incident-title"
                   className={`tw-w-full tw-bg-white/5 tw-border tw-border-white/10 tw-rounded-2xl tw-px-6 tw-py-4 tw-text-white tw-font-bold tw-outline-none focus:tw-border-blue-500/50 transition-all placeholder:tw-text-slate-700 ${!isEditable('title') ? 'tw-opacity-50 tw-cursor-not-allowed' : ''}`}
                   placeholder="요약 제목을 입력하세요 (예: 서울 데이터센터 서버 중단)"
                   value={formData.title}
@@ -114,6 +119,7 @@ const IncidentFormModal: React.FC<Props> = ({ incident, onClose, onSubmit }) => 
                   onChange={e => setFormData({...formData, title: e.target.value})}
                 />
                 <textarea 
+                  data-testid="input-incident-description"
                   className={`tw-w-full tw-bg-white/5 tw-border tw-border-white/10 tw-rounded-2xl tw-px-6 tw-py-4 tw-text-white tw-text-sm tw-outline-none focus:tw-border-blue-500/50 transition-all tw-min-h-[140px] placeholder:tw-text-slate-700 ${!isEditable('description') ? 'tw-opacity-50 tw-cursor-not-allowed' : ''}`}
                   placeholder="상세 증상, 에러 코드 및 업무 영향도를 입력하세요..."
                   value={formData.description}
@@ -126,6 +132,7 @@ const IncidentFormModal: React.FC<Props> = ({ incident, onClose, onSubmit }) => 
                 <div className="tw-space-y-4">
                   <label className="tw-text-[10px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest">접수 채널</label>
                   <select 
+                    data-testid="select-incident-channel"
                     className={`tw-w-full tw-bg-white/5 tw-border tw-border-white/10 tw-rounded-2xl tw-px-6 tw-py-4 tw-text-white tw-font-bold tw-appearance-none focus:tw-border-blue-500/50 transition-all tw-cursor-pointer ${!isEditable('channel') ? 'tw-opacity-50 tw-cursor-not-allowed' : ''}`}
                     disabled={!isEditable('channel')}
                     value={formData.channel || 'OTHER'}
@@ -156,6 +163,7 @@ const IncidentFormModal: React.FC<Props> = ({ incident, onClose, onSubmit }) => 
                   <label className="tw-text-[10px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest">영향도 수준 (Impact)</label>
                   <div className="tw-relative">
                     <select 
+                      data-testid="select-incident-impact"
                       className={`tw-w-full tw-bg-white/5 tw-border tw-border-white/10 tw-rounded-2xl tw-px-6 tw-py-4 tw-text-white tw-font-bold tw-appearance-none focus:tw-border-blue-500/50 transition-all tw-cursor-pointer ${(!isEditable('impact') || formData.isMajorIncident) ? 'tw-opacity-50 tw-cursor-not-allowed' : ''}`}
                       disabled={!isEditable('impact') || formData.isMajorIncident}
                       value={formData.impact}
@@ -171,6 +179,7 @@ const IncidentFormModal: React.FC<Props> = ({ incident, onClose, onSubmit }) => 
                   <label className="tw-text-[10px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest">시급성 지표 (Urgency)</label>
                   <div className="tw-relative">
                     <select 
+                      data-testid="select-incident-urgency"
                       className={`tw-w-full tw-bg-white/5 tw-border tw-border-white/10 tw-rounded-2xl tw-px-6 tw-py-4 tw-text-white tw-font-bold tw-appearance-none focus:tw-border-blue-500/50 transition-all tw-cursor-pointer ${(!isEditable('urgency') || formData.isMajorIncident) ? 'tw-opacity-50 tw-cursor-not-allowed' : ''}`}
                       disabled={!isEditable('urgency') || formData.isMajorIncident}
                       value={formData.urgency}
@@ -194,6 +203,7 @@ const IncidentFormModal: React.FC<Props> = ({ incident, onClose, onSubmit }) => 
                   >
                     <label className="tw-text-[10px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest">보류 사유 (On-Hold Reason)</label>
                     <textarea 
+                      data-testid="textarea-on-hold-reason"
                       className={`tw-w-full tw-bg-amber-500/5 tw-border tw-border-amber-500/20 tw-rounded-2xl tw-px-6 tw-py-4 tw-text-white tw-text-sm tw-outline-none focus:tw-border-amber-500/50 transition-all tw-min-h-[100px] placeholder:tw-text-slate-700 ${!isEditable('onHoldReason') ? 'tw-opacity-50 tw-cursor-not-allowed' : ''}`}
                       placeholder="인시던트가 일시 중단된 사유를 입력하세요 (예: 벤더사 회신 대기, 고객 추가 정보 필요)..."
                       value={formData.onHoldReason || ''}
@@ -214,6 +224,7 @@ const IncidentFormModal: React.FC<Props> = ({ incident, onClose, onSubmit }) => 
                         <div className="tw-space-y-4">
                           <label className="tw-text-[10px] tw-font-black tw-text-emerald-500 tw-uppercase tw-tracking-widest">해결 코드 (Resolution Code)</label>
                           <select 
+                            data-testid="select-resolution-code"
                             className={`tw-w-full tw-bg-emerald-500/5 tw-border tw-border-emerald-500/20 tw-rounded-2xl tw-px-6 tw-py-4 tw-text-white tw-font-bold tw-appearance-none focus:tw-border-emerald-500/50 transition-all tw-cursor-pointer ${!isEditable('resolutionCode') ? 'tw-opacity-50 tw-cursor-not-allowed' : ''}`}
                             disabled={!isEditable('resolutionCode')}
                             value={formData.resolutionCode || ''}
@@ -230,6 +241,7 @@ const IncidentFormModal: React.FC<Props> = ({ incident, onClose, onSubmit }) => 
                         <div className="tw-space-y-4">
                           <label className="tw-text-[10px] tw-font-black tw-text-emerald-500 tw-uppercase tw-tracking-widest">해결 상세 내용 (Workaround/Resolution)</label>
                           <textarea 
+                            data-testid="textarea-resolution-workaround"
                             className={`tw-w-full tw-bg-emerald-500/5 tw-border tw-border-emerald-500/20 tw-rounded-2xl tw-px-6 tw-py-4 tw-text-white tw-text-sm tw-outline-none focus:tw-border-emerald-500/50 transition-all tw-min-h-[100px] placeholder:tw-text-slate-700 ${!isEditable('workaround') ? 'tw-opacity-50 tw-cursor-not-allowed' : ''}`}
                             placeholder="서비스 복구를 위해 수행한 조치 내용을 상세히 기록하세요..."
                             value={formData.workaround || ''}
@@ -246,6 +258,7 @@ const IncidentFormModal: React.FC<Props> = ({ incident, onClose, onSubmit }) => 
                 <label className="tw-text-[10px] tw-font-black tw-text-slate-500 tw-uppercase tw-tracking-widest">ITIL 생명주기 상태 (Status)</label>
                 <div className="tw-relative">
                   <select 
+                    data-testid="select-incident-status"
                     className={`tw-w-full tw-bg-white/5 tw-border tw-border-white/10 tw-rounded-2xl tw-px-6 tw-py-4 tw-text-white tw-font-bold tw-appearance-none focus:tw-border-blue-500/50 transition-all tw-cursor-pointer ${!incident ? 'tw-opacity-50 tw-cursor-not-allowed' : 'tw-text-emerald-400'}`}
                     disabled={!incident}
                     value={formData.status}
@@ -294,12 +307,14 @@ const IncidentFormModal: React.FC<Props> = ({ incident, onClose, onSubmit }) => 
 
           <div className="tw-p-8 tw-bg-white/2 tw-border-t tw-border-white/5 tw-flex tw-gap-4">
             <button 
+              data-testid="btn-modal-cancel"
               onClick={onClose}
               className="tw-px-8 tw-py-4 tw-bg-slate-800 hover:tw-bg-slate-700 tw-text-white tw-font-black tw-rounded-2xl tw-transition-all"
             >
               작성 취소
             </button>
             <button 
+              data-testid="btn-modal-submit"
               onClick={() => onSubmit(formData as IncidentDTO)}
               className="tw-flex-1 tw-py-4 tw-bg-blue-600 hover:tw-bg-blue-500 tw-text-white tw-font-black tw-rounded-2xl tw-shadow-xl tw-shadow-blue-600/30 tw-transition-all active:tw-scale-95 tw-flex tw-items-center tw-justify-center tw-gap-2"
             >

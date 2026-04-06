@@ -23,3 +23,25 @@ export const generateMockRequests = (count: number): RequestDTO[] => {
 
 export const defaultMockData = generateMockRequests(10);
 export const hugeMockData = generateMockRequests(200);
+
+export const generateMockIncidents = (count: number): any[] => {
+  const statuses = ['NEW', 'ASSIGNED', 'IN_PROGRESS', 'ON_HOLD', 'RESOLVED', 'CLOSED'];
+  return Array.from({ length: count }, (_, i) => ({
+    id: i + 1,
+    incidentId: `INC-20260405-${String(i + 1).padStart(4, '0')}`,
+    title: `[Mock] System Outage ${i + 1}`,
+    description: `Detailed description for incident ${i + 1}`,
+    tenantId: i % 2 === 0 ? 'CUSTOMER_A' : 'CUSTOMER_B',
+    mspId: i % 3 === 0 ? 'MSP_X' : 'MSP_Y',
+    status: statuses[i % statuses.length],
+    priority: i % 5 === 0 ? 'P1' : 'P3',
+    impact: 'HIGH',
+    urgency: 'MEDIUM',
+    isMajorIncident: i % 10 === 0,
+    createdAt: new Date().toISOString(),
+    slaDueDate: new Date(Date.now() + 86400000).toISOString()
+  }));
+};
+
+export const defaultIncidents = generateMockIncidents(10);
+export const hugeIncidents = generateMockIncidents(300);

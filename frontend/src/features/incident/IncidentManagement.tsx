@@ -8,7 +8,8 @@ import {
   Activity, Clock, 
   Trash2, Database, 
   Edit2, AlertOctagon,
-  Building2
+  Building2,
+  AlertCircle
 } from 'lucide-react';
 import IncidentFormModal from './IncidentFormModal';
 import './Incident.css';
@@ -126,7 +127,8 @@ const IncidentManagement: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingIncident, setEditingIncident] = useState<IncidentDTO | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [deletingId, setDeletingId] = useState<number | null>(null);
+    const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Lists from System
   const [customerList, setCustomerList] = useState<CustomerCompanyDTO[]>([]);
@@ -188,7 +190,10 @@ const IncidentManagement: React.FC = () => {
         const updated = res.data.content.find(i => i.id === refreshSelectedId);
         if (updated) setSelectedIncident(updated);
       }
-    } catch (err) { console.error(err); }
+    } catch (err) { 
+       console.error(err);
+       setError('데이터를 불러오는 중 오류가 발생했습니다.');
+    }
   };
 
   useEffect(() => { fetchIncidents(); }, [activeTab, currentPage]);
@@ -256,12 +261,23 @@ const IncidentManagement: React.FC = () => {
             </div>
           </div>
           <button 
+            data-testid="btn-create-incident"
             className="tw-px-5 tw-py-2.5 tw-bg-blue-600 hover:tw-bg-blue-500 tw-text-white tw-rounded-xl tw-text-xs tw-font-black tw-flex tw-items-center tw-gap-2 tw-transition-all active:tw-scale-95"
             onClick={() => { setEditingIncident(null); setIsModalOpen(true); }}
           >
             <Plus size={16} /> 티켓 생성
           </button>
         </header>
+
+        {error && (
+          <div data-testid="error-message" className="tw-bg-rose-500/10 tw-border tw-border-rose-500/20 tw-p-4 tw-rounded-2xl tw-mb-6 tw-flex tw-justify-between tw-items-center">
+            <div className="tw-flex tw-items-center tw-gap-3">
+              <AlertCircle className="tw-text-rose-400" size={18} />
+              <span className="tw-text-rose-400 tw-text-xs tw-font-bold">{error}</span>
+            </div>
+            <button onClick={() => { setError(null); fetchIncidents(); }} className="tw-text-[10px] tw-font-black tw-text-rose-400 tw-uppercase tw-bg-rose-500/10 tw-px-3 tw-py-1 tw-rounded-lg">Retry</button>
+          </div>
+        )}
 
         {/* 📈 Bento Stats Ribbon - Condensed with MSP Insights */}
         <div className="tw-grid tw-grid-cols-4 tw-gap-4 tw-mb-6">
@@ -310,6 +326,7 @@ const IncidentManagement: React.FC = () => {
                 ].map(tab => (
                   <button
                     key={tab.id}
+                    data-testid={`tab-incident-${tab.id.toLowerCase()}`}
                     onClick={() => setActiveTab(tab.id as any)}
                     className={`tw-px-4 tw-py-1.5 tw-rounded-xl tw-text-[10px] tw-font-black tw-transition-all ${activeTab === tab.id ? 'tw-bg-blue-600 tw-text-white' : 'tw-bg-white/5 tw-text-slate-500 hover:tw-bg-white/10'}`}
                   >
@@ -319,6 +336,7 @@ const IncidentManagement: React.FC = () => {
               </div>
               <div className="tw-flex tw-gap-3">
                 <button 
+                  data-testid="btn-toggle-advanced-search"
                   onClick={() => setShowAdvancedSearch(!showAdvancedSearch)}
                   className={`tw-px-3 tw-py-1.5 tw-rounded-xl tw-text-[10px] tw-font-black tw-transition-all tw-flex tw-items-center tw-gap-2 ${showAdvancedSearch ? 'tw-bg-blue-600 tw-text-white' : 'tw-bg-white/5 tw-text-slate-400'}`}
                 >
@@ -327,6 +345,7 @@ const IncidentManagement: React.FC = () => {
                 <div className="tw-relative">
                   <Search className="tw-absolute tw-left-3 tw-top-1/2 tw--translate-y-1/2 tw-text-slate-600" size={14} />
                   <input 
+                    data-testid="input-incident-search"
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
                     className="tw-bg-slate-900/60 tw-border tw-border-white/5 tw-rounded-xl tw-pl-9 tw-pr-3 tw-py-1.5 tw-text-[10px] tw-outline-none tw-w-48" 
@@ -349,6 +368,7 @@ const IncidentManagement: React.FC = () => {
                       <div className="tw-flex-1 tw-min-w-[160px] tw-space-y-1.5">
                         <label className="tw-text-[9px] tw-font-black tw-text-slate-600 tw-uppercase">고객사</label>
                         <select 
+                          data-testid="select-filter-customer"
                           value={filterCustomer}
                           onChange={e => setFilterCustomer(e.target.value)}
                           className="tw-w-full tw-bg-slate-800 tw-border tw-border-white/10 tw-rounded-lg tw-px-2 tw-py-1.5 tw-text-[10px] tw-text-white tw-outline-none"
@@ -362,6 +382,7 @@ const IncidentManagement: React.FC = () => {
                       <div className="tw-flex-1 tw-min-w-[160px] tw-space-y-1.5">
                         <label className="tw-text-[9px] tw-font-black tw-text-slate-600 tw-uppercase">운영사 (MSP)</label>
                         <select 
+                          data-testid="select-filter-msp"
                           value={filterMsp}
                           onChange={e => setFilterMsp(e.target.value)}
                           className="tw-w-full tw-bg-slate-800 tw-border tw-border-white/10 tw-rounded-lg tw-px-2 tw-py-1.5 tw-text-[10px] tw-text-white tw-outline-none"
@@ -375,14 +396,14 @@ const IncidentManagement: React.FC = () => {
                       <div className="tw-flex-[1.2] tw-min-w-[240px] tw-space-y-1.5">
                         <label className="tw-text-[9px] tw-font-black tw-text-slate-600 tw-uppercase">발생일 범위</label>
                         <div className="tw-flex tw-items-center tw-gap-2">
-                          <input type="date" value={filterStartDate} onChange={e => setFilterStartDate(e.target.value)} className="tw-flex-1 tw-bg-white/5 tw-border tw-border-white/10 tw-rounded-lg tw-px-2 tw-py-1.5 tw-text-[10px] tw-text-white" />
+                          <input data-testid="input-filter-start-date" type="date" value={filterStartDate} onChange={e => setFilterStartDate(e.target.value)} className="tw-flex-1 tw-bg-white/5 tw-border tw-border-white/10 tw-rounded-lg tw-px-2 tw-py-1.5 tw-text-[10px] tw-text-white" />
                           <span className="tw-text-slate-700 tw-text-[10px]">~</span>
-                          <input type="date" value={filterEndDate} onChange={e => setFilterEndDate(e.target.value)} className="tw-flex-1 tw-bg-white/5 tw-border tw-border-white/10 tw-rounded-lg tw-px-2 tw-py-1.5 tw-text-[10px] tw-text-white" />
+                          <input data-testid="input-filter-end-date" type="date" value={filterEndDate} onChange={e => setFilterEndDate(e.target.value)} className="tw-flex-1 tw-bg-white/5 tw-border tw-border-white/10 tw-rounded-lg tw-px-2 tw-py-1.5 tw-text-[10px] tw-text-white" />
                         </div>
                       </div>
                       <div className="tw-flex tw-gap-2 tw-ml-auto">
-                        <button onClick={() => { setFilterCustomer(''); setFilterMsp(''); setFilterStartDate(''); setFilterEndDate(''); fetchIncidents(); }} className="tw-px-3 tw-py-1.5 tw-rounded-lg tw-bg-white/5 tw-text-slate-500 tw-text-[10px] tw-font-bold">Reset</button>
-                        <button onClick={() => { setCurrentPage(1); fetchIncidents(); }} className="tw-px-5 tw-py-1.5 tw-rounded-lg tw-bg-blue-600 tw-text-white tw-text-[10px] tw-font-bold shadow-lg shadow-blue-600/20">Apply Filters</button>
+                        <button data-testid="btn-filter-reset" onClick={() => { setFilterCustomer(''); setFilterMsp(''); setFilterStartDate(''); setFilterEndDate(''); fetchIncidents(); }} className="tw-px-3 tw-py-1.5 tw-rounded-lg tw-bg-white/5 tw-text-slate-500 tw-text-[10px] tw-font-bold">Reset</button>
+                        <button data-testid="btn-filter-apply" onClick={() => { setCurrentPage(1); fetchIncidents(); }} className="tw-px-5 tw-py-1.5 tw-rounded-lg tw-bg-blue-600 tw-text-white tw-text-[10px] tw-font-bold shadow-lg shadow-blue-600/20">Apply Filters</button>
                       </div>
                     </div>
                   </div>
@@ -396,6 +417,7 @@ const IncidentManagement: React.FC = () => {
                   <motion.div
                     layout
                     key={inc.id}
+                    data-testid={`incident-card-${inc.incidentId}`}
                     initial={{ opacity: 0, scale: 0.98 }}
                     animate={{ opacity: 1, scale: 1 }}
                     onClick={() => setSelectedIncident(inc)}
@@ -476,9 +498,9 @@ const IncidentManagement: React.FC = () => {
                 <div className="tw-flex tw-justify-between tw-items-center tw-mb-8">
                   <div className="tw-text-[10px] tw-font-black tw-text-blue-500 tw-font-mono">{selectedIncident.incidentId}</div>
                   <div className="tw-flex tw-gap-2">
-                    <button onClick={() => { setEditingIncident(selectedIncident); setIsModalOpen(true); }} className="tw-p-2 tw-bg-white/5 hover:tw-bg-blue-600 tw-text-slate-400 tw-rounded-lg"><Edit2 size={16} /></button>
-                    <button onClick={() => setDeletingId(selectedIncident.id!)} className="tw-p-2 tw-bg-white/5 hover:tw-bg-rose-600 tw-text-slate-400 tw-rounded-lg"><Trash2 size={16} /></button>
-                    <button onClick={() => setSelectedIncident(null)} className="tw-w-8 tw-h-8 tw-bg-white/5 tw-text-white tw-rounded-lg tw-ml-2">✕</button>
+                    <button data-testid="btn-edit-incident" onClick={() => { setEditingIncident(selectedIncident); setIsModalOpen(true); }} className="tw-p-2 tw-bg-white/5 hover:tw-bg-blue-600 tw-text-slate-400 tw-rounded-lg"><Edit2 size={16} /></button>
+                    <button data-testid="btn-delete-incident" onClick={() => setDeletingId(selectedIncident.id!)} className="tw-p-2 tw-bg-white/5 hover:tw-bg-rose-600 tw-text-slate-400 tw-rounded-lg"><Trash2 size={16} /></button>
+                    <button data-testid="btn-close-drawer" onClick={() => setSelectedIncident(null)} className="tw-w-8 tw-h-8 tw-bg-white/5 tw-text-white tw-rounded-lg tw-ml-2">✕</button>
                   </div>
                 </div>
 

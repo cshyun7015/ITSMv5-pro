@@ -27,11 +27,15 @@ import { MockController } from './components/MockController';
 import './App.css';
 
 function AppContent() {
-  const [currentView, setCurrentView] = useState('dashboard');
+  const [currentView, setCurrentView] = useState(() => sessionStorage.getItem('currentView') || 'dashboard');
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [menuSearch, setMenuSearch] = useState('');
   const { user, logout } = useAuth();
   const isAdmin = user?.role === 'ROLE_ADMIN' || user?.role === 'ROLE_OPER';
+
+  useEffect(() => {
+    sessionStorage.setItem('currentView', currentView);
+  }, [currentView]);
 
   useEffect(() => {
     // Scaling handled natively via responsive CSS (100% width on #root and .app-container)
@@ -67,6 +71,7 @@ function AppContent() {
               key={item.id}
               className={`nav-item ${currentView === item.id ? 'active' : ''}`}
               onClick={() => setCurrentView(item.id)}
+              data-testid={`nav-item-${item.id}`}
               data-tooltip={isCollapsed ? item.label : ''}
             >
               <div className="nav-icon-wrapper">
@@ -147,7 +152,10 @@ function AppContent() {
         <div className="sidebar-footer">
           <div 
             className="nav-item sign-out" 
-            onClick={logout} 
+            onClick={() => {
+              sessionStorage.removeItem('currentView');
+              logout();
+            }} 
             data-tooltip={isCollapsed ? '시스템 종료' : ''}
           >
             <div className="nav-icon-wrapper">
