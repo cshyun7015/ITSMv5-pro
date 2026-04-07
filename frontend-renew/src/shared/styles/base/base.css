@@ -1,0 +1,181 @@
+/* Layer 1: Base Elements and Layout Reset */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-background-primary text-text-primary antialiased min-h-screen font-main;
+  }
+}
+
+/* Layer 3: Shared UI Component Standards (@layer components) */
+@layer components {
+  .btn-base {
+    @apply inline-flex items-center justify-center rounded-md font-bold transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none;
+  }
+
+  /* Button Sizes (Optimized for Korean/Enterprise Density) */
+  .btn-sm { @apply btn-base h-8 px-2.5 text-xs gap-1.5; }
+  .btn-md { @apply btn-base h-10 px-4 text-sm gap-2; }
+  .btn-lg { @apply btn-base h-12 px-6 text-base gap-3; }
+
+  /* Style Variants (Using HSL design tokens) */
+  .btn-primary { @apply bg-brand-primary text-black hover:brightness-110; }
+  .btn-secondary { @apply bg-white/5 border border-white/10 text-white hover:bg-white/10; }
+
+  /* Standard Layout Patterns (Positioning) */
+  .action-bar { @apply flex items-center justify-between gap-4 p-4 border-b border-white/5; }
+  .btn-group-right { @apply flex items-center justify-end gap-3; }
+  .btn-group-left { @apply flex items-center justify-start gap-4; }
+
+  /* --- Form Element Standards --- */
+  .label-base {
+    @apply block text-xs font-bold text-text-secondary mb-1.5 uppercase tracking-wider;
+  }
+  .label-required::after {
+    content: '*';
+    @apply text-status-critical ml-1;
+  }
+
+  .input-base {
+    @apply h-10 w-full bg-white/5 border border-white/10 rounded-md px-4 text-sm text-text-primary outline-none transition-all placeholder:text-text-muted;
+  }
+  .input-base:focus {
+    @apply border-brand-primary/50 ring-2 ring-brand-primary/20 bg-white/10;
+  }
+
+  .select-base {
+    @apply input-base appearance-none cursor-pointer pr-10;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    color-scheme: dark;
+  }
+
+  .form-group {
+    @apply flex flex-col gap-1;
+  }
+
+  /* --- Premium DatePicker Customization --- */
+  .react-datepicker-wrapper { @apply w-full; }
+  .react-datepicker {
+    @apply bg-background-secondary/90 backdrop-blur-xl border border-white/10 text-text-primary font-main rounded-lg shadow-2xl overflow-hidden !important;
+  }
+  .react-datepicker__header {
+    @apply bg-bg-tertiary border-b border-white/10 p-4 !important;
+  }
+  .react-datepicker__current-month, .react-datepicker__day-name {
+    @apply text-text-primary font-bold !important;
+  }
+  .react-datepicker__day {
+    @apply text-text-secondary hover:bg-brand-primary hover:text-black rounded-md transition-colors !important;
+  }
+  .react-datepicker__day--selected {
+    @apply bg-brand-primary text-black font-bold shadow-lg shadow-brand-primary/40 !important;
+  }
+  .react-datepicker__day--today {
+    @apply text-brand-primary border border-brand-primary/30 !important;
+  }
+  .react-datepicker__navigation--next, .react-datepicker__navigation--previous {
+    @apply top-4 !important;
+  }
+
+  /* --- Table & Data Grid Standards --- */
+  .table-container {
+    @apply w-full overflow-x-auto rounded-xl border border-white/10 bg-white/5 backdrop-blur-md;
+  }
+  .table-base {
+    @apply w-full text-left border-collapse;
+  }
+  .table-header-cell {
+    @apply sticky top-0 bg-background-tertiary px-6 py-4 text-xs font-extrabold text-text-primary uppercase tracking-widest border-b border-white/10 z-10;
+  }
+  .table-body-cell {
+    @apply px-6 py-3.5 text-sm text-text-secondary border-b border-white/5;
+  }
+  .table-row {
+    @apply transition-colors hover:bg-white/5 cursor-pointer;
+  }
+
+  /* --- Semantic Status Badges --- */
+  .badge-status {
+    @apply inline-flex items-center justify-center rounded-full text-[10px] font-extrabold uppercase tracking-tight border transition-all;
+  }
+  .badge-md { @apply h-6 w-[72px]; }
+  .badge-sm { @apply h-5 w-[60px] text-[9px]; }
+
+  .badge-critical { @apply bg-status-critical/10 text-status-critical border-status-critical/20; }
+  .badge-high { @apply bg-status-high/10 text-status-high border-status-high/20; }
+  .badge-medium { @apply bg-status-medium/10 text-status-medium border-status-medium/20; }
+  .badge-low { @apply bg-status-low/10 text-status-low border-status-low/20; }
+  .badge-resolved { @apply bg-status-resolved/10 text-status-resolved border-status-resolved/20; }
+
+  /* --- Premium Card Standards --- */
+  .card-base {
+    @apply rounded-xl border border-white/10 bg-white/5 backdrop-blur-md p-5 transition-all duration-300 hover:bg-white/10 hover:scale-[1.02] hover:shadow-2xl hover:shadow-cyan-500/10 cursor-pointer;
+  }
+
+  /* --- Slide-over (Drawer) Standards --- */
+  .drawer-overlay {
+    @apply fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] transition-opacity duration-300;
+  }
+  .drawer-content {
+    @apply fixed right-0 top-0 h-full w-full max-w-[450px] bg-background-secondary border-l border-white/10 z-[101] shadow-2xl transition-transform duration-300 flex flex-col;
+  }
+  .drawer-header {
+    @apply flex items-center justify-between px-6 py-5 border-b border-white/10 bg-background-tertiary;
+  }
+  .drawer-body {
+    @apply flex-1 overflow-y-auto p-6 space-y-6;
+  }
+  .drawer-footer {
+    @apply flex items-center justify-end gap-3 px-6 py-5 border-t border-white/10 bg-background-tertiary;
+  }
+
+  /* --- Premium Modal & Dialog Standards --- */
+  .modal-overlay {
+    @apply fixed inset-0 bg-black/60 backdrop-blur-md z-[200] transition-opacity duration-300 flex items-center justify-center p-4;
+  }
+  .modal-content {
+    @apply w-full max-w-[400px] bg-background-secondary border border-white/10 rounded-2xl shadow-2xl shadow-black/80 flex flex-col overflow-hidden animate-scale-in;
+  }
+  .modal-header {
+    @apply px-6 py-5 border-b border-white/5 bg-white/[0.02] flex items-center justify-between;
+  }
+  .modal-body {
+    @apply p-8 text-center space-y-3;
+  }
+  .modal-footer {
+    @apply p-6 border-t border-white/5 bg-white/[0.01] flex items-center justify-center gap-3;
+  }
+}
+
+/* Layer 2: Layout Shell Standards (Sidebar, Header, Main) */
+.layout-grid {
+  @apply grid min-h-screen;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto 1fr;
+  grid-template-areas: 
+    "sidebar header"
+    "sidebar content";
+}
+
+.layout-sidebar { grid-area: sidebar; }
+.layout-header { grid-area: header; }
+.layout-content { grid-area: content; }
+
+/* Custom Scrollbar for ITSM consistency */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: hsl(var(--bg-primary));
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--bg-secondary));
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsla(0, 0%, 100%, 0.1);
+}

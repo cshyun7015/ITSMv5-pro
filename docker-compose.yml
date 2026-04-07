@@ -44,14 +44,37 @@ services:
       - "companyId=MSP"
 
   # Frontend
-  portal-ui:
+  # portal-ui:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile
+  #     args:
+  #       - VITE_API_URL=http://localhost:8000
+  #       - VITE_ENABLE_MOCKS=true
+  #   container_name: portal-ui
+  #   ports:
+  #     - "3000:80"
+  #   environment:
+  #     - VITE_API_URL=http://localhost:8000
+  #     - VITE_ENABLE_MOCKS=true
+  #     - TZ=Asia/Seoul
+  #     - OTEL_RESOURCE_ATTRIBUTES=companyId=MSP,service.version=1.0.0
+  #   depends_on:
+  #     api-gateway:
+  #       condition: service_started
+  #   networks:
+  #     - itsm-network
+  #   labels:
+  #     - "companyId=MSP"
+
+  renew-portal-ui:
     build:
-      context: ./frontend
+      context: ./frontend-renew
       dockerfile: Dockerfile
       args:
         - VITE_API_URL=http://localhost:8000
         - VITE_ENABLE_MOCKS=true
-    container_name: portal-ui
+    container_name: renew-portal-ui
     ports:
       - "3000:80"
     environment:
@@ -316,9 +339,9 @@ services:
     image: nginx/nginx-prometheus-exporter:latest
     container_name: nginx-frontend-exporter
     command:
-      - -nginx.scrape-uri=http://portal-ui:80/nginx_status
+      - -nginx.scrape-uri=http://renew-portal-ui:80/nginx_status
     depends_on:
-      - portal-ui
+      - renew-portal-ui
     networks:
       - itsm-network
     labels:
@@ -346,7 +369,7 @@ services:
       dockerfile: Dockerfile.e2e
     container_name: itsm-test-e2e
     environment:
-      - BASE_URL=http://portal-ui:80
+      - BASE_URL=http://renew-portal-ui:80
       - DB_HOST=itsm-db
       - DB_PORT=3306
       - DB_USER=root
@@ -355,7 +378,7 @@ services:
       - ADMIN_PASSWORD=admin123
       - TZ=Asia/Seoul
     depends_on:
-      portal-ui:
+      renew-portal-ui:
         condition: service_started
       itsm-db:
         condition: service_healthy

@@ -1,0 +1,35 @@
+:root {
+  /* Core Deep Neutral Palette */
+  --bg-primary: 230 20% 5%;
+  --bg-secondary: 230 15% 10%;
+  --bg-tertiary: 230 15% 15%;
+  
+  --text-primary: 0 0% 95%;
+  --text-secondary: 230 10% 60%;
+  --text-muted: 230 10% 40%;
+  
+  /* Theme Overrides (Dynamic from Tenant Store) */
+  --theme-primary: var(--brand-primary);
+  --theme-background: var(--bg-primary);
+  
+  /* Brand & Accents (Defaults, can be overridden per tenant) */
+  --brand-primary: 184 100% 50%; /* Neon Cyan */
+  --brand-secondary: 280 100% 60%; /* Vibrant Purple */
+  --brand-accent: 320 100% 60%; /* Hot Pink */
+  
+  /* Semantic Statuses (ITIL v5) */
+  --status-critical: 350 100% 60%;
+  --status-high: 25 100% 60%;
+  --status-medium: 50 100% 60%;
+  --status-low: 184 100% 50%;
+  --status-resolved: 145 100% 60%;
+  
+  /* Measurement & Scaling */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --spacing-unit: 8px;
+  
+  /* Typography */
+  --font-main: 'Inter', 'Outfit', system-ui, -apple-system, sans-serif;
+}

@@ -1,0 +1,21 @@
+/* Layer 1 (Base): Typography Rules */
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Outfit:wght@100..900&display=swap');
+
+h1, h2, h3, h4, h5, h6 {
+  @apply font-main font-extrabold tracking-tight;
+  color: hsl(var(--text-primary));
+}
+
+h1 { @apply text-4xl mb-8; }
+h2 { @apply text-2xl mb-6; }
+h3 { @apply text-xl mb-4; }
+
+p {
+  @apply text-sm leading-relaxed;
+  color: hsl(var(--text-secondary));
+}
+
+.text-muted {
+  @apply text-xs italic;
+  color: hsl(var(--text-muted));
+}

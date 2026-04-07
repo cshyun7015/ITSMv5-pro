@@ -1,0 +1,22 @@
+/* 
+  ITSM v5 Renewal - Global CSS Entry 
+  Hierarchy: 
+  1. Base (Variables, Typography, Base)
+  2. Layout (Layout, Shell)
+  3. Components (Shared UI through Tailwind/Modules)
+  4. Features (Page specifics)
+*/
+
+@import './base/variables.css';
+@import './base/typography.css';
+@import './base/base.css';
+
+/* Shared Animations for Premium Visuals */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
