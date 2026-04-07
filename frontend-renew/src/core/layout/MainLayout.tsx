@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, AlertCircle, ClipboardList, Monitor, Users, Settings, LogOut, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, AlertCircle, ClipboardList, Monitor, Users, Settings, LogOut, ChevronRight, ChevronLeft } from 'lucide-react';
 import { useAuthStore } from '../auth/useAuthStore';
 
 /**
@@ -11,6 +11,7 @@ import { useAuthStore } from '../auth/useAuthStore';
 const MainLayout: React.FC = () => {
   const location = useLocation();
   const { tenantId, logout } = useAuthStore();
+  const [isCollapsed, setIsCollapsed] = React.useState(false);
 
   const menuItems = [
     { name: '대시보드', path: '/dashboard', icon: LayoutDashboard },
@@ -25,46 +26,60 @@ const MainLayout: React.FC = () => {
   return (
     <div className="flex h-screen bg-background-primary text-text-primary overflow-hidden">
       {/* 사이드바 (LNB) */}
-      <aside className="w-64 bg-background-secondary border-r border-white/5 flex flex-col z-50">
-        <div className="p-6">
-          <h1 className="text-2xl font-black italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600">
-            ITSM V5
+      <aside className={`${isCollapsed ? 'w-20' : 'w-64'} bg-background-secondary border-r border-white/5 flex flex-col z-50 transition-all duration-300 ease-in-out relative`}>
+        <div className={`p-6 flex flex-col transition-all duration-300 ${isCollapsed ? 'px-4 items-center' : ''}`}>
+          <h1 className={`${isCollapsed ? 'text-lg' : 'text-2xl'} font-black italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600 transition-all`}>
+            {isCollapsed ? 'V5' : 'ITSM V5'}
           </h1>
-          <p className="text-[10px] text-text-muted mt-1 font-mono uppercase tracking-widest leading-none">
-            Renewal Standard
-          </p>
+          {!isCollapsed && (
+            <p className="text-[10px] text-text-muted mt-1 font-mono uppercase tracking-widest leading-none animate-fade-in">
+              Renewal Standard
+            </p>
+          )}
         </div>
+        
+        {/* 플로팅 토글 버튼 (Floating Edge Toggle) */}
+        <button 
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="absolute right-0 translate-x-1/2 top-12 w-8 h-8 rounded-full bg-background-primary border-2 border-cyan-500/50 flex items-center justify-center text-cyan-400 hover:text-white hover:bg-cyan-500 hover:border-cyan-500 transition-all z-[60] shadow-lg shadow-black/50 cursor-pointer"
+          title={isCollapsed ? '메뉴 펼치기' : '메뉴 접기'}
+        >
+          {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+        </button>
+        
 
-        <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
+        <nav className={`flex-1 space-y-1 overflow-y-auto transition-all duration-300 ${isCollapsed ? 'px-2' : 'px-4'}`}>
           {menuItems.map((item) => {
             const isActive = location.pathname.startsWith(item.path);
             return (
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 group ${
+                title={isCollapsed ? item.name : ''}
+                className={`flex items-center ${isCollapsed ? 'justify-center py-4' : 'justify-between px-4 py-3'} rounded-xl transition-all duration-200 group ${
                   isActive 
                   ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' 
                   : 'text-text-secondary hover:bg-white/5 hover:text-white border border-transparent'
                 }`}
               >
-                <div className="flex items-center gap-3">
-                  <item.icon size={18} className={isActive ? 'text-cyan-400' : 'text-text-muted group-hover:text-white'} />
-                  <span className="text-sm font-bold">{item.name}</span>
+                <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'}`}>
+                  <item.icon size={isCollapsed ? 22 : 18} className={isActive ? 'text-cyan-400' : 'text-text-muted group-hover:text-white'} />
+                  {!isCollapsed && <span className="text-sm font-bold animate-fade-in">{item.name}</span>}
                 </div>
-                {isActive && <ChevronRight size={14} className="animate-pulse" />}
+                {!isCollapsed && isActive && <ChevronRight size={14} className="animate-pulse" />}
               </Link>
             );
           })}
         </nav>
 
-        <div className="p-4 border-t border-white/5">
+        <div className={`p-4 border-t border-white/5 flex flex-col gap-2 transition-all duration-300 ${isCollapsed ? 'items-center px-2' : ''}`}>
           <button 
             onClick={logout}
-            className="flex items-center gap-3 w-full px-4 py-3 text-text-muted hover:text-red-400 hover:bg-red-400/10 rounded-xl transition-all"
+            className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} w-full px-4 py-3 text-text-muted hover:text-red-400 hover:bg-red-400/10 rounded-xl transition-all`}
+            title={isCollapsed ? '로그아웃' : ''}
           >
-            <LogOut size={18} />
-            <span className="text-sm font-bold">로그아웃</span>
+            <LogOut size={isCollapsed ? 20 : 18} />
+            {!isCollapsed && <span className="text-sm font-bold">로그아웃</span>}
           </button>
         </div>
       </aside>
