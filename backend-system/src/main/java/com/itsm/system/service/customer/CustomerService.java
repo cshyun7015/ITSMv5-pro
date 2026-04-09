@@ -9,6 +9,7 @@ import com.itsm.system.dto.organization.customer.CustomerUserDTO;
 import com.itsm.system.repository.customer.CustomerCompanyRepository;
 import com.itsm.system.repository.customer.CustomerTeamRepository;
 import com.itsm.system.repository.customer.CustomerUserRepository;
+import com.itsm.system.security.TenantContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -54,6 +55,12 @@ public class CustomerService {
                 .address(dto.getAddress())
                 .status(dto.getStatus() != null ? dto.getStatus() : "ACTIVE")
                 .build();
+
+        // MSP can explicitly set tenantId
+        if (dto.getTenantId() != null && TenantContext.DEFAULT_TENANT.equals(TenantContext.getTenantId())) {
+            company.setTenantId(dto.getTenantId());
+        }
+
         return convertToCompanyDTO(companyRepository.save(company));
     }
 
@@ -68,6 +75,9 @@ public class CustomerService {
         company.setEmail(dto.getEmail());
         company.setAddress(dto.getAddress());
         company.setStatus(dto.getStatus());
+        if (dto.getIsDeleted() != null) {
+            company.setIsDeleted(dto.getIsDeleted());
+        }
         return convertToCompanyDTO(companyRepository.save(company));
     }
 
@@ -226,10 +236,12 @@ public class CustomerService {
                 .email(company.getEmail())
                 .address(company.getAddress())
                 .status(company.getStatus())
+                .tenantId(company.getTenantId())
                 .createdAt(company.getCreatedAt())
                 .updatedAt(company.getUpdatedAt())
                 .createdBy(company.getCreatedBy())
                 .updatedBy(company.getUpdatedBy())
+                .isDeleted(company.getIsDeleted())
                 .build();
     }
 

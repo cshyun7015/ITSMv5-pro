@@ -19,6 +19,8 @@ public class CustomerCompanyDTO {
     private String email;
     private String address;
     private String status;
+    private String tenantId;
+    private Boolean isDeleted;
     
     // Audit fields
     private LocalDateTime createdAt;

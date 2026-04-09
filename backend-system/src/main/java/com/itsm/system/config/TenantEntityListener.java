@@ -14,13 +14,20 @@ public class TenantEntityListener {
 
     @PrePersist
     public void prePersist(Object entity) {
-        if (entity instanceof BaseTenantEntity) {
-            String tenantId = TenantContext.getTenantId();
-            if (tenantId != null) {
-                ((BaseTenantEntity) entity).setTenantId(tenantId);
-                log.trace("Injected tenantId [{}] into entity of type [{}]", tenantId, entity.getClass().getSimpleName());
+        if (entity instanceof BaseTenantEntity tenantEntity) {
+            String currentContextTenantId = TenantContext.getTenantId();
+            String existingTenantId = tenantEntity.getTenantId();
+
+            // Inject current context only if existing tenantId is null or the default 'MSP'
+            if (existingTenantId == null || TenantContext.DEFAULT_TENANT.equals(existingTenantId)) {
+                if (currentContextTenantId != null) {
+                    tenantEntity.setTenantId(currentContextTenantId);
+                    log.trace("Injected tenantId [{}] into entity of type [{}]", currentContextTenantId, entity.getClass().getSimpleName());
+                } else {
+                    log.warn("Attempted to persist TenantEntity [{}] but TenantID is null in TenantContext", entity.getClass().getSimpleName());
+                }
             } else {
-                log.warn("Attempted to persist TenantEntity [{}] but TenantID is null in TenantContext", entity.getClass().getSimpleName());
+                log.trace("Preserving manually set tenantId [{}] for entity of type [{}]", existingTenantId, entity.getClass().getSimpleName());
             }
         }
     }

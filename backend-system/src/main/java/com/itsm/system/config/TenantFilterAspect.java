@@ -33,13 +33,17 @@ public class TenantFilterAspect {
         
         // Enable Tenant Filter
         String tenantId = TenantContext.getTenantId();
-        if (tenantId != null) {
+        boolean isMsp = TenantContext.DEFAULT_TENANT.equals(tenantId);
+
+        if (tenantId != null && !isMsp) {
             session.enableFilter("tenantFilter").setParameter("tenantId", tenantId);
+            // Enable Deleted Filter (default to showing only non-deleted items)
+            session.enableFilter("deletedFilter").setParameter("isDeleted", false);
+            log.trace("Activated Hibernate filters in session: tenantId={}, isDeleted=false", tenantId);
+        } else if (isMsp) {
+            session.disableFilter("tenantFilter");
+            session.disableFilter("deletedFilter");
+            log.trace("Disabled Hibernate filters for MSP (SuperUser) session");
         }
-        
-        // Enable Deleted Filter (default to showing only non-deleted items)
-        session.enableFilter("deletedFilter").setParameter("isDeleted", false);
-        
-        log.trace("Activated Hibernate filters in session: tenantId={}, isDeleted=false", tenantId);
     }
 }

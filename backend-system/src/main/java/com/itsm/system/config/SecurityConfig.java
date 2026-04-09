@@ -1,6 +1,7 @@
 package com.itsm.system.config;
 
 import com.itsm.system.security.JwtAuthenticationFilter;
+import com.itsm.system.security.TenantContextFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,6 +27,7 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final TenantContextFilter tenantContextFilter;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -47,11 +49,12 @@ public class SecurityConfig {
                 .requestMatchers("/health").permitAll()
                 .requestMatchers("/v1/auth/**").permitAll()
                 .requestMatchers("/v1/system/**").permitAll() 
-                .requestMatchers("/v1/organization/**").permitAll() 
-                .requestMatchers("/v1/customer-governance/**").permitAll()
+                .requestMatchers("/v1/customer/**").permitAll()
+                .requestMatchers("/v1/operator/**").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
                 .anyRequest().authenticated()
             )
+            .addFilterBefore(tenantContextFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -62,8 +65,9 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of("http://localhost:3000", "http://portal-ui", "http://portal-ui:80")); // Frontend URL and internal container URL
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
-        configuration.setAllowCredentials(true); // Required for Cookies
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Tenant-ID", "Accept"));
+        configuration.setExposedHeaders(List.of("X-Tenant-ID"));
+        configuration.setAllowCredentials(true);
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
