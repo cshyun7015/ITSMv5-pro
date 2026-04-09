@@ -6,9 +6,10 @@ import com.itsm.system.domain.organization.operator.OperatorTeam;
 import com.itsm.system.dto.organization.operator.OperatorCompanyDTO;
 import com.itsm.system.dto.organization.operator.OperatorDTO;
 import com.itsm.system.dto.organization.operator.OperatorTeamDTO;
-import com.itsm.system.repository.organization.mapping.OperatorTeamMemberRepository;
-import com.itsm.system.repository.organization.operator.OperatorCompanyRepository;
-import com.itsm.system.repository.organization.operator.OperatorTeamRepository;
+import com.itsm.system.repository.operator.OperatorRepository;
+import com.itsm.system.repository.operator.mapping.OperatorTeamMemberRepository;
+import com.itsm.system.repository.operator.OperatorCompanyRepository;
+import com.itsm.system.repository.operator.OperatorTeamRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -24,7 +25,7 @@ public class OperatorService {
 
     private final OperatorCompanyRepository companyRepository;
     private final OperatorTeamRepository teamRepository;
-    private final com.itsm.system.repository.organization.operator.OperatorRepository operatorRepository;
+    private final OperatorRepository operatorRepository;
     private final OperatorTeamMemberRepository teamMemberRepository;
     private final PasswordEncoder passwordEncoder;
     private final com.itsm.system.domain.code.CommonCodeRepository commonCodeRepository;

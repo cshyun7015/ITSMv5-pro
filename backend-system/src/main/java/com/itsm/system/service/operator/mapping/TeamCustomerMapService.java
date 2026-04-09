@@ -6,8 +6,8 @@ import com.itsm.system.domain.organization.mapping.TeamCustomerMap.TeamCustomerM
 import com.itsm.system.domain.organization.operator.OperatorTeam;
 import com.itsm.system.dto.organization.mapping.TeamCustomerMapDTO;
 import com.itsm.system.repository.organization.customer.CustomerCompanyRepository;
-import com.itsm.system.repository.organization.mapping.TeamCustomerMapRepository;
-import com.itsm.system.repository.organization.operator.OperatorTeamRepository;
+import com.itsm.system.repository.operator.mapping.TeamCustomerMapRepository;
+import com.itsm.system.repository.operator.OperatorTeamRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
