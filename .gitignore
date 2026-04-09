@@ -32,5 +32,6 @@ tmp/
 docker-compose.yml
 e2e/test-results/
 backend-incident/gradlew
+backend-incident/bin/
 backend-request/bin/
 **/bin/
