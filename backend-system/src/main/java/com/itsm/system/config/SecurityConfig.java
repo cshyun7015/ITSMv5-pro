@@ -45,10 +45,10 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/health").permitAll()
-                .requestMatchers("/api/v1/auth/**").permitAll()
-                .requestMatchers("/api/v1/system/**").permitAll() 
-                .requestMatchers("/api/v1/organization/**").permitAll() // TEMPORARY: Unblock for dev
-                .requestMatchers("/api/v1/customer-governance/**").permitAll()
+                .requestMatchers("/v1/auth/**").permitAll()
+                .requestMatchers("/v1/system/**").permitAll() 
+                .requestMatchers("/v1/organization/**").permitAll() 
+                .requestMatchers("/v1/customer-governance/**").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
                 .anyRequest().authenticated()
             )

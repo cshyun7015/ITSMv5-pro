@@ -13,5 +13,15 @@ export default defineConfig({
   server: {
     port: 3000,
     host: true,
+    proxy: {
+      '/api': {
+        target: 'http://api-gateway:80',
+        changeOrigin: true,
+      },
+      '/v1': {
+        target: 'http://api-gateway:80',
+        changeOrigin: true,
+      },
+    },
   },
 })

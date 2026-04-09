@@ -1,4 +1,4 @@
-package com.itsm.system.controller.organization;
+package com.itsm.system.controller.operator;
 
 import com.itsm.system.dto.organization.operator.OperatorCompanyDTO;
 import com.itsm.system.dto.organization.operator.OperatorDTO;
@@ -11,108 +11,108 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/v1/system/organization/operators")
+@RequestMapping("/v1/operator")
 @RequiredArgsConstructor
-public class OperatorManagementController {
+public class OperatorController {
 
     private final OperatorService operatorService;
 
     // --- Operator Side ---
-    @GetMapping("/operators/companies")
+    @GetMapping("/companies")
     public ResponseEntity<List<OperatorCompanyDTO>> getAllOperatorCompanies() {
         return ResponseEntity.ok(operatorService.getAllCompanies());
     }
 
-    @GetMapping("/operators/companies/{id}")
+    @GetMapping("/companies/{id}")
     public ResponseEntity<OperatorCompanyDTO> getOperatorCompany(@PathVariable Long id) {
         return ResponseEntity.ok(operatorService.getCompany(id));
     }
 
-    @PostMapping("/operators/companies")
+    @PostMapping("/companies")
     public ResponseEntity<OperatorCompanyDTO> createOperatorCompany(@RequestBody OperatorCompanyDTO dto) {
         return ResponseEntity.ok(operatorService.createCompany(dto));
     }
 
-    @PutMapping("/operators/companies/{id}")
+    @PutMapping("/companies/{id}")
     public ResponseEntity<OperatorCompanyDTO> updateOperatorCompany(@PathVariable Long id, @RequestBody OperatorCompanyDTO dto) {
         return ResponseEntity.ok(operatorService.updateCompany(id, dto));
     }
 
-    @DeleteMapping("/operators/companies/{id}")
+    @DeleteMapping("/companies/{id}")
     public ResponseEntity<Void> deleteOperatorCompany(@PathVariable Long id) {
         operatorService.deleteCompany(id);
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/operators/companies/{companyId}/teams")
+    @GetMapping("/companies/{companyId}/teams")
     public ResponseEntity<List<OperatorTeamDTO>> getOperatorTeams(@PathVariable Long companyId) {
         return ResponseEntity.ok(operatorService.getTeamsByCompany(companyId));
     }
 
-    @GetMapping("/operators/teams")
+    @GetMapping("/teams")
     public ResponseEntity<List<OperatorTeamDTO>> getAllTeams() {
         return ResponseEntity.ok(operatorService.getAllTeams());
     }
 
-    @GetMapping("/operators/teams/{id}")
+    @GetMapping("/teams/{id}")
     public ResponseEntity<OperatorTeamDTO> getOperatorTeam(@PathVariable Long id) {
         return ResponseEntity.ok(operatorService.getTeam(id));
     }
 
-    @PostMapping("/operators/companies/{companyId}/teams")
+    @PostMapping("/companies/{companyId}/teams")
     public ResponseEntity<OperatorTeamDTO> createOperatorTeam(@PathVariable Long companyId, @RequestBody OperatorTeamDTO dto) {
         return ResponseEntity.ok(operatorService.createTeam(companyId, dto));
     }
 
-    @PutMapping("/operators/teams/{id}")
+    @PutMapping("/teams/{id}")
     public ResponseEntity<OperatorTeamDTO> updateOperatorTeam(@PathVariable Long id, @RequestBody OperatorTeamDTO dto) {
         return ResponseEntity.ok(operatorService.updateTeam(id, dto));
     }
 
-    @DeleteMapping("/operators/teams/{id}")
+    @DeleteMapping("/teams/{id}")
     public ResponseEntity<Void> deleteOperatorTeam(@PathVariable Long id) {
         operatorService.deleteTeam(id);
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/operators/teams/{teamId}/operators")
+    @GetMapping("/teams/{teamId}/operators")
     public ResponseEntity<List<OperatorDTO>> getOperatorsByTeam(@PathVariable Long teamId) {
         return ResponseEntity.ok(operatorService.getOperatorsByTeam(teamId));
     }
 
-    @GetMapping("/operators/operators")
+    @GetMapping("/operators")
     public ResponseEntity<List<OperatorDTO>> getAllOperators() {
         return ResponseEntity.ok(operatorService.getAllOperators());
     }
 
-    @GetMapping("/operators/operators/{id}")
+    @GetMapping("/operators/{id}")
     public ResponseEntity<OperatorDTO> getOperator(@PathVariable Long id) {
         return ResponseEntity.ok(operatorService.getOperator(id));
     }
 
-    @PostMapping("/operators/teams/{teamId}/operators")
+    @PostMapping("/teams/{teamId}/operators")
     public ResponseEntity<OperatorDTO> createOperator(@PathVariable Long teamId, @RequestBody OperatorDTO dto) {
         return ResponseEntity.ok(operatorService.createOperator(teamId, dto));
     }
 
-    @PutMapping("/operators/operators/{id}")
+    @PutMapping("/operators/{id}")
     public ResponseEntity<OperatorDTO> updateOperator(@PathVariable Long id, @RequestBody OperatorDTO dto) {
         return ResponseEntity.ok(operatorService.updateOperator(id, dto));
     }
 
-    @DeleteMapping("/operators/operators/{id}")
+    @DeleteMapping("/operators/{id}")
     public ResponseEntity<Void> deleteOperator(@PathVariable Long id) {
         operatorService.deleteOperator(id);
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/operators/operators/{id}/teams/{teamId}")
+    @PostMapping("/operators/{id}/teams/{teamId}")
     public ResponseEntity<Void> assignTeam(@PathVariable Long id, @PathVariable Long teamId) {
         operatorService.assignTeam(id, teamId);
         return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping("/operators/operators/{id}/teams/{teamId}")
+    @DeleteMapping("/operators/{id}/teams/{teamId}")
     public ResponseEntity<Void> unassignTeam(@PathVariable Long id, @PathVariable Long teamId) {
         operatorService.unassignTeam(id, teamId);
         return ResponseEntity.ok().build();

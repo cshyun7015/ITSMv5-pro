@@ -1,4 +1,4 @@
-package com.itsm.system.controller.organization;
+package com.itsm.system.controller.customer;
 
 import com.itsm.system.domain.common.ApiResponse;
 import com.itsm.system.dto.organization.customer.CustomerCompanyDTO;
@@ -15,9 +15,9 @@ import java.util.List;
  * Standardized Controller for Customer Organization Management.
  */
 @RestController
-@RequestMapping("/v1/system/organization")
+@RequestMapping("/v1/customer")
 @RequiredArgsConstructor
-public class CustomerManagementController {
+public class CustomerController {
 
     private final CustomerService customerService;
 

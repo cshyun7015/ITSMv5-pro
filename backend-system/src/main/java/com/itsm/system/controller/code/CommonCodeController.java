@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/system/codes")
+@RequestMapping("/v1/system/codes")
 @RequiredArgsConstructor
 public class CommonCodeController {
 

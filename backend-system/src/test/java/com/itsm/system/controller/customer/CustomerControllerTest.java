@@ -1,7 +1,6 @@
-package com.itsm.system.controller.organization;
+package com.itsm.system.controller.customer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.itsm.system.controller.customer.CustomerController;
 import com.itsm.system.dto.organization.customer.CustomerCompanyDTO;
 import com.itsm.system.dto.organization.customer.CustomerTeamDTO;
 import com.itsm.system.dto.organization.customer.CustomerUserDTO;
@@ -53,7 +52,7 @@ class CustomerControllerTest {
     void getAllCompanies_Success() throws Exception {
         given(customerService.getAllCompanies()).willReturn(List.of(CustomerCompanyDTO.builder().id(1L).name("고객사A").build()));
 
-        mockMvc.perform(get("/api/v1/customer-governance/companies"))
+        mockMvc.perform(get("/v1/customer/companies"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data[0].name").value("고객사A"));
@@ -65,7 +64,7 @@ class CustomerControllerTest {
         CustomerCompanyDTO dto = CustomerCompanyDTO.builder().customerId("C001").name("신규고객").build();
         given(customerService.createCompany(any(CustomerCompanyDTO.class))).willReturn(dto);
 
-        mockMvc.perform(post("/api/v1/customer-governance/companies")
+        mockMvc.perform(post("/v1/customer/companies")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
@@ -80,7 +79,7 @@ class CustomerControllerTest {
     void getOrganizationTree_Success() throws Exception {
         given(customerService.getOrganizationTree(1L)).willReturn(List.of(CustomerTeamDTO.builder().id(10L).name("Root팀").build()));
 
-        mockMvc.perform(get("/api/v1/customer-governance/companies/1/organization-tree"))
+        mockMvc.perform(get("/v1/customer/companies/1/organization-tree"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data[0].name").value("Root팀"));
@@ -92,7 +91,7 @@ class CustomerControllerTest {
         CustomerTeamDTO dto = CustomerTeamDTO.builder().name("IT팀").build();
         given(customerService.createTeam(anyLong(), any(CustomerTeamDTO.class))).willReturn(dto);
 
-        mockMvc.perform(post("/api/v1/customer-governance/companies/1/teams")
+        mockMvc.perform(post("/v1/customer/companies/1/teams")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
@@ -107,7 +106,7 @@ class CustomerControllerTest {
     void getUsersByTeam_Success() throws Exception {
         given(customerService.getUsersByTeam(10L)).willReturn(List.of(CustomerUserDTO.builder().userId("user1").build()));
 
-        mockMvc.perform(get("/api/v1/customer-governance/teams/10/users"))
+        mockMvc.perform(get("/v1/customer/teams/10/users"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data[0].userId").value("user1"));
@@ -119,7 +118,7 @@ class CustomerControllerTest {
         CustomerUserDTO dto = CustomerUserDTO.builder().userId("newuser").password("pass123").build();
         given(customerService.createUser(anyLong(), any(CustomerUserDTO.class))).willReturn(dto);
 
-        mockMvc.perform(post("/api/v1/customer-governance/teams/10/users")
+        mockMvc.perform(post("/v1/customer/teams/10/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
@@ -132,7 +131,7 @@ class CustomerControllerTest {
     void deleteUser_ValidId_ReturnsOk() throws Exception {
         doNothing().when(customerService).deleteUser(100L);
 
-        mockMvc.perform(delete("/api/v1/customer-governance/users/100"))
+        mockMvc.perform(delete("/v1/customer/users/100"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
     }

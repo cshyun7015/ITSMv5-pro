@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/v1/system/stats")
+@RequestMapping("/v1/system/stats")
 @RequiredArgsConstructor
 public class SystemStatsController {
 

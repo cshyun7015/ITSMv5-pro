@@ -16,7 +16,7 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     // 로컬 스토리지나 Zustand 스토어에서 테넌트 ID를 가져옴
-    const tenantId = localStorage.getItem('X-Tenant-ID') || 'default';
+    const tenantId = localStorage.getItem('X-Tenant-ID') || 'T001';
     if (tenantId) {
       config.headers['X-Tenant-ID'] = tenantId;
     }

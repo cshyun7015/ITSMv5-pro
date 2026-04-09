@@ -1,6 +1,5 @@
-package com.itsm.system.controller.organization.mapping;
+package com.itsm.system.controller.operator;
 
-import com.itsm.system.controller.operator.TeamCustomerMapController;
 import com.itsm.system.dto.organization.mapping.TeamCustomerMapDTO;
 import com.itsm.system.security.JwtAuthenticationFilter;
 import com.itsm.system.security.JwtTokenProvider;

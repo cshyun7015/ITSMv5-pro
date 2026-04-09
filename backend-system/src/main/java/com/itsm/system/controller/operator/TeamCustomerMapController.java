@@ -1,4 +1,4 @@
-package com.itsm.system.controller.organization.mapping;
+package com.itsm.system.controller.operator;
 
 import com.itsm.system.dto.organization.mapping.TeamCustomerMapDTO;
 import com.itsm.system.service.organization.mapping.TeamCustomerMapService;
