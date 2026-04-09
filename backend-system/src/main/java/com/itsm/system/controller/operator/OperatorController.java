@@ -3,7 +3,7 @@ package com.itsm.system.controller.operator;
 import com.itsm.system.dto.organization.operator.OperatorCompanyDTO;
 import com.itsm.system.dto.organization.operator.OperatorDTO;
 import com.itsm.system.dto.organization.operator.OperatorTeamDTO;
-import com.itsm.system.service.organization.operator.OperatorService;
+import com.itsm.system.service.operator.OperatorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

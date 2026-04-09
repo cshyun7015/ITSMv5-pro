@@ -2,8 +2,8 @@ package com.itsm.system.security;
 
 import com.itsm.system.domain.organization.customer.CustomerUser;
 import com.itsm.system.domain.organization.operator.Operator;
-import com.itsm.system.repository.organization.customer.CustomerUserRepository;
-import com.itsm.system.repository.organization.operator.OperatorRepository;
+import com.itsm.system.repository.customer.CustomerUserRepository;
+import com.itsm.system.repository.operator.OperatorRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;

@@ -1,7 +1,7 @@
 package com.itsm.system.controller.stats;
 
-import com.itsm.system.repository.organization.customer.CustomerCompanyRepository;
-import com.itsm.system.repository.organization.customer.CustomerUserRepository;
+import com.itsm.system.repository.customer.CustomerCompanyRepository;
+import com.itsm.system.repository.customer.CustomerUserRepository;
 import com.itsm.system.dto.stats.SystemStatsDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;

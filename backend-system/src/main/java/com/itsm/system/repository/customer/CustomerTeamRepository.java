@@ -1,4 +1,4 @@
-package com.itsm.system.repository.organization.customer;
+package com.itsm.system.repository.customer;
 
 import com.itsm.system.domain.organization.customer.CustomerTeam;
 import org.springframework.data.jpa.repository.JpaRepository;

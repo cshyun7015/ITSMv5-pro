@@ -1,9 +1,10 @@
 package com.itsm.system.controller.operator;
 
+import com.itsm.system.controller.operator.mapping.TeamCustomerMapController;
 import com.itsm.system.dto.organization.mapping.TeamCustomerMapDTO;
 import com.itsm.system.security.JwtAuthenticationFilter;
 import com.itsm.system.security.JwtTokenProvider;
-import com.itsm.system.service.organization.mapping.TeamCustomerMapService;
+import com.itsm.system.service.operator.mapping.TeamCustomerMapService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

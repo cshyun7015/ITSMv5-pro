@@ -1,7 +1,7 @@
-package com.itsm.system.controller.operator;
+package com.itsm.system.controller.operator.mapping;
 
 import com.itsm.system.dto.organization.mapping.TeamCustomerMapDTO;
-import com.itsm.system.service.organization.mapping.TeamCustomerMapService;
+import com.itsm.system.service.operator.mapping.TeamCustomerMapService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

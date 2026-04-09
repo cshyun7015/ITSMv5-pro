@@ -6,7 +6,7 @@ import com.itsm.system.dto.organization.operator.OperatorDTO;
 import com.itsm.system.dto.organization.operator.OperatorTeamDTO;
 import com.itsm.system.security.JwtAuthenticationFilter;
 import com.itsm.system.security.JwtTokenProvider;
-import com.itsm.system.service.organization.operator.OperatorService;
+import com.itsm.system.service.operator.OperatorService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

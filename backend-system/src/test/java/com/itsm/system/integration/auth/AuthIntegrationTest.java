@@ -5,9 +5,8 @@ import com.itsm.system.domain.organization.customer.CustomerTeam;
 import com.itsm.system.dto.auth.AuthResponse;
 import com.itsm.system.dto.auth.LoginRequest;
 import com.itsm.system.dto.auth.SignupRequest;
-import com.itsm.system.repository.organization.customer.CustomerCompanyRepository;
-import com.itsm.system.repository.organization.customer.CustomerTeamRepository;
-import com.itsm.system.repository.organization.customer.CustomerUserRepository;
+import com.itsm.system.repository.customer.CustomerCompanyRepository;
+import com.itsm.system.repository.customer.CustomerTeamRepository;
 import com.itsm.system.service.auth.AuthService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -32,9 +31,6 @@ class AuthIntegrationTest {
 
     @Autowired
     private CustomerTeamRepository teamRepository;
-
-    @Autowired
-    private CustomerUserRepository userRepository;
 
     @BeforeEach
     void setUp() {

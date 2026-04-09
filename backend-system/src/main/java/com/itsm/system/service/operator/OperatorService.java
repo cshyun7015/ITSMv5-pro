@@ -1,4 +1,4 @@
-package com.itsm.system.service.organization.operator;
+package com.itsm.system.service.operator;
 
 import com.itsm.system.domain.organization.operator.Operator;
 import com.itsm.system.domain.organization.operator.OperatorCompany;

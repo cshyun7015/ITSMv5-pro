@@ -1,11 +1,10 @@
-package com.itsm.system.integration.organization.mapping;
+package com.itsm.system.integration.operator.mapping;
 
 import com.itsm.system.domain.organization.customer.CustomerCompany;
 import com.itsm.system.domain.organization.operator.OperatorCompany;
 import com.itsm.system.domain.organization.operator.OperatorTeam;
 import com.itsm.system.dto.organization.mapping.TeamCustomerMapDTO;
-import com.itsm.system.repository.organization.customer.CustomerCompanyRepository;
-import com.itsm.system.repository.operator.mapping.TeamCustomerMapRepository;
+import com.itsm.system.repository.customer.CustomerCompanyRepository;
 import com.itsm.system.repository.operator.OperatorCompanyRepository;
 import com.itsm.system.repository.operator.OperatorTeamRepository;
 import com.itsm.system.service.operator.mapping.TeamCustomerMapService;
@@ -36,9 +35,6 @@ class TeamCustomerMapIntegrationTest {
 
     @Autowired
     private CustomerCompanyRepository customerRepository;
-
-    @Autowired
-    private TeamCustomerMapRepository mappingRepository;
 
     private OperatorTeam savedTeam;
     private CustomerCompany savedCustomer;

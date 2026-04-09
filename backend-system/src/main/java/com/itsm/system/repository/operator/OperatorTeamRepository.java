@@ -1,4 +1,4 @@
-package com.itsm.system.repository.organization.operator;
+package com.itsm.system.repository.operator;
 
 import com.itsm.system.domain.organization.operator.OperatorTeam;
 import org.springframework.data.jpa.repository.JpaRepository;

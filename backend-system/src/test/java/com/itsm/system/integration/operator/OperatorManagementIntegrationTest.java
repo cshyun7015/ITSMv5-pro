@@ -1,4 +1,4 @@
-package com.itsm.system.integration.organization;
+package com.itsm.system.integration.operator;
 
 import com.itsm.system.domain.code.CodeGroup;
 import com.itsm.system.domain.code.CodeGroupRepository;
@@ -7,8 +7,6 @@ import com.itsm.system.domain.code.CommonCodeRepository;
 import com.itsm.system.dto.organization.operator.OperatorCompanyDTO;
 import com.itsm.system.dto.organization.operator.OperatorDTO;
 import com.itsm.system.dto.organization.operator.OperatorTeamDTO;
-import com.itsm.system.repository.operator.OperatorCompanyRepository;
-import com.itsm.system.repository.operator.OperatorTeamRepository;
 import com.itsm.system.repository.operator.OperatorRepository;
 import com.itsm.system.service.operator.OperatorService;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,12 +27,6 @@ class OperatorManagementIntegrationTest {
 
     @Autowired
     private OperatorService operatorService;
-
-    @Autowired
-    private OperatorCompanyRepository companyRepository;
-
-    @Autowired
-    private OperatorTeamRepository teamRepository;
 
     @Autowired
     private OperatorRepository operatorRepository;

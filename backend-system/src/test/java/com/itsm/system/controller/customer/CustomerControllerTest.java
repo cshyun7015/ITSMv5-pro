@@ -6,7 +6,7 @@ import com.itsm.system.dto.organization.customer.CustomerTeamDTO;
 import com.itsm.system.dto.organization.customer.CustomerUserDTO;
 import com.itsm.system.security.JwtAuthenticationFilter;
 import com.itsm.system.security.JwtTokenProvider;
-import com.itsm.system.service.organization.customer.CustomerService;
+import com.itsm.system.service.customer.CustomerService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -1,4 +1,4 @@
-package com.itsm.system.repository.organization.mapping;
+package com.itsm.system.repository.operator.mapping;
 
 import com.itsm.system.domain.organization.mapping.OperatorTeamMember;
 import com.itsm.system.domain.organization.mapping.OperatorTeamMember.OperatorTeamMemberId;

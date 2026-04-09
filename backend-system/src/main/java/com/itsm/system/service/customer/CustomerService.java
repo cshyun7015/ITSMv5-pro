@@ -1,4 +1,4 @@
-package com.itsm.system.service.organization.customer;
+package com.itsm.system.service.customer;
 
 import com.itsm.system.domain.organization.customer.CustomerCompany;
 import com.itsm.system.domain.organization.customer.CustomerTeam;
@@ -6,7 +6,7 @@ import com.itsm.system.domain.organization.customer.CustomerUser;
 import com.itsm.system.dto.organization.customer.CustomerCompanyDTO;
 import com.itsm.system.dto.organization.customer.CustomerTeamDTO;
 import com.itsm.system.dto.organization.customer.CustomerUserDTO;
-import com.itsm.system.repository.organization.customer.CustomerCompanyRepository;
+import com.itsm.system.repository.customer.CustomerCompanyRepository;
 import com.itsm.system.repository.customer.CustomerTeamRepository;
 import com.itsm.system.repository.customer.CustomerUserRepository;
 import lombok.RequiredArgsConstructor;
