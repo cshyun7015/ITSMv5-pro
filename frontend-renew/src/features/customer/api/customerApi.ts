@@ -35,7 +35,7 @@ export const customerApi = {
 
   // --- 조직 트리 (Organization Tree) ---
   fetchOrganizationTree: async (companyId: number): Promise<CustomerTeam[]> => {
-    const response = await apiClient.get(`${BASE_URL}/companies/${companyId}/organization-tree`);
+    const response = await apiClient.get(`${BASE_URL}/companies/${companyId}/customer-tree`);
     return response.data.data;
   },
 

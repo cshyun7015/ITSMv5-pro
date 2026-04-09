@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/v1/system/organization/mappings")
+@RequestMapping("/v1/operator/mapping")
 @RequiredArgsConstructor
 public class TeamCustomerMapController {
 

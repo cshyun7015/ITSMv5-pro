@@ -23,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 @Transactional
-class OperatorManagementIntegrationTest {
+class OperatorIntegrationTest {
 
     @Autowired
     private OperatorService operatorService;

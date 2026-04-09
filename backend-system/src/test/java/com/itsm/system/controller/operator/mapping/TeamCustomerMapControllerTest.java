@@ -1,6 +1,5 @@
-package com.itsm.system.controller.operator;
+package com.itsm.system.controller.operator.mapping;
 
-import com.itsm.system.controller.operator.mapping.TeamCustomerMapController;
 import com.itsm.system.dto.organization.mapping.TeamCustomerMapDTO;
 import com.itsm.system.security.JwtAuthenticationFilter;
 import com.itsm.system.security.JwtTokenProvider;
@@ -50,7 +49,7 @@ class TeamCustomerMapControllerTest {
         given(mappingService.getMappingsByTeam(1L)).willReturn(List.of(dto));
 
         // when & then
-        mockMvc.perform(get("/v1/mapping/team/1"))
+        mockMvc.perform(get("/v1/operator/mapping/team/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].operatorTeamId").value(1))
                 .andExpect(jsonPath("$[0].customerCompanyName").value("고객사A"));
@@ -69,7 +68,7 @@ class TeamCustomerMapControllerTest {
         given(mappingService.getMappingsByCustomer(10L)).willReturn(List.of(dto));
 
         // when & then
-        mockMvc.perform(get("/v1/mapping/customer/10"))
+        mockMvc.perform(get("/v1/operator/mapping/customer/10"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].customerCompanyId").value(10))
                 .andExpect(jsonPath("$[0].operatorTeamName").value("운영1팀"));
@@ -86,7 +85,7 @@ class TeamCustomerMapControllerTest {
         given(mappingService.assignTeamToCustomer(1L, 10L)).willReturn(dto);
 
         // when & then
-        mockMvc.perform(post("/v1/mapping/1/10"))
+        mockMvc.perform(post("/v1/operator/mapping/1/10"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.operatorTeamId").value(1))
                 .andExpect(jsonPath("$.customerCompanyId").value(10));
@@ -99,7 +98,7 @@ class TeamCustomerMapControllerTest {
         doNothing().when(mappingService).unassignTeamFromCustomer(1L, 10L);
 
         // when & then
-        mockMvc.perform(delete("/v1/mapping/1/10"))
+        mockMvc.perform(delete("/v1/operator/mapping/1/10"))
                 .andExpect(status().isNoContent());
     }
 }

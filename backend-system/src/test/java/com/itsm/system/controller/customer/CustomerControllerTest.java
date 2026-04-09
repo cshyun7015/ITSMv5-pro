@@ -79,7 +79,7 @@ class CustomerControllerTest {
     void getOrganizationTree_Success() throws Exception {
         given(customerService.getOrganizationTree(1L)).willReturn(List.of(CustomerTeamDTO.builder().id(10L).name("Root팀").build()));
 
-        mockMvc.perform(get("/v1/customer/companies/1/organization-tree"))
+        mockMvc.perform(get("/v1/customer/companies/1/customer-tree"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data[0].name").value("Root팀"));

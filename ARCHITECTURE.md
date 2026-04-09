@@ -2,7 +2,7 @@
 
 ## 1. Core Domain (ITSM)
 본 프로젝트는 여러 고객사(Tenant)가 동시에 사용하는 IT 서비스 관리(ITSM) 플랫폼입니다.
-- **주요 모듈:** Common Code(공통 코드 관리), Customer Management(고객 조직 관리), Operator Management(운영 조직 관리), Dashboard(대시보드-사용자관점, 운영자관점), Event Management(이벤트 관리), Incidnet Management(인시던트 관리), Service Request Management(서비스 요청 관리) 
+- **주요 모듈:** Common Code(공통 코드 관리), Customer (사용자 관리), Operator (운영자 관리), Dashboard(대시보드-사용자관점, 운영자관점), Event Management(이벤트 관리), Incidnet Management(인시던트 관리), Service Request Management(서비스 요청 관리) 
 
 ## 2. Multi-Tenancy Architecture (중요)
 모든 백엔드 로직과 데이터베이스 쿼리는 테넌트 간 완벽한 격리를 보장해야 합니다.

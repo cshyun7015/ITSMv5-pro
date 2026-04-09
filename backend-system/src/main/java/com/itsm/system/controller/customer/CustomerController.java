@@ -54,7 +54,7 @@ public class CustomerController {
         return ApiResponse.success(customerService.getTeamsByCompany(companyId));
     }
 
-    @GetMapping("/companies/{companyId}/organization-tree")
+    @GetMapping("/companies/{companyId}/customer-tree")
     public ApiResponse<List<CustomerTeamDTO>> getOrganizationTree(@PathVariable Long companyId) {
         return ApiResponse.success(customerService.getOrganizationTree(companyId));
     }
