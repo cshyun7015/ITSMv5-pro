@@ -1,6 +1,7 @@
 package com.itsm.system.controller.organization;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.itsm.system.controller.operator.OperatorController;
 import com.itsm.system.dto.organization.operator.OperatorCompanyDTO;
 import com.itsm.system.dto.organization.operator.OperatorDTO;
 import com.itsm.system.dto.organization.operator.OperatorTeamDTO;
@@ -26,9 +27,9 @@ import static org.mockito.Mockito.doNothing;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(controllers = OperatorManagementController.class, excludeAutoConfiguration = SecurityAutoConfiguration.class)
+@WebMvcTest(controllers = OperatorController.class, excludeAutoConfiguration = SecurityAutoConfiguration.class)
 @AutoConfigureMockMvc(addFilters = false)
-class OperatorManagementControllerTest {
+class OperatorControllerTest {
 
     @Autowired
     private MockMvc mockMvc;

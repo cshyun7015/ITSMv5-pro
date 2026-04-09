@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/organization")
+@RequestMapping("/v1/system/organization/operators")
 @RequiredArgsConstructor
 public class OperatorManagementController {
 

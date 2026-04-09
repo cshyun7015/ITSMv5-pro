@@ -1,6 +1,6 @@
 package com.itsm.system.controller.organization.mapping;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.itsm.system.controller.operator.TeamCustomerMapController;
 import com.itsm.system.dto.organization.mapping.TeamCustomerMapDTO;
 import com.itsm.system.security.JwtAuthenticationFilter;
 import com.itsm.system.security.JwtTokenProvider;
@@ -12,12 +12,10 @@ import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfi
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doNothing;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;

@@ -15,7 +15,7 @@ import java.util.List;
  * Standardized Controller for Customer Organization Management.
  */
 @RestController
-@RequestMapping("/api/v1/customer-governance")
+@RequestMapping("/v1/system/organization")
 @RequiredArgsConstructor
 public class CustomerManagementController {
 

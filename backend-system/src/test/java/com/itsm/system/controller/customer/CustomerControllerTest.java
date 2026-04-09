@@ -1,6 +1,7 @@
 package com.itsm.system.controller.organization;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.itsm.system.controller.customer.CustomerController;
 import com.itsm.system.dto.organization.customer.CustomerCompanyDTO;
 import com.itsm.system.dto.organization.customer.CustomerTeamDTO;
 import com.itsm.system.dto.organization.customer.CustomerUserDTO;
@@ -26,9 +27,9 @@ import static org.mockito.Mockito.doNothing;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(controllers = CustomerManagementController.class, excludeAutoConfiguration = SecurityAutoConfiguration.class)
+@WebMvcTest(controllers = CustomerController.class, excludeAutoConfiguration = SecurityAutoConfiguration.class)
 @AutoConfigureMockMvc(addFilters = false)
-class CustomerManagementControllerTest {
+class CustomerControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
