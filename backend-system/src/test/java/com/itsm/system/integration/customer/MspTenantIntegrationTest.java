@@ -104,4 +104,31 @@ class MspTenantIntegrationTest {
         CustomerCompanyDTO fetched = customerService.getCompany(newCompany.getId());
         assertThat(fetched.getTenantId()).isEqualTo("T-CCC");
     }
+
+    @Test
+    @DisplayName("MSP는 데이터를 물리적으로 삭제(Hard Delete)할 수 있다")
+    void mspCanPerformHardDelete() {
+        // 1. Set MSP context
+        TenantContext.setTenantId(TenantContext.DEFAULT_TENANT);
+
+        // 2. Create target company
+        CustomerCompanyDTO company = customerService.createCompany(CustomerCompanyDTO.builder()
+                .customerId("C-HARD-" + System.currentTimeMillis())
+                .name("Hard Delete Target")
+                .build());
+        Long id = company.getId();
+
+        entityManager.flush();
+        entityManager.clear();
+
+        // 3. Perform Hard Delete (id, hardDelete=true)
+        customerService.deleteCompany(id, true);
+
+        entityManager.flush();
+        entityManager.clear();
+
+        // 4. Verify it's physically gone (even MSP cannot see it)
+        List<CustomerCompanyDTO> allCompanies = customerService.getAllCompanies();
+        assertThat(allCompanies.stream().noneMatch(c -> c.getId().equals(id))).isTrue();
+    }
 }

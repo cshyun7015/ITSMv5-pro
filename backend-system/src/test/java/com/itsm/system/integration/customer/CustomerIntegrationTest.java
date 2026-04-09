@@ -112,7 +112,7 @@ class CustomerIntegrationTest {
         entityManager.clear();
 
         // 2. Delete Team (Soft Delete)
-        customerService.deleteTeam(teamId);
+        customerService.deleteTeam(teamId, false);
         
         entityManager.flush();
         entityManager.clear();

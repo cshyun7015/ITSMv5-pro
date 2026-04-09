@@ -43,8 +43,8 @@ public class CustomerController {
     }
 
     @DeleteMapping("/companies/{id}")
-    public ApiResponse<Void> deleteCompany(@PathVariable Long id) {
-        customerService.deleteCompany(id);
+    public ApiResponse<Void> deleteCompany(@PathVariable Long id, @RequestParam(defaultValue = "false") boolean hardDelete) {
+        customerService.deleteCompany(id, hardDelete);
         return ApiResponse.success(null);
     }
 
@@ -75,8 +75,8 @@ public class CustomerController {
     }
 
     @DeleteMapping("/teams/{id}")
-    public ApiResponse<Void> deleteTeam(@PathVariable Long id) {
-        customerService.deleteTeam(id);
+    public ApiResponse<Void> deleteTeam(@PathVariable Long id, @RequestParam(defaultValue = "false") boolean hardDelete) {
+        customerService.deleteTeam(id, hardDelete);
         return ApiResponse.success(null);
     }
 

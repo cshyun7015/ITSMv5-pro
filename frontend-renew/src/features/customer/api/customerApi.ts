@@ -29,8 +29,8 @@ export const customerApi = {
     return response.data.data;
   },
 
-  deleteCompany: async (id: number): Promise<void> => {
-    await apiClient.delete(`${BASE_URL}/companies/${id}`);
+  deleteCompany: async (id: number, hardDelete: boolean = false): Promise<void> => {
+    await apiClient.delete(`${BASE_URL}/companies/${id}`, { params: { hardDelete } });
   },
 
   // --- 조직 트리 (Organization Tree) ---
@@ -60,8 +60,8 @@ export const customerApi = {
     return response.data.data;
   },
 
-  deleteTeam: async (id: number): Promise<void> => {
-    await apiClient.delete(`${BASE_URL}/teams/${id}`);
+  deleteTeam: async (id: number, hardDelete: boolean = false): Promise<void> => {
+    await apiClient.delete(`${BASE_URL}/teams/${id}`, { params: { hardDelete } });
   },
 
   // --- 사용자 (User) ---

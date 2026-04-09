@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Building2, Users, ChevronRight, ChevronDown, Plus, Edit3 } from 'lucide-react';
+import { Building2, Users, ChevronRight, ChevronDown, Plus, Edit3, Trash2 } from 'lucide-react';
 import { customerApi } from '../api/customerApi';
 import { CustomerCompany, CustomerTeam } from '../types/customerType';
 import Modal from '../../../components/common/Modal';
+import ConfirmModal from '../../../components/common/ConfirmModal';
 import CustomerCompanyForm from './CustomerCompanyForm';
 import CustomerTeamForm from './CustomerTeamForm';
 import { useCustomerMutations } from '../hooks/useCustomerMutations';
@@ -17,8 +18,9 @@ const CustomerTreeList: React.FC<CustomerTreeListProps> = ({ onSelectNode, selec
   const [expandedCompanies, setExpandedCompanies] = useState<Set<number>>(new Set());
   const [editingCompany, setEditingCompany] = useState<CustomerCompany | null>(null);
   const [addingTeamTo, setAddingTeamTo] = useState<number | null>(null);
+  const [deletingNode, setDeletingNode] = useState<{ type: 'COMPANY' | 'TEAM'; id: number; name: string } | null>(null);
 
-  const { updateCompany, createTeam } = useCustomerMutations();
+  const { updateCompany, createTeam, deleteCompany, deleteTeam } = useCustomerMutations();
 
   // --- Data Fetching ---
   const { data: companies, isLoading: companiesLoading } = useQuery<CustomerCompany[]>({
@@ -65,6 +67,20 @@ const CustomerTreeList: React.FC<CustomerTreeListProps> = ({ onSelectNode, selec
     }
   };
 
+  const handleDeleteConfirm = async (hardDelete: boolean) => {
+    if (!deletingNode) return;
+    try {
+      if (deletingNode.type === 'COMPANY') {
+        await deleteCompany.mutateAsync({ id: deletingNode.id, hardDelete });
+      } else {
+        await deleteTeam.mutateAsync({ id: deletingNode.id, hardDelete });
+      }
+      setDeletingNode(null);
+    } catch (error) {
+      alert(`${deletingNode.type === 'COMPANY' ? '고객사' : '팀'} 삭제에 실패했습니다.`);
+    }
+  };
+
   if (companiesLoading) {
     return (
       <div className="p-6 space-y-4 animate-pulse">
@@ -88,6 +104,8 @@ const CustomerTreeList: React.FC<CustomerTreeListProps> = ({ onSelectNode, selec
             onSelect={() => onSelectNode('COMPANY', company.id)}
             onEdit={() => handleEditCompany(company)}
             onAddTeam={() => handleAddTeam(company.id)}
+            onDelete={() => setDeletingNode({ type: 'COMPANY', id: company.id, name: company.name })}
+            onTeamDelete={(id, name) => setDeletingNode({ type: 'TEAM', id, name })}
             selectedNode={selectedNode}
             onSelectNode={onSelectNode}
           />
@@ -125,6 +143,17 @@ const CustomerTreeList: React.FC<CustomerTreeListProps> = ({ onSelectNode, selec
           />
         )}
       </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={!!deletingNode}
+        onClose={() => setDeletingNode(null)}
+        onConfirm={handleDeleteConfirm}
+        title={`${deletingNode?.type === 'COMPANY' ? '고객사' : '팀'} 삭제`}
+        message={`'${deletingNode?.name}' 정보를 정말로 삭제하시겠습니까?\n이 작업은 되돌릴 수 없으며 소속된 하위 데이터가 영향받을 수 있습니다.`}
+        confirmLabel="삭제하기"
+        isDangerous={true}
+      />
     </div>
   );
 };
@@ -139,12 +168,14 @@ interface CompanyNodeProps {
   onSelect: () => void;
   onEdit: () => void;
   onAddTeam: () => void;
+  onDelete: () => void;
+  onTeamDelete: (id: number, name: string) => void;
   selectedNode: { type: 'COMPANY' | 'TEAM'; id: number } | null;
   onSelectNode: (type: 'COMPANY' | 'TEAM', id: number) => void;
 }
 
 const CompanyNode: React.FC<CompanyNodeProps> = ({ 
-  company, isExpanded, onToggle, isSelected, onSelect, onEdit, onAddTeam, selectedNode, onSelectNode 
+  company, isExpanded, onToggle, isSelected, onSelect, onEdit, onAddTeam, onDelete, onTeamDelete, selectedNode, onSelectNode 
 }) => {
   const { data: tree, isLoading: treeLoading } = useQuery<CustomerTeam[]>({
     queryKey: ['orgTree', company.id],
@@ -186,6 +217,13 @@ const CompanyNode: React.FC<CompanyNodeProps> = ({
           >
             <Edit3 size={14} />
           </button>
+           <button 
+            onClick={(e) => { e.stopPropagation(); onDelete(); }}
+            className="p-1.5 hover:bg-white/10 rounded-lg text-text-muted hover:text-red-400" 
+            title="삭제"
+          >
+            <Trash2 size={14} />
+          </button>
         </div>
       </div>
 
@@ -194,7 +232,12 @@ const CompanyNode: React.FC<CompanyNodeProps> = ({
           {treeLoading ? (
             <div className="py-2 text-[10px] text-text-muted uppercase tracking-widest italic animate-pulse">Loading Teams...</div>
           ) : (
-            <TeamTree nodes={tree || []} onSelect={onSelectNode} selectedNode={selectedNode} />
+            <TeamTree 
+              nodes={tree || []} 
+              onSelect={onSelectNode} 
+              onDelete={onTeamDelete}
+              selectedNode={selectedNode} 
+            />
           )}
         </div>
       )}
@@ -205,8 +248,9 @@ const CompanyNode: React.FC<CompanyNodeProps> = ({
 const TeamTree: React.FC<{ 
   nodes: CustomerTeam[], 
   onSelect: (type: 'COMPANY' | 'TEAM', id: number) => void,
+  onDelete: (id: number, name: string) => void,
   selectedNode: { type: 'COMPANY' | 'TEAM'; id: number } | null 
-}> = ({ nodes, onSelect, selectedNode }) => {
+}> = ({ nodes, onSelect, onDelete, selectedNode }) => {
   return (
     <>
       {Array.isArray(nodes) && nodes.map(team => (
@@ -223,6 +267,13 @@ const TeamTree: React.FC<{
               <Users size={14} className="shrink-0" />
               <span className="text-xs font-medium truncate">{team.name}</span>
             </div>
+            <button 
+              onClick={(e) => { e.stopPropagation(); onDelete(team.id, team.name); }}
+              className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-white/10 rounded-lg text-text-muted hover:text-red-400 transition-all" 
+              title="팀 삭제"
+            >
+              <Trash2 size={12} />
+            </button>
           </div>
           {/* Hierarchy support would go here recursively if teams have children */}
         </div>

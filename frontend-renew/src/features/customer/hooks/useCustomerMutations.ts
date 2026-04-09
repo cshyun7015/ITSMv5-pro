@@ -47,10 +47,29 @@ export const useCustomerMutations = () => {
     },
   });
 
+  // --- Delete Mutations ---
+  const deleteCompany = useMutation({
+    mutationFn: ({ id, hardDelete }: { id: number; hardDelete: boolean }) => 
+      customerApi.deleteCompany(id, hardDelete),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['companies'] });
+    },
+  });
+
+  const deleteTeam = useMutation({
+    mutationFn: ({ id, hardDelete }: { id: number; hardDelete: boolean }) => 
+      customerApi.deleteTeam(id, hardDelete),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orgTree'] });
+    },
+  });
+
   return {
     createCompany,
     updateCompany,
     createTeam,
     updateTeam,
+    deleteCompany,
+    deleteTeam,
   };
 };

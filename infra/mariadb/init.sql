@@ -174,35 +174,6 @@ CREATE TABLE IF NOT EXISTS common_codes (
     CONSTRAINT fk_common_code_group FOREIGN KEY (group_id) REFERENCES code_groups(group_id) ON DELETE CASCADE
 );
 
--- 5-2. Legacy / Bootstrap Master Tables
-CREATE TABLE IF NOT EXISTS companies (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    company_id VARCHAR(50) NOT NULL UNIQUE,
-    name VARCHAR(200) NOT NULL,
-    business_number VARCHAR(50),
-    representative_name VARCHAR(100),
-    phone VARCHAR(50),
-    email VARCHAR(100),
-    address TEXT,
-    status VARCHAR(20) DEFAULT 'ACTIVE',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
-
-CREATE TABLE IF NOT EXISTS users (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    user_id VARCHAR(50) NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL,
-    name VARCHAR(100) NOT NULL,
-    email VARCHAR(100),
-    role VARCHAR(50) DEFAULT 'ROLE_USER',
-    company_id VARCHAR(50) NOT NULL,
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT fk_user_company_legacy FOREIGN KEY (company_id) REFERENCES companies(company_id)
-);
-
 -- 5-3. Advanced Organizational Schema (Refactored)
 CREATE TABLE IF NOT EXISTS customer_companies (
   id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -214,21 +185,31 @@ CREATE TABLE IF NOT EXISTS customer_companies (
   email VARCHAR(100),
   address TEXT,
   status VARCHAR(20) DEFAULT 'ACTIVE',
-  tenant_id VARCHAR(50) NOT NULL,
+  tenant_id VARCHAR(50) NOT NULL DEFAULT 'SYSTEM',
   is_deleted TINYINT(1) DEFAULT 0,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  created_by VARCHAR(50),
+  updated_by VARCHAR(50)
 );
 
 CREATE TABLE IF NOT EXISTS customer_teams (
   id BIGINT AUTO_INCREMENT PRIMARY KEY,
   customer_company_id BIGINT,
+  parent_team_id BIGINT,
   name VARCHAR(100) NOT NULL,
   description TEXT,
-  tenant_id VARCHAR(50) NOT NULL,
+  tenant_id VARCHAR(50) NOT NULL DEFAULT 'SYSTEM',
   is_deleted TINYINT(1) DEFAULT 0,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (customer_company_id) REFERENCES customer_companies(id)
+  updated_at DATETIME(6),
+  cost_center VARCHAR(50),
+  service_hours VARCHAR(100),
+  status VARCHAR(20) DEFAULT 'ACTIVE',
+  created_by VARCHAR(50),
+  updated_by VARCHAR(50),
+  FOREIGN KEY (customer_company_id) REFERENCES customer_companies(id),
+  FOREIGN KEY (parent_team_id) REFERENCES customer_teams(id)
 );
 
 CREATE TABLE IF NOT EXISTS customer_users (
@@ -240,10 +221,17 @@ CREATE TABLE IF NOT EXISTS customer_users (
   email VARCHAR(100),
   role VARCHAR(50) DEFAULT 'ROLE_USER',
   is_active TINYINT(1) DEFAULT 1,
-  tenant_id VARCHAR(50) NOT NULL,
+  tenant_id VARCHAR(50) NOT NULL DEFAULT 'SYSTEM',
   is_deleted TINYINT(1) DEFAULT 0,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  position VARCHAR(50),
+  is_vip TINYINT(1) DEFAULT 0,
+  location_id BIGINT,
+  is_approver TINYINT(1) DEFAULT 0,
+  user_criticality VARCHAR(20),
+  created_by VARCHAR(50),
+  updated_by VARCHAR(50),
   FOREIGN KEY (customer_team_id) REFERENCES customer_teams(id)
 );
 
@@ -401,46 +389,48 @@ INSERT IGNORE INTO common_codes (group_id, code_id, code_name, sort_order, is_ac
 ('CUS_ROLE', 'ROLE_CUS_USER', '일반 사용자', 30, 1);
 
 -- 6-3. Legacy Bootstrap Data
-INSERT IGNORE INTO companies (company_id, name, business_number, representative_name, status)
-VALUES ('MSP', 'MSP(삭제불가)', '000-00-00000', '운영관리자', 'ACTIVE'),
-('126-81-03725', '하이닉스', '031-5185-4114', '곽노정', 'ACTIVE'),
-('124-81-00998', '삼성전자', '02-2255-0114', '한종희', 'ACTIVE');
+-- INSERT IGNORE INTO companies (company_id, name, business_number, representative_name, status)
+-- VALUES ('MSP', 'MSP(삭제불가)', '000-00-00000', '운영관리자', 'ACTIVE'),
+-- ('126-81-03725', '하이닉스', '031-5185-4114', '곽노정', 'ACTIVE'),
+-- ('124-81-00998', '삼성전자', '02-2255-0114', '한종희', 'ACTIVE');
 
-INSERT IGNORE INTO users (user_id, password, name, email, role, company_id)
-VALUES 
-('admin', '$2a$10$h8Dz0Jxxjv2hxT.oN/41tukeALShSKcQjCdwiJFQm6ogvOMsTKPm2', 'System Administrator', 'admin@msp.com', 'ROLE_ADMIN', 'MSP'),
-('operator1', '$2a$10$9wEuO9flJ2.1D7ik6Cfsp.dwf7e1mOZEGN/wDCKXgE2PLcK8FCYKi', '운영자1', 'op1@msp.com', 'ROLE_OPER', 'MSP'),
-('operator2', '$2a$10$9wEuO9flJ2.1D7ik6Cfsp.dwf7e1mOZEGN/wDCKXgE2PLcK8FCYKi', '운영자2', 'op2@msp.com', 'ROLE_OPER', 'MSP'),
-('user1', '$2a$10$9wEuO9flJ2.1D7ik6Cfsp.dwf7e1mOZEGN/wDCKXgE2PLcK8FCYKi', '사용자1', 'user1@comp1.com', 'ROLE_USER', '126-81-03725');
+-- INSERT IGNORE INTO users (user_id, password, name, email, role, company_id)
+-- VALUES 
+-- ('admin', '$2a$10$h8Dz0Jxxjv2hxT.oN/41tukeALShSKcQjCdwiJFQm6ogvOMsTKPm2', 'System Administrator', 'admin@msp.com', 'ROLE_ADMIN', 'MSP'),
+-- ('operator1', '$2a$10$9wEuO9flJ2.1D7ik6Cfsp.dwf7e1mOZEGN/wDCKXgE2PLcK8FCYKi', '운영자1', 'op1@msp.com', 'ROLE_OPER', 'MSP'),
+-- ('operator2', '$2a$10$9wEuO9flJ2.1D7ik6Cfsp.dwf7e1mOZEGN/wDCKXgE2PLcK8FCYKi', '운영자2', 'op2@msp.com', 'ROLE_OPER', 'MSP'),
+-- ('user1', '$2a$10$9wEuO9flJ2.1D7ik6Cfsp.dwf7e1mOZEGN/wDCKXgE2PLcK8FCYKi', '사용자1', 'user1@comp1.com', 'ROLE_USER', '126-81-03725');
 
--- 6-4. Data Migration to Refactored Schema
-INSERT IGNORE INTO customer_companies (customer_id, name, business_number, representative_name, status, tenant_id, is_deleted)
-SELECT company_id, name, business_number, representative_name, status, 'SYSTEM', 0 FROM companies;
+-- 6-4. Refactored Organization Data (Meaningful Only)
+INSERT IGNORE INTO customer_companies (id, tenant_id, customer_id, name, business_number, representative_name, phone, email, address, status, is_deleted, created_at, updated_at) VALUES
+(1, 'SYSTEM', '126-81-03725', '하이닉스', '031-5185-4114', '곽노정', NULL, NULL, NULL, 'ACTIVE', 0, '2026-04-05 06:53:15', '2026-04-10 00:32:47'),
+(2, 'SYSTEM', '124-81-00998', '삼성전자', '02-2255-0114', '한종희', NULL, NULL, NULL, 'ACTIVE', 0, '2026-04-05 06:53:15', '2026-04-10 00:32:47'),
+(4, 'SYSTEM', 'MSP', 'MSP(삭제불가)', '000-00-00000', '운영관리자', NULL, NULL, NULL, 'ACTIVE', 0, '2026-04-05 07:08:42', '2026-04-10 00:32:47'),
+(246, 'SYSTEM', 'google', 'google', '123-45-67890', 'google', '012-3456-7890', 'google@google.com', 'Google Atlanta\n1105 W Peachtree St NW, Atlanta, GA 30309', 'ACTIVE', 0, '2026-04-10 07:56:45', '2026-04-10 07:56:45');
 
-INSERT IGNORE INTO operator_companies (operator_company_id, name, business_number, status, representative_name)
-SELECT company_id, name, business_number, status, representative_name FROM companies WHERE company_id = 'MSP';
+INSERT IGNORE INTO customer_teams (id, tenant_id, customer_company_id, parent_team_id, name, description, is_deleted, created_at, status) VALUES
+(1, 'MSP', 2, NULL, '기본팀', '마이그레이션 자동 생성', 0, '2026-04-05 06:53:15', 'ACTIVE'),
+(2, 'MSP', 1, NULL, '기본팀', '마이그레이션 자동 생성', 0, '2026-04-05 06:53:15', 'ACTIVE'),
+(4, 'MSP', 4, NULL, '기본팀', '마이그레이션 자동 생성', 0, '2026-04-05 07:08:49', 'ACTIVE'),
+(154, 'SYSTEM', 246, NULL, 'T1', '모든 것은 다 처리한다.', 0, '2026-04-10 07:58:30', 'ACTIVE');
 
-INSERT IGNORE INTO customer_teams (customer_company_id, name, description, tenant_id, is_deleted)
-SELECT id, '기본팀', '마이그레이션 자동 생성', 'SYSTEM', 0 FROM customer_companies;
+INSERT IGNORE INTO customer_users (id, tenant_id, customer_team_id, user_id, password, name, email, role, is_active, is_deleted) VALUES
+(1, 'MSP', 2, 'user1', '$2a$10$9wEuO9flJ2.1D7ik6Cfsp.dwf7e1mOZEGN/wDCKXgE2PLcK8FCYKi', '사용자1', 'user1@comp1.com', 'ROLE_USER', 1, 0);
 
-INSERT IGNORE INTO operator_teams (operator_company_id, name, description)
-SELECT id, '운영본부', '마이그레이션 자동 생성' FROM operator_companies;
+-- Operators and Teams (MSP)
+INSERT IGNORE INTO operator_companies (operator_company_id, name, business_number, status, representative_name) VALUES
+('MSP', 'MSP(삭제불가)', '000-00-00000', 'ACTIVE', '운영관리자');
 
-INSERT IGNORE INTO customer_users (customer_team_id, user_id, password, name, email, role, is_active, tenant_id, is_deleted)
-SELECT 
-  (SELECT ct.id FROM customer_teams ct JOIN customer_companies cc ON ct.customer_company_id = cc.id WHERE cc.customer_id = u.company_id LIMIT 1),
-  u.user_id, u.password, u.name, u.email, u.role, u.is_active, 'SYSTEM', 0
-FROM users u WHERE u.role = 'ROLE_USER';
+INSERT IGNORE INTO operator_teams (operator_company_id, name, description) VALUES
+(1, '운영본부', '기본 운영 조직');
 
-INSERT IGNORE INTO operators (user_id, password, name, email, role, is_active)
-SELECT u.user_id, u.password, u.name, u.email, u.role, u.is_active
-FROM users u WHERE u.role IN ('ROLE_OPER', 'ROLE_ADMIN');
+INSERT IGNORE INTO operators (user_id, password, name, email, role, is_active) VALUES
+('admin', '$2a$10$h8Dz0Jxxjv2hxT.oN/41tukeALShSKcQjCdwiJFQm6ogvOMsTKPm2', 'System Administrator', 'admin@msp.com', 'ROLE_ADMIN', 1),
+('operator1', '$2a$10$9wEuO9flJ2.1D7ik6Cfsp.dwf7e1mOZEGN/wDCKXgE2PLcK8FCYKi', '운영자1', 'op1@msp.com', 'ROLE_OPER', 1),
+('operator2', '$2a$10$9wEuO9flJ2.1D7ik6Cfsp.dwf7e1mOZEGN/wDCKXgE2PLcK8FCYKi', '운영자2', 'op2@msp.com', 'ROLE_OPER', 1);
 
-INSERT IGNORE INTO operator_team_members (operator_id, operator_team_id)
-SELECT 
-  o.id, 
-  (SELECT ot.id FROM operator_teams ot JOIN operator_companies oc ON ot.operator_company_id = oc.id JOIN users u ON u.company_id = oc.operator_company_id WHERE u.user_id = o.user_id LIMIT 1)
-FROM operators o WHERE o.id IS NOT NULL;
+INSERT IGNORE INTO operator_team_members (operator_id, operator_team_id) VALUES
+(1, 1), (2, 1), (3, 1);
 
 -- -----------------------------------------------------------------------------
 -- 7. Service Specific Seed Data

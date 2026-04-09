@@ -7,6 +7,7 @@ import Modal from '../../../components/common/Modal';
 import CustomerCompanyForm from './CustomerCompanyForm';
 import CustomerTeamForm from './CustomerTeamForm';
 import { useCustomerMutations } from '../hooks/useCustomerMutations';
+import ConfirmModal from '../../../components/common/ConfirmModal';
 
 interface CustomerDetailProps {
   selectedNode: { type: 'COMPANY' | 'TEAM'; id: number } | null;
@@ -40,8 +41,9 @@ const CustomerDetail: React.FC<CustomerDetailProps> = ({ selectedNode }) => {
 const CompanyDetail: React.FC<{ id: number }> = ({ id }) => {
   const [isEditModalOpen, setIsEditModalOpen] = React.useState(false);
   const [isAddTeamModalOpen, setIsAddTeamModalOpen] = React.useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
   
-  const { updateCompany, createTeam } = useCustomerMutations();
+  const { updateCompany, createTeam, deleteCompany } = useCustomerMutations();
 
   const { data: company, isLoading } = useQuery<CustomerCompany>({
     queryKey: ['company', id],
@@ -63,6 +65,15 @@ const CompanyDetail: React.FC<{ id: number }> = ({ id }) => {
       setIsAddTeamModalOpen(false);
     } catch (error) {
       alert('팀 생성에 실패했습니다.');
+    }
+  };
+
+  const handleDelete = async (hardDelete: boolean) => {
+    try {
+      await deleteCompany.mutateAsync({ id, hardDelete });
+      setIsDeleteModalOpen(false);
+    } catch (error) {
+      alert('고객사 삭제에 실패했습니다.');
     }
   };
 
@@ -101,6 +112,12 @@ const CompanyDetail: React.FC<{ id: number }> = ({ id }) => {
            >
               <Edit3 size={14} /> 수정
            </button>
+           <button 
+             onClick={() => setIsDeleteModalOpen(true)}
+             className="btn-md bg-white/5 border border-white/10 hover:bg-red-400/20 hover:text-red-400 rounded-xl px-4 flex items-center gap-2 text-xs font-bold transition-all"
+           >
+              <Trash2 size={14} /> 삭제
+           </button>
         </div>
       </div>
 
@@ -111,6 +128,16 @@ const CompanyDetail: React.FC<{ id: number }> = ({ id }) => {
       <Modal isOpen={isAddTeamModalOpen} onClose={() => setIsAddTeamModalOpen(false)} title="신규 팀 등록">
         <CustomerTeamForm companyId={id} onSubmit={handleAddTeam} isLoading={createTeam.isPending} />
       </Modal>
+
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDelete}
+        title="고객사 삭제"
+        message={`'${company.name}' 고객사를 삭제하시겠습니까?\n이 작업은 소속된 팀과 사용자에게 영향을 줄 수 있습니다.`}
+        confirmLabel="삭제하기"
+        isDangerous={true}
+      />
 
       <div className="flex-1 bg-white/[0.02] border border-white/5 rounded-3xl p-8 flex flex-col items-center justify-center opacity-40">
          <Building2 size={48} className="text-white/10 mb-4" />
@@ -123,7 +150,8 @@ const CompanyDetail: React.FC<{ id: number }> = ({ id }) => {
 
 const TeamDetail: React.FC<{ id: number }> = ({ id }) => {
   const [isEditModalOpen, setIsEditModalOpen] = React.useState(false);
-  const { updateTeam } = useCustomerMutations();
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
+  const { updateTeam, deleteTeam } = useCustomerMutations();
 
   const { data: team, isLoading: teamLoading } = useQuery<CustomerTeam>({
     queryKey: ['team', id],
@@ -136,6 +164,15 @@ const TeamDetail: React.FC<{ id: number }> = ({ id }) => {
       setIsEditModalOpen(false);
     } catch (error) {
       alert('팀 정보 수정에 실패했습니다.');
+    }
+  };
+
+  const handleDeleteTeam = async (hardDelete: boolean) => {
+    try {
+      await deleteTeam.mutateAsync({ id, hardDelete });
+      setIsDeleteModalOpen(false);
+    } catch (error) {
+      alert('팀 삭제에 실패했습니다.');
     }
   };
 
@@ -169,17 +206,23 @@ const TeamDetail: React.FC<{ id: number }> = ({ id }) => {
                  <div className="flex items-center gap-2 italic text-text-muted">Descr: {team.description || '팀 설명이 없습니다.'}</div>
               </div>
            </div>
-           <div className="flex gap-2">
-              <button 
-                onClick={() => setIsEditModalOpen(true)}
-                className="btn-md bg-white/5 border border-white/10 hover:bg-amber-400/20 hover:text-amber-400 rounded-xl px-4 flex items-center gap-2 text-xs font-black transition-all"
-              >
-                 <Edit3 size={14} /> 팀 수정
-              </button>
-              <button className="btn-md bg-white/5 border border-white/10 hover:bg-cyan-500/20 hover:text-cyan-400 rounded-xl px-4 flex items-center gap-2 text-xs font-black transition-all">
-                 <UserPlus size={14} /> 사용자 초대
-              </button>
-           </div>
+            <div className="flex gap-2">
+               <button 
+                 onClick={() => setIsEditModalOpen(true)}
+                 className="btn-md bg-white/5 border border-white/10 hover:bg-amber-400/20 hover:text-amber-400 rounded-xl px-4 flex items-center gap-2 text-xs font-black transition-all"
+               >
+                  <Edit3 size={14} /> 팀 수정
+               </button>
+               <button className="btn-md bg-white/5 border border-white/10 hover:bg-cyan-500/20 hover:text-cyan-400 rounded-xl px-4 flex items-center gap-2 text-xs font-black transition-all">
+                  <UserPlus size={14} /> 사용자 초대
+               </button>
+               <button 
+                  onClick={() => setIsDeleteModalOpen(true)}
+                  className="btn-md bg-white/5 border border-white/10 hover:bg-red-500/20 hover:text-red-400 rounded-xl px-4 flex items-center gap-2 text-xs font-black transition-all"
+               >
+                  <Trash2 size={14} /> 팀 삭제
+               </button>
+            </div>
          </div>
 
          <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="팀 정보 수정">
@@ -192,6 +235,16 @@ const TeamDetail: React.FC<{ id: number }> = ({ id }) => {
               />
             )}
          </Modal>
+
+         <ConfirmModal
+            isOpen={isDeleteModalOpen}
+            onClose={() => setIsDeleteModalOpen(false)}
+            onConfirm={handleDeleteTeam}
+            title="팀 삭제"
+            message={`'${team.name}' 팀 정보를 정말로 삭제하시겠습니까?`}
+            confirmLabel="삭제하기"
+            isDangerous={true}
+          />
       </div>
 
       <div className="flex-1 p-8 overflow-y-auto">

@@ -10,6 +10,7 @@ import com.itsm.system.repository.customer.CustomerCompanyRepository;
 import com.itsm.system.repository.customer.CustomerTeamRepository;
 import com.itsm.system.repository.customer.CustomerUserRepository;
 import com.itsm.system.security.TenantContext;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -29,6 +30,7 @@ public class CustomerService {
     private final CustomerTeamRepository teamRepository;
     private final CustomerUserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EntityManager entityManager;
 
     // --- Company Services ---
     public List<CustomerCompanyDTO> getAllCompanies() {
@@ -82,8 +84,15 @@ public class CustomerService {
     }
 
     @Transactional
-    public void deleteCompany(Long id) {
-        companyRepository.deleteById(id);
+    public void deleteCompany(Long id, boolean hardDelete) {
+        if (hardDelete && TenantContext.DEFAULT_TENANT.equals(TenantContext.getTenantId())) {
+            log.info("Performing hard delete for company id: {}", id);
+            entityManager.createNativeQuery("DELETE FROM customer_companies WHERE id = :id")
+                    .setParameter("id", id)
+                    .executeUpdate();
+        } else {
+            companyRepository.deleteById(id);
+        }
     }
 
     // --- Team Services ---
@@ -147,8 +156,15 @@ public class CustomerService {
     }
 
     @Transactional
-    public void deleteTeam(Long id) {
-        teamRepository.deleteById(id);
+    public void deleteTeam(Long id, boolean hardDelete) {
+        if (hardDelete && TenantContext.DEFAULT_TENANT.equals(TenantContext.getTenantId())) {
+            log.info("Performing hard delete for team id: {}", id);
+            entityManager.createNativeQuery("DELETE FROM customer_teams WHERE id = :id")
+                    .setParameter("id", id)
+                    .executeUpdate();
+        } else {
+            teamRepository.deleteById(id);
+        }
     }
 
     // --- User Services ---
