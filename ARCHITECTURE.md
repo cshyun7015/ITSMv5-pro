@@ -19,14 +19,15 @@
 ## 4. Database Schema (MariaDB 10.11)
 - **삭제 정책:** 물리적 삭제(DELETE) 대신 `is_deleted` 컬럼을 활용한 논리적 삭제(Soft Delete)를 기본으로 합니다. 물리적 삭제는 MSP 라는 운영 조직에 속한 운영자만 할 수 있습니다.
 - **기본 규칙:** 소문자 스네이크 케이스(Snake Case) 및 단수형 명사 사용
-- **테이블 명명:** `[모듈_접두사]_[엔티티명]` (DB 예약어 충돌 방지 및 모듈별 정렬 목적)
-  - Common Code: `sys_*` (예: `sys_common_code`)
-  - Customer Mgmt: `cust_*` (예: `cust_organization`)
-  - Operator Mgmt: `opr_*` (예: `opr_user`)
-  - Dashboard: `dash_*` (예: `dash_layout`)
-  - Event Mgmt: `evt_*` (예: `evt_event`)
-  - Incident Mgmt: `inc_*` (예: `inc_incident`)
-  - Service Request: `sr_*` (예: `sr_request`)
+- **테이블 명명:** `[엔티티명]` (DB 예약어 충돌 방지 및 모듈별 정렬 목적)
 - **필수 공통 컬럼:** - 멀티테넌시: `tenant_id`
   - 감사(Audit): `created_by`, `created_at`, `updated_by`, `updated_at`
   - 상태 제어: `is_deleted` (논리적 삭제)
+
+## 5. 시스템 아키텍처 구조
+- API Gateway: 모든 외부 요청은 Nginx API Gateway를 통해 라우팅됩니다.
+- 사용자 --> [포탈/UI 컨테이너 (Vite/React)]
+- 포탈/UI --> [API Gateway (Nginx)] --> [요청관리 Backend (Spring Boot)] --> [통합DB (Schema: request_mgmt)]
+
+## 6. 빌드 및 테스트
+- 빌드 및 테스트는 컨테이너 환경에서 수행한다. (docker-compose.yml 파일 참고)
