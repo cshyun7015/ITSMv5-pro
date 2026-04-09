@@ -2,6 +2,34 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.2.4'
     id 'io.spring.dependency-management' version '1.1.6'
+    id 'jacoco'
+}
+
+jacoco {
+    toolVersion = "0.8.11"
+}
+
+jacocoTestReport {
+    reports {
+        html.required = true
+        xml.required = true
+    }
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                    "**/Q*",
+                    "**/*Application*",
+                    "**/*Config*",
+                    "**/*DTO*",
+                    "**/*Entity*"
+            ])
+        }))
+    }
+}
+
+test {
+    useJUnitPlatform()
+    finalizedBy jacocoTestReport
 }
 
 group = 'com.itsm'
@@ -24,6 +52,12 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'io.micrometer:micrometer-registry-prometheus'
+
+    // QueryDSL
+    implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
+    annotationProcessor "com.querydsl:querydsl-apt:5.0.0:jakarta"
+    annotationProcessor "jakarta.persistence:jakarta.persistence-api"
+    annotationProcessor "jakarta.annotation:jakarta.annotation-api"
     
     // JSON Logging
     implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
@@ -41,8 +75,4 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.testcontainers:mariadb:1.19.7'
     testImplementation 'org.testcontainers:junit-jupiter:1.19.7'
-}
-
-tasks.named('test') {
-    useJUnitPlatform()
 }

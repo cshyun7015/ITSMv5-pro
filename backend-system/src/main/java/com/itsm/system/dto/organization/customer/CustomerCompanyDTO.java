@@ -19,6 +19,10 @@ public class CustomerCompanyDTO {
     private String email;
     private String address;
     private String status;
+    
+    // Audit fields
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private String createdBy;
+    private String updatedBy;
 }

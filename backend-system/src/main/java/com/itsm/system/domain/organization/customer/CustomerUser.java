@@ -1,11 +1,8 @@
 package com.itsm.system.domain.organization.customer;
 
+import com.itsm.system.domain.common.BaseTenantEntity;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "customer_users")
@@ -14,7 +11,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CustomerUser {
+public class CustomerUser extends BaseTenantEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -37,16 +34,23 @@ public class CustomerUser {
     private String email;
 
     @Column(length = 50)
-    private String role; // ROLE_USER
+    private String position;
+
+    @Column(length = 50)
+    private String role; // ROLE_USER, ROLE_ADMIN, etc.
 
     @Column(name = "is_active")
-    private Boolean isActive;
+    @Builder.Default
+    private Boolean isActive = true;
 
-    @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
+    @Column(name = "is_vip")
+    @Builder.Default
+    private Boolean isVip = false;
 
-    @UpdateTimestamp
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    @Column(name = "is_approver")
+    @Builder.Default
+    private Boolean isApprover = false;
+
+    @Column(name = "user_criticality", length = 20)
+    private String userCriticality; // HIGH, MEDIUM, LOW
 }

@@ -1,15 +1,19 @@
 package com.itsm.system.controller.organization;
 
+import com.itsm.system.domain.common.ApiResponse;
 import com.itsm.system.dto.organization.customer.CustomerCompanyDTO;
 import com.itsm.system.dto.organization.customer.CustomerTeamDTO;
 import com.itsm.system.dto.organization.customer.CustomerUserDTO;
 import com.itsm.system.service.organization.customer.CustomerService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * Standardized Controller for Customer Organization Management.
+ */
 @RestController
 @RequestMapping("/api/v1/customer-governance")
 @RequiredArgsConstructor
@@ -19,82 +23,87 @@ public class CustomerManagementController {
 
     // --- Customer Company CRUD ---
     @GetMapping("/companies")
-    public ResponseEntity<List<CustomerCompanyDTO>> getAllCompanies() {
-        return ResponseEntity.ok(customerService.getAllCompanies());
+    public ApiResponse<List<CustomerCompanyDTO>> getAllCompanies() {
+        return ApiResponse.success(customerService.getAllCompanies());
     }
 
     @GetMapping("/companies/{id}")
-    public ResponseEntity<CustomerCompanyDTO> getCompany(@PathVariable Long id) {
-        return ResponseEntity.ok(customerService.getCompany(id));
+    public ApiResponse<CustomerCompanyDTO> getCompany(@PathVariable Long id) {
+        return ApiResponse.success(customerService.getCompany(id));
     }
 
     @PostMapping("/companies")
-    public ResponseEntity<CustomerCompanyDTO> createCompany(@RequestBody CustomerCompanyDTO dto) {
-        return ResponseEntity.ok(customerService.createCompany(dto));
+    public ApiResponse<CustomerCompanyDTO> createCompany(@Valid @RequestBody CustomerCompanyDTO dto) {
+        return ApiResponse.success(customerService.createCompany(dto));
     }
 
     @PutMapping("/companies/{id}")
-    public ResponseEntity<CustomerCompanyDTO> updateCompany(@PathVariable Long id, @RequestBody CustomerCompanyDTO dto) {
-        return ResponseEntity.ok(customerService.updateCompany(id, dto));
+    public ApiResponse<CustomerCompanyDTO> updateCompany(@PathVariable Long id, @Valid @RequestBody CustomerCompanyDTO dto) {
+        return ApiResponse.success(customerService.updateCompany(id, dto));
     }
 
     @DeleteMapping("/companies/{id}")
-    public ResponseEntity<Void> deleteCompany(@PathVariable Long id) {
+    public ApiResponse<Void> deleteCompany(@PathVariable Long id) {
         customerService.deleteCompany(id);
-        return ResponseEntity.ok().build();
+        return ApiResponse.success(null);
     }
 
-    // --- Customer Team CRUD ---
+    // --- Customer Team CRUD & Hierarchy ---
     @GetMapping("/companies/{companyId}/teams")
-    public ResponseEntity<List<CustomerTeamDTO>> getTeamsByCompany(@PathVariable Long companyId) {
-        return ResponseEntity.ok(customerService.getTeamsByCompany(companyId));
+    public ApiResponse<List<CustomerTeamDTO>> getTeamsByCompany(@PathVariable Long companyId) {
+        return ApiResponse.success(customerService.getTeamsByCompany(companyId));
+    }
+
+    @GetMapping("/companies/{companyId}/organization-tree")
+    public ApiResponse<List<CustomerTeamDTO>> getOrganizationTree(@PathVariable Long companyId) {
+        return ApiResponse.success(customerService.getOrganizationTree(companyId));
     }
 
     @PostMapping("/companies/{companyId}/teams")
-    public ResponseEntity<CustomerTeamDTO> createTeam(@PathVariable Long companyId, @RequestBody CustomerTeamDTO dto) {
-        return ResponseEntity.ok(customerService.createTeam(companyId, dto));
+    public ApiResponse<CustomerTeamDTO> createTeam(@PathVariable Long companyId, @Valid @RequestBody CustomerTeamDTO dto) {
+        return ApiResponse.success(customerService.createTeam(companyId, dto));
     }
 
     @GetMapping("/teams/{id}")
-    public ResponseEntity<CustomerTeamDTO> getTeam(@PathVariable Long id) {
-        return ResponseEntity.ok(customerService.getTeam(id));
+    public ApiResponse<CustomerTeamDTO> getTeam(@PathVariable Long id) {
+        return ApiResponse.success(customerService.getTeam(id));
     }
 
     @PutMapping("/teams/{id}")
-    public ResponseEntity<CustomerTeamDTO> updateTeam(@PathVariable Long id, @RequestBody CustomerTeamDTO dto) {
-        return ResponseEntity.ok(customerService.updateTeam(id, dto));
+    public ApiResponse<CustomerTeamDTO> updateTeam(@PathVariable Long id, @Valid @RequestBody CustomerTeamDTO dto) {
+        return ApiResponse.success(customerService.updateTeam(id, dto));
     }
 
     @DeleteMapping("/teams/{id}")
-    public ResponseEntity<Void> deleteTeam(@PathVariable Long id) {
+    public ApiResponse<Void> deleteTeam(@PathVariable Long id) {
         customerService.deleteTeam(id);
-        return ResponseEntity.ok().build();
+        return ApiResponse.success(null);
     }
 
     // --- Customer User CRUD ---
     @GetMapping("/teams/{teamId}/users")
-    public ResponseEntity<List<CustomerUserDTO>> getUsersByTeam(@PathVariable Long teamId) {
-        return ResponseEntity.ok(customerService.getUsersByTeam(teamId));
+    public ApiResponse<List<CustomerUserDTO>> getUsersByTeam(@PathVariable Long teamId) {
+        return ApiResponse.success(customerService.getUsersByTeam(teamId));
     }
 
     @PostMapping("/teams/{teamId}/users")
-    public ResponseEntity<CustomerUserDTO> createUser(@PathVariable Long teamId, @RequestBody CustomerUserDTO dto) {
-        return ResponseEntity.ok(customerService.createUser(teamId, dto));
+    public ApiResponse<CustomerUserDTO> createUser(@PathVariable Long teamId, @Valid @RequestBody CustomerUserDTO dto) {
+        return ApiResponse.success(customerService.createUser(teamId, dto));
     }
 
     @GetMapping("/users/{id}")
-    public ResponseEntity<CustomerUserDTO> getUser(@PathVariable Long id) {
-        return ResponseEntity.ok(customerService.getUser(id));
+    public ApiResponse<CustomerUserDTO> getUser(@PathVariable Long id) {
+        return ApiResponse.success(customerService.getUser(id));
     }
 
     @PutMapping("/users/{id}")
-    public ResponseEntity<CustomerUserDTO> updateUser(@PathVariable Long id, @RequestBody CustomerUserDTO dto) {
-        return ResponseEntity.ok(customerService.updateUser(id, dto));
+    public ApiResponse<CustomerUserDTO> updateUser(@PathVariable Long id, @Valid @RequestBody CustomerUserDTO dto) {
+        return ApiResponse.success(customerService.updateUser(id, dto));
     }
 
     @DeleteMapping("/users/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+    public ApiResponse<Void> deleteUser(@PathVariable Long id) {
         customerService.deleteUser(id);
-        return ResponseEntity.ok().build();
+        return ApiResponse.success(null);
     }
 }

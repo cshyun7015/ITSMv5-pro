@@ -10,6 +10,7 @@ import com.itsm.system.repository.organization.customer.CustomerCompanyRepositor
 import com.itsm.system.repository.organization.customer.CustomerTeamRepository;
 import com.itsm.system.repository.organization.customer.CustomerUserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,14 +21,15 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Slf4j
 public class CustomerService {
 
     private final CustomerCompanyRepository companyRepository;
     private final CustomerTeamRepository teamRepository;
     private final CustomerUserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final com.itsm.system.domain.code.CommonCodeRepository commonCodeRepository;
 
+    // --- Company Services ---
     public List<CustomerCompanyDTO> getAllCompanies() {
         return companyRepository.findAll().stream()
                 .map(this::convertToCompanyDTO)
@@ -37,34 +39,9 @@ public class CustomerService {
     public CustomerCompanyDTO getCompany(Long id) {
         return companyRepository.findById(id)
                 .map(this::convertToCompanyDTO)
-                .orElseThrow(() -> new RuntimeException("Company not found"));
+                .orElseThrow(() -> new RuntimeException("Company not found: " + id));
     }
 
-    public List<CustomerTeamDTO> getTeamsByCompany(Long companyId) {
-        return teamRepository.findByCustomerCompanyId(companyId).stream()
-                .map(this::convertToTeamDTO)
-                .collect(Collectors.toList());
-    }
-
-    public CustomerTeamDTO getTeam(Long id) {
-        return teamRepository.findById(id)
-                .map(this::convertToTeamDTO)
-                .orElseThrow(() -> new RuntimeException("Team not found"));
-    }
-
-    public CustomerUserDTO getUser(Long id) {
-        return userRepository.findById(id)
-                .map(this::convertToUserDTO)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-    }
-
-    public List<CustomerUserDTO> getUsersByTeam(Long teamId) {
-        return userRepository.findByCustomerTeamId(teamId).stream()
-                .map(this::convertToUserDTO)
-                .collect(Collectors.toList());
-    }
-
-    // --- Company CRUD ---
     @Transactional
     public CustomerCompanyDTO createCompany(CustomerCompanyDTO dto) {
         CustomerCompany company = CustomerCompany.builder()
@@ -83,7 +60,7 @@ public class CustomerService {
     @Transactional
     public CustomerCompanyDTO updateCompany(Long id, CustomerCompanyDTO dto) {
         CustomerCompany company = companyRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Company not found"));
+                .orElseThrow(() -> new RuntimeException("Company not found: " + id));
         company.setName(dto.getName());
         company.setBusinessNumber(dto.getBusinessNumber());
         company.setRepresentativeName(dto.getRepresentativeName());
@@ -99,32 +76,63 @@ public class CustomerService {
         companyRepository.deleteById(id);
     }
 
-    // --- Team CRUD & Mapping ---
+    // --- Team Services ---
+    public List<CustomerTeamDTO> getTeamsByCompany(Long companyId) {
+        return teamRepository.findByCustomerCompanyId(companyId).stream()
+                .map(this::convertToTeamDTO)
+                .collect(Collectors.toList());
+    }
+
+    public CustomerTeamDTO getTeam(Long id) {
+        return teamRepository.findById(id)
+                .map(this::convertToTeamDTO)
+                .orElseThrow(() -> new RuntimeException("Team not found: " + id));
+    }
+
     @Transactional
     public CustomerTeamDTO createTeam(Long companyId, CustomerTeamDTO dto) {
         CustomerCompany company = companyRepository.findById(companyId)
-                .orElseThrow(() -> new RuntimeException("Company not found"));
-        CustomerTeam team = CustomerTeam.builder()
+                .orElseThrow(() -> new RuntimeException("Company not found: " + companyId));
+        
+        CustomerTeam.CustomerTeamBuilder teamBuilder = CustomerTeam.builder()
                 .customerCompany(company)
                 .name(dto.getName())
                 .description(dto.getDescription())
-                .build();
-        return convertToTeamDTO(teamRepository.save(team));
+                .costCenter(dto.getCostCenter())
+                .serviceHours(dto.getServiceHours())
+                .status(dto.getStatus() != null ? dto.getStatus() : "ACTIVE");
+
+        if (dto.getParentTeamId() != null) {
+            CustomerTeam parent = teamRepository.findById(dto.getParentTeamId())
+                    .orElseThrow(() -> new RuntimeException("Parent team not found: " + dto.getParentTeamId()));
+            teamBuilder.parentTeam(parent);
+        }
+
+        return convertToTeamDTO(teamRepository.save(teamBuilder.build()));
     }
 
     @Transactional
     public CustomerTeamDTO updateTeam(Long id, CustomerTeamDTO dto) {
         CustomerTeam team = teamRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Team not found"));
+                .orElseThrow(() -> new RuntimeException("Team not found: " + id));
+        
         team.setName(dto.getName());
         team.setDescription(dto.getDescription());
-        
-        if (dto.getCustomerCompanyId() != null) {
-            CustomerCompany company = companyRepository.findById(dto.getCustomerCompanyId())
-                    .orElseThrow(() -> new RuntimeException("Company not found"));
-            team.setCustomerCompany(company);
+        team.setCostCenter(dto.getCostCenter());
+        team.setServiceHours(dto.getServiceHours());
+        team.setStatus(dto.getStatus());
+
+        if (dto.getParentTeamId() != null) {
+            if (dto.getParentTeamId().equals(id)) {
+                throw new RuntimeException("A team cannot be its own parent.");
+            }
+            CustomerTeam parent = teamRepository.findById(dto.getParentTeamId())
+                    .orElseThrow(() -> new RuntimeException("Parent team not found: " + dto.getParentTeamId()));
+            team.setParentTeam(parent);
+        } else {
+            team.setParentTeam(null);
         }
-        
+
         return convertToTeamDTO(teamRepository.save(team));
     }
 
@@ -133,63 +141,61 @@ public class CustomerService {
         teamRepository.deleteById(id);
     }
 
-    // --- User CRUD & Mapping ---
+    // --- User Services ---
+    public List<CustomerUserDTO> getUsersByTeam(Long teamId) {
+        return userRepository.findByCustomerTeamId(teamId).stream()
+                .map(this::convertToUserDTO)
+                .collect(Collectors.toList());
+    }
+
+    public CustomerUserDTO getUser(Long id) {
+        return userRepository.findById(id)
+                .map(this::convertToUserDTO)
+                .orElseThrow(() -> new RuntimeException("User not found: " + id));
+    }
+
     @Transactional
     public CustomerUserDTO createUser(Long teamId, CustomerUserDTO dto) {
         CustomerTeam team = teamRepository.findById(teamId)
-                .orElseThrow(() -> new RuntimeException("Team not found"));
-        
-        if (dto.getPassword() == null || dto.getPassword().isBlank()) {
-            throw new IllegalArgumentException("Password is mandatory for new customer user registration.");
-        }
-        
-        if (userRepository.findByUserId(dto.getUserId()).isPresent()) {
-            throw new IllegalArgumentException("User ID already exists: " + dto.getUserId());
-        }
-        
-        // Validate Role
-        String role = dto.getRole() != null ? dto.getRole() : "ROLE_CUS_USER";
-        validateRole(role);
+                .orElseThrow(() -> new RuntimeException("Team not found: " + teamId));
         
         CustomerUser user = CustomerUser.builder()
                 .customerTeam(team)
                 .userId(dto.getUserId())
                 .name(dto.getName())
-                .email(dto.getEmail())
                 .password(passwordEncoder.encode(dto.getPassword()))
-                .role(role)
+                .email(dto.getEmail())
+                .position(dto.getPosition())
+                .role(dto.getRole() != null ? dto.getRole() : "ROLE_USER")
                 .isActive(dto.getIsActive() != null ? dto.getIsActive() : true)
+                .isVip(dto.getIsVip() != null ? dto.getIsVip() : false)
+                .isApprover(dto.getIsApprover() != null ? dto.getIsApprover() : false)
+                .userCriticality(dto.getUserCriticality())
                 .build();
+
         return convertToUserDTO(userRepository.save(user));
     }
 
     @Transactional
     public CustomerUserDTO updateUser(Long id, CustomerUserDTO dto) {
         CustomerUser user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        
-        if (dto.getRole() != null) {
-            validateRole(dto.getRole());
-            user.setRole(dto.getRole());
-        }
+                .orElseThrow(() -> new RuntimeException("User not found: " + id));
         
         user.setName(dto.getName());
         user.setEmail(dto.getEmail());
+        user.setPosition(dto.getPosition());
         user.setIsActive(dto.getIsActive());
-        
+        user.setIsVip(dto.getIsVip());
+        user.setIsApprover(dto.getIsApprover());
+        user.setUserCriticality(dto.getUserCriticality());
+
         if (dto.getCustomerTeamId() != null) {
             CustomerTeam team = teamRepository.findById(dto.getCustomerTeamId())
                     .orElseThrow(() -> new RuntimeException("Team not found"));
             user.setCustomerTeam(team);
         }
-        
-        return convertToUserDTO(userRepository.save(user));
-    }
 
-    private void validateRole(String roleId) {
-        if (!commonCodeRepository.existsByGroupIdAndCodeId("CUS_ROLE", roleId)) {
-            throw new IllegalArgumentException("Invalid role code: " + roleId + ". It must exist in the CUS_ROLE group.");
-        }
+        return convertToUserDTO(userRepository.save(user));
     }
 
     @Transactional
@@ -197,6 +203,18 @@ public class CustomerService {
         userRepository.deleteById(id);
     }
 
+    /**
+     * Hierarchical Tree View Fetching.
+     */
+    public List<CustomerTeamDTO> getOrganizationTree(Long companyId) {
+        List<CustomerTeam> allTeams = teamRepository.findByCustomerCompanyId(companyId);
+        return allTeams.stream()
+                .filter(t -> t.getParentTeam() == null)
+                .map(this::convertToTeamDTO)
+                .collect(Collectors.toList());
+    }
+
+    // --- Converters ---
     private CustomerCompanyDTO convertToCompanyDTO(CustomerCompany company) {
         return CustomerCompanyDTO.builder()
                 .id(company.getId())
@@ -210,18 +228,32 @@ public class CustomerService {
                 .status(company.getStatus())
                 .createdAt(company.getCreatedAt())
                 .updatedAt(company.getUpdatedAt())
+                .createdBy(company.getCreatedBy())
+                .updatedBy(company.getUpdatedBy())
                 .build();
     }
 
     private CustomerTeamDTO convertToTeamDTO(CustomerTeam team) {
-        return CustomerTeamDTO.builder()
+        CustomerTeamDTO.CustomerTeamDTOBuilder builder = CustomerTeamDTO.builder()
                 .id(team.getId())
                 .customerCompanyId(team.getCustomerCompany().getId())
                 .customerCompanyName(team.getCustomerCompany().getName())
                 .name(team.getName())
                 .description(team.getDescription())
+                .costCenter(team.getCostCenter())
+                .serviceHours(team.getServiceHours())
+                .status(team.getStatus())
                 .createdAt(team.getCreatedAt())
-                .build();
+                .updatedAt(team.getUpdatedAt())
+                .createdBy(team.getCreatedBy())
+                .updatedBy(team.getUpdatedBy());
+
+        if (team.getParentTeam() != null) {
+            builder.parentTeamId(team.getParentTeam().getId());
+            builder.parentTeamName(team.getParentTeam().getName());
+        }
+
+        return builder.build();
     }
 
     private CustomerUserDTO convertToUserDTO(CustomerUser user) {
@@ -233,9 +265,16 @@ public class CustomerService {
                 .userId(user.getUserId())
                 .name(user.getName())
                 .email(user.getEmail())
+                .position(user.getPosition())
                 .role(user.getRole())
                 .isActive(user.getIsActive())
+                .isVip(user.getIsVip())
+                .isApprover(user.getIsApprover())
+                .userCriticality(user.getUserCriticality())
                 .createdAt(user.getCreatedAt())
+                .updatedAt(user.getUpdatedAt())
+                .createdBy(user.getCreatedBy())
+                .updatedBy(user.getUpdatedBy())
                 .build();
     }
 }

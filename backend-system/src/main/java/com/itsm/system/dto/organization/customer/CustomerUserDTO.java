@@ -18,7 +18,16 @@ public class CustomerUserDTO {
     private String password;
     private String name;
     private String email;
+    private String position;
     private String role;
     private Boolean isActive;
+    private Boolean isVip;
+    private Boolean isApprover;
+    private String userCriticality;
+    
+    // Audit fields
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    private String createdBy;
+    private String updatedBy;
 }

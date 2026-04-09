@@ -48,17 +48,18 @@ class CustomerManagementControllerTest {
     // --- Company Tests ---
 
     @Test
-    @DisplayName("전체 고객사 조회 - 성공")
+    @DisplayName("전체 고객사 조회 - 성공 (ApiResponse 적용)")
     void getAllCompanies_Success() throws Exception {
         given(customerService.getAllCompanies()).willReturn(List.of(CustomerCompanyDTO.builder().id(1L).name("고객사A").build()));
 
         mockMvc.perform(get("/api/v1/customer-governance/companies"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].name").value("고객사A"));
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data[0].name").value("고객사A"));
     }
 
     @Test
-    @DisplayName("고객사 생성 - 성공")
+    @DisplayName("고객사 생성 - 성공 (ApiResponse 적용)")
     void createCompany_ValidDto_ReturnsOk() throws Exception {
         CustomerCompanyDTO dto = CustomerCompanyDTO.builder().customerId("C001").name("신규고객").build();
         given(customerService.createCompany(any(CustomerCompanyDTO.class))).willReturn(dto);
@@ -67,23 +68,25 @@ class CustomerManagementControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.customerId").value("C001"));
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.customerId").value("C001"));
     }
 
     // --- Team Tests ---
 
     @Test
-    @DisplayName("고객사별 팀 조회 - 성공")
-    void getTeamsByCompany_ValidId_ReturnsList() throws Exception {
-        given(customerService.getTeamsByCompany(1L)).willReturn(List.of(CustomerTeamDTO.builder().id(10L).name("운영팀").build()));
+    @DisplayName("조직도 트리 조회 - 성공")
+    void getOrganizationTree_Success() throws Exception {
+        given(customerService.getOrganizationTree(1L)).willReturn(List.of(CustomerTeamDTO.builder().id(10L).name("Root팀").build()));
 
-        mockMvc.perform(get("/api/v1/customer-governance/companies/1/teams"))
+        mockMvc.perform(get("/api/v1/customer-governance/companies/1/organization-tree"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].name").value("운영팀"));
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data[0].name").value("Root팀"));
     }
 
     @Test
-    @DisplayName("팀 생성 - 성공")
+    @DisplayName("팀 생성 - 성공 (ApiResponse 적용)")
     void createTeam_ValidDto_ReturnsOk() throws Exception {
         CustomerTeamDTO dto = CustomerTeamDTO.builder().name("IT팀").build();
         given(customerService.createTeam(anyLong(), any(CustomerTeamDTO.class))).willReturn(dto);
@@ -92,23 +95,25 @@ class CustomerManagementControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("IT팀"));
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.name").value("IT팀"));
     }
 
     // --- User Tests ---
 
     @Test
-    @DisplayName("팀별 사용자 조회 - 성공")
+    @DisplayName("팀별 사용자 조회 - 성공 (ApiResponse 적용)")
     void getUsersByTeam_Success() throws Exception {
         given(customerService.getUsersByTeam(10L)).willReturn(List.of(CustomerUserDTO.builder().userId("user1").build()));
 
         mockMvc.perform(get("/api/v1/customer-governance/teams/10/users"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].userId").value("user1"));
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data[0].userId").value("user1"));
     }
 
     @Test
-    @DisplayName("사용자 생성 - 성공")
+    @DisplayName("사용자 생성 - 성공 (ApiResponse 적용)")
     void createUser_ValidDto_ReturnsOk() throws Exception {
         CustomerUserDTO dto = CustomerUserDTO.builder().userId("newuser").password("pass123").build();
         given(customerService.createUser(anyLong(), any(CustomerUserDTO.class))).willReturn(dto);
@@ -117,7 +122,8 @@ class CustomerManagementControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.userId").value("newuser"));
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.userId").value("newuser"));
     }
 
     @Test
@@ -126,6 +132,7 @@ class CustomerManagementControllerTest {
         doNothing().when(customerService).deleteUser(100L);
 
         mockMvc.perform(delete("/api/v1/customer-governance/users/100"))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
     }
 }

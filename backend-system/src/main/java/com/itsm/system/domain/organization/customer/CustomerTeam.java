@@ -1,10 +1,8 @@
 package com.itsm.system.domain.organization.customer;
 
+import com.itsm.system.domain.common.BaseTenantEntity;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-
-import java.time.LocalDateTime;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,19 +14,27 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CustomerTeam {
+public class CustomerTeam extends BaseTenantEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToMany(mappedBy = "customerTeam", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<CustomerUser> users = new ArrayList<>();
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_company_id")
     private CustomerCompany customerCompany;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_team_id")
+    private CustomerTeam parentTeam;
+
+    @OneToMany(mappedBy = "parentTeam", cascade = CascadeType.ALL)
+    @Builder.Default
+    private List<CustomerTeam> subTeams = new ArrayList<>();
+
+    @OneToMany(mappedBy = "customerTeam", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<CustomerUser> users = new ArrayList<>();
 
     @Column(nullable = false, length = 100)
     private String name;
@@ -36,7 +42,12 @@ public class CustomerTeam {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
+    @Column(name = "cost_center", length = 50)
+    private String costCenter;
+
+    @Column(name = "service_hours", length = 100)
+    private String serviceHours;
+
+    @Column(length = 20)
+    private String status;
 }

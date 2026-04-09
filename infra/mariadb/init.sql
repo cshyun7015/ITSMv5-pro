@@ -214,6 +214,8 @@ CREATE TABLE IF NOT EXISTS customer_companies (
   email VARCHAR(100),
   address TEXT,
   status VARCHAR(20) DEFAULT 'ACTIVE',
+  tenant_id VARCHAR(50) NOT NULL,
+  is_deleted TINYINT(1) DEFAULT 0,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -223,6 +225,8 @@ CREATE TABLE IF NOT EXISTS customer_teams (
   customer_company_id BIGINT,
   name VARCHAR(100) NOT NULL,
   description TEXT,
+  tenant_id VARCHAR(50) NOT NULL,
+  is_deleted TINYINT(1) DEFAULT 0,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (customer_company_id) REFERENCES customer_companies(id)
 );
@@ -236,6 +240,8 @@ CREATE TABLE IF NOT EXISTS customer_users (
   email VARCHAR(100),
   role VARCHAR(50) DEFAULT 'ROLE_USER',
   is_active TINYINT(1) DEFAULT 1,
+  tenant_id VARCHAR(50) NOT NULL,
+  is_deleted TINYINT(1) DEFAULT 0,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (customer_team_id) REFERENCES customer_teams(id)
@@ -408,22 +414,22 @@ VALUES
 ('user1', '$2a$10$9wEuO9flJ2.1D7ik6Cfsp.dwf7e1mOZEGN/wDCKXgE2PLcK8FCYKi', '사용자1', 'user1@comp1.com', 'ROLE_USER', '126-81-03725');
 
 -- 6-4. Data Migration to Refactored Schema
-INSERT IGNORE INTO customer_companies (customer_id, name, business_number, representative_name, status)
-SELECT company_id, name, business_number, representative_name, status FROM companies;
+INSERT IGNORE INTO customer_companies (customer_id, name, business_number, representative_name, status, tenant_id, is_deleted)
+SELECT company_id, name, business_number, representative_name, status, 'SYSTEM', 0 FROM companies;
 
 INSERT IGNORE INTO operator_companies (operator_company_id, name, business_number, status, representative_name)
 SELECT company_id, name, business_number, status, representative_name FROM companies WHERE company_id = 'MSP';
 
-INSERT IGNORE INTO customer_teams (customer_company_id, name, description)
-SELECT id, '기본팀', '마이그레이션 자동 생성' FROM customer_companies;
+INSERT IGNORE INTO customer_teams (customer_company_id, name, description, tenant_id, is_deleted)
+SELECT id, '기본팀', '마이그레이션 자동 생성', 'SYSTEM', 0 FROM customer_companies;
 
 INSERT IGNORE INTO operator_teams (operator_company_id, name, description)
 SELECT id, '운영본부', '마이그레이션 자동 생성' FROM operator_companies;
 
-INSERT IGNORE INTO customer_users (customer_team_id, user_id, password, name, email, role, is_active)
+INSERT IGNORE INTO customer_users (customer_team_id, user_id, password, name, email, role, is_active, tenant_id, is_deleted)
 SELECT 
   (SELECT ct.id FROM customer_teams ct JOIN customer_companies cc ON ct.customer_company_id = cc.id WHERE cc.customer_id = u.company_id LIMIT 1),
-  u.user_id, u.password, u.name, u.email, u.role, u.is_active
+  u.user_id, u.password, u.name, u.email, u.role, u.is_active, 'SYSTEM', 0
 FROM users u WHERE u.role = 'ROLE_USER';
 
 INSERT IGNORE INTO operators (user_id, password, name, email, role, is_active)

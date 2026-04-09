@@ -31,3 +31,25 @@
 
 ## 6. 빌드 및 테스트
 - 빌드 및 테스트는 컨테이너 환경에서 수행한다. (docker-compose.yml 파일 참고)
+
+## 7. Frontend UI 표준 (Standard)
+사용자 경험(UX)과 시각적 완성도를 최우선으로 하며, 다음 원칙을 엄격히 준수합니다.
+- **디자인 테마:** "Premium Deep Neutral" 기반의 다크 모드 지향
+- **색상 시스템:** `variables.css`의 HSL 토큰을 필수 사용 (예: `--bg-primary: 230 20% 5%`)
+- **스타일링 규칙:** 
+  - `base.css`에 정의된 공통 컴포넌트 클래스(`.card-base`, `.input-base` 등)를 최우선 사용
+  - 인라인 스타일이나 임의의 Tailwind 유틸리티(`bg-white/5` 등)를 통한 땜빵식 수정을 엄격히 금지
+- **심미성 요소:** 고해상도 타이포그래피(Inter, Roboto 등), 부드러운 마이크로 애니메이션, 세밀한 정보 밀도 유지
+
+## 8. Backend 개발 표준 및 절차
+백엔드의 안정성과 데이터 격리를 보장하기 위해 **Inside-Out (도메인 우선)** 방식을 따릅니다.
+
+### 개발 순서 (Sequence)
+1. **Domain (Core):** `BaseEntity` 또는 `BaseTenantEntity`를 상속받아 비즈니스 규칙과 감사를 포함한 엔티티 설계
+2. **Repository (Data Access):** Spring Data JPA 및 QueryDSL을 이용한 데이터 접근 레이어 구현
+3. **Service (Business Logic):** 트랜잭션 관리 및 엔티티-DTO 매핑을 포함한 비즈니스 오케스트레이션
+4. **Controller (Web Layer):** REST API 엔드포인트 및 입력값 검증(`@Valid`) 구현
+
+### 품질 원칙
+- **테스트 필수:** 모든 백엔드 로직은 출시 전 `JUnit5` 및 `Testcontainers` 기반의 통합 테스트를 100% 통과해야 함
+- **프론트엔드 작업 시점:** 백엔드의 통합 테스트가 완료되고 API 규격이 확정된 이후에만 프론트엔드 UI 작업을 착수함

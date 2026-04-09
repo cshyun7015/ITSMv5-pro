@@ -1,11 +1,8 @@
 package com.itsm.system.domain.organization.customer;
 
+import com.itsm.system.domain.common.BaseTenantEntity;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
-import java.time.LocalDateTime;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +14,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CustomerCompany {
+public class CustomerCompany extends BaseTenantEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -50,12 +47,4 @@ public class CustomerCompany {
 
     @Column(length = 20)
     private String status; // ACTIVE, INACTIVE
-
-    @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
-
-    @UpdateTimestamp
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
 }

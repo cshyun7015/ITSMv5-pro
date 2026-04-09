@@ -22,6 +22,28 @@ services:
     labels:
       - "companyId=MSP"
 
+  itsm-test-db:
+    image: mariadb:10.11
+    container_name: itsm-test-db
+    environment:
+      - MARIADB_ROOT_PASSWORD=itsmpass
+      - MARIADB_DATABASE=system_mgmt
+      - TZ=Asia/Seoul
+    ports:
+      - "3307:3306"
+    volumes:
+      - itsm-test-db-data:/var/lib/mysql
+      - ./infra/mariadb/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb-admin ping -h localhost -uroot -p$$MARIADB_ROOT_PASSWORD"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - itsm-network
+    labels:
+      - "companyId=MSP"
+
   # API Gateway: OTel 모듈이 포함된 Nginx 이미지 사용 권장
   api-gateway:
     image: nginxinc/nginx-unprivileged:otel # 실제 운영시에는 OTel 모듈이 포함된 커스텀 이미지나 nginxinc/nginx-unprivileged:otel 권장
@@ -402,4 +424,5 @@ networks:
 
 volumes:
   itsm-db-data:
+  itsm-test-db-data:
   grafana-storage:

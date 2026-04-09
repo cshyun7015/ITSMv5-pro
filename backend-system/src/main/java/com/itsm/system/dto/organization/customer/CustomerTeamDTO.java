@@ -13,7 +13,17 @@ public class CustomerTeamDTO {
     private Long id;
     private Long customerCompanyId;
     private String customerCompanyName;
+    private Long parentTeamId;
+    private String parentTeamName;
     private String name;
     private String description;
+    private String costCenter;
+    private String serviceHours;
+    private String status;
+    
+    // Audit fields
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    private String createdBy;
+    private String updatedBy;
 }
