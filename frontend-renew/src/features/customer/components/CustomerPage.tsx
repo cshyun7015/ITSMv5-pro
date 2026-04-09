@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { Users, Plus, Download } from 'lucide-react';
 import CustomerTreeList from './CustomerTreeList';
 import CustomerDetail from './CustomerDetail';
+import Modal from '../../../components/common/Modal';
+import CustomerCompanyForm from './CustomerCompanyForm';
+import { useCustomerMutations } from '../hooks/useCustomerMutations';
 
 /**
  * 고객 조직 관리 메인 페이지 (MFE Module)
@@ -10,13 +13,26 @@ import CustomerDetail from './CustomerDetail';
  */
 const CustomerPage: React.FC = () => {
   const [selectedNode, setSelectedNode] = useState<{ type: 'COMPANY' | 'TEAM'; id: number } | null>(null);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  
+  const { createCompany } = useCustomerMutations();
 
   const handleSelectNode = (type: 'COMPANY' | 'TEAM', id: number) => {
     setSelectedNode({ type, id });
   };
 
   const handleAddCompany = () => {
-    console.log('Add Company clicked');
+    setIsAddModalOpen(true);
+  };
+  
+  const handleSubmitAdd = async (data: any) => {
+    try {
+      await createCompany.mutateAsync(data);
+      setIsAddModalOpen(false);
+    } catch (error) {
+      console.error('Failed to create company:', error);
+      alert('고객사 등록에 실패했습니다.');
+    }
   };
 
   return (
@@ -62,6 +78,18 @@ const CustomerPage: React.FC = () => {
            <CustomerDetail selectedNode={selectedNode} />
         </div>
       </div>
+
+      {/* 고객사 등록 모달 */}
+      <Modal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        title="신규 고객사 등록"
+      >
+        <CustomerCompanyForm 
+          onSubmit={handleSubmitAdd} 
+          isLoading={createCompany.isPending} 
+        />
+      </Modal>
     </div>
   );
 };

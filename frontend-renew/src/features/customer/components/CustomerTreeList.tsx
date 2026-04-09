@@ -3,6 +3,10 @@ import { useQuery } from '@tanstack/react-query';
 import { Building2, Users, ChevronRight, ChevronDown, Plus, Edit3 } from 'lucide-react';
 import { customerApi } from '../api/customerApi';
 import { CustomerCompany, CustomerTeam } from '../types/customerType';
+import Modal from '../../../components/common/Modal';
+import CustomerCompanyForm from './CustomerCompanyForm';
+import CustomerTeamForm from './CustomerTeamForm';
+import { useCustomerMutations } from '../hooks/useCustomerMutations';
 
 interface CustomerTreeListProps {
   onSelectNode: (type: 'COMPANY' | 'TEAM', id: number) => void;
@@ -11,6 +15,10 @@ interface CustomerTreeListProps {
 
 const CustomerTreeList: React.FC<CustomerTreeListProps> = ({ onSelectNode, selectedNode }) => {
   const [expandedCompanies, setExpandedCompanies] = useState<Set<number>>(new Set());
+  const [editingCompany, setEditingCompany] = useState<CustomerCompany | null>(null);
+  const [addingTeamTo, setAddingTeamTo] = useState<number | null>(null);
+
+  const { updateCompany, createTeam } = useCustomerMutations();
 
   // --- Data Fetching ---
   const { data: companies, isLoading: companiesLoading } = useQuery<CustomerCompany[]>({
@@ -23,6 +31,38 @@ const CustomerTreeList: React.FC<CustomerTreeListProps> = ({ onSelectNode, selec
     if (newExpanded.has(id)) newExpanded.delete(id);
     else newExpanded.add(id);
     setExpandedCompanies(newExpanded);
+  };
+
+  const handleEditCompany = (company: CustomerCompany) => {
+    setEditingCompany(company);
+  };
+
+  const handleAddTeam = (companyId: number) => {
+    setAddingTeamTo(companyId);
+  };
+
+  const submitEditCompany = async (data: any) => {
+    if (!editingCompany) return;
+    try {
+      await updateCompany.mutateAsync({ id: editingCompany.id, company: data });
+      setEditingCompany(null);
+    } catch (error) {
+      alert('고객사 수정에 실패했습니다.');
+    }
+  };
+
+  const submitAddTeam = async (data: any) => {
+    if (!addingTeamTo) return;
+    try {
+      await createTeam.mutateAsync({ companyId: addingTeamTo, team: data });
+      setAddingTeamTo(null);
+      // Expand the company if it wasn't
+      if (!expandedCompanies.has(addingTeamTo)) {
+        toggleCompany(addingTeamTo);
+      }
+    } catch (error) {
+      alert('팀 생성에 실패했습니다.');
+    }
   };
 
   if (companiesLoading) {
@@ -46,6 +86,8 @@ const CustomerTreeList: React.FC<CustomerTreeListProps> = ({ onSelectNode, selec
             onToggle={() => toggleCompany(company.id)}
             isSelected={selectedNode?.type === 'COMPANY' && selectedNode.id === company.id}
             onSelect={() => onSelectNode('COMPANY', company.id)}
+            onEdit={() => handleEditCompany(company)}
+            onAddTeam={() => handleAddTeam(company.id)}
             selectedNode={selectedNode}
             onSelectNode={onSelectNode}
           />
@@ -53,6 +95,36 @@ const CustomerTreeList: React.FC<CustomerTreeListProps> = ({ onSelectNode, selec
           <div className="p-4 text-center text-[10px] text-text-muted italic opacity-50">고객사 정보를 불러올 수 없습니다.</div>
         )}
       </div>
+
+      {/* Edit Company Modal */}
+      <Modal 
+        isOpen={!!editingCompany} 
+        onClose={() => setEditingCompany(null)} 
+        title="고객사 정보 수정"
+      >
+        {editingCompany && (
+          <CustomerCompanyForm 
+            initialData={editingCompany} 
+            onSubmit={submitEditCompany} 
+            isLoading={updateCompany.isPending} 
+          />
+        )}
+      </Modal>
+
+      {/* Add Team Modal */}
+      <Modal 
+        isOpen={!!addingTeamTo} 
+        onClose={() => setAddingTeamTo(null)} 
+        title="신규 팀 등록"
+      >
+        {addingTeamTo && (
+          <CustomerTeamForm 
+            companyId={addingTeamTo} 
+            onSubmit={submitAddTeam} 
+            isLoading={createTeam.isPending} 
+          />
+        )}
+      </Modal>
     </div>
   );
 };
@@ -65,12 +137,14 @@ interface CompanyNodeProps {
   onToggle: () => void;
   isSelected: boolean;
   onSelect: () => void;
+  onEdit: () => void;
+  onAddTeam: () => void;
   selectedNode: { type: 'COMPANY' | 'TEAM'; id: number } | null;
   onSelectNode: (type: 'COMPANY' | 'TEAM', id: number) => void;
 }
 
 const CompanyNode: React.FC<CompanyNodeProps> = ({ 
-  company, isExpanded, onToggle, isSelected, onSelect, selectedNode, onSelectNode 
+  company, isExpanded, onToggle, isSelected, onSelect, onEdit, onAddTeam, selectedNode, onSelectNode 
 }) => {
   const { data: tree, isLoading: treeLoading } = useQuery<CustomerTeam[]>({
     queryKey: ['orgTree', company.id],
@@ -98,8 +172,20 @@ const CompanyNode: React.FC<CompanyNodeProps> = ({
         </div>
         
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-           <button className="p-1.5 hover:bg-white/10 rounded-lg text-text-muted hover:text-cyan-400" title="팀 추가"><Plus size={14} /></button>
-           <button className="p-1.5 hover:bg-white/10 rounded-lg text-text-muted hover:text-amber-400" title="수정"><Edit3 size={14} /></button>
+           <button 
+            onClick={(e) => { e.stopPropagation(); onAddTeam(); }}
+            className="p-1.5 hover:bg-white/10 rounded-lg text-text-muted hover:text-cyan-400" 
+            title="팀 추가"
+          >
+            <Plus size={14} />
+          </button>
+           <button 
+            onClick={(e) => { e.stopPropagation(); onEdit(); }}
+            className="p-1.5 hover:bg-white/10 rounded-lg text-text-muted hover:text-amber-400" 
+            title="수정"
+          >
+            <Edit3 size={14} />
+          </button>
         </div>
       </div>
 

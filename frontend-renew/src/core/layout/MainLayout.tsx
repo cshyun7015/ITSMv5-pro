@@ -10,7 +10,7 @@ import { useAuthStore } from '../auth/useAuthStore';
  */
 const MainLayout: React.FC = () => {
   const location = useLocation();
-  const { tenantId, isLoggedIn, loginBatch } = useAuthStore();
+  const { tenantId, isLoggedIn, loginBatch, logout } = useAuthStore();
   const [isCollapsed, setIsCollapsed] = React.useState(false);
 
   // --- [MOCK SESSION INJECTION] ---

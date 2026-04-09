@@ -115,7 +115,7 @@ services:
   # Frontend Unit Tests (Vitest)
   portal-ui-test:
     build:
-      context: ./frontend
+      context: ./frontend-renew
       dockerfile: Dockerfile
       target: build
     container_name: portal-ui-test

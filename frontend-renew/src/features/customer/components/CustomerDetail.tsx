@@ -3,6 +3,10 @@ import { useQuery } from '@tanstack/react-query';
 import { Building2, Users, Mail, Phone, MapPin, ShieldCheck, Star, Trash2, Edit3, UserPlus, Plus } from 'lucide-react';
 import { customerApi } from '../api/customerApi';
 import { CustomerCompany, CustomerTeam, CustomerUser } from '../types/customerType';
+import Modal from '../../../components/common/Modal';
+import CustomerCompanyForm from './CustomerCompanyForm';
+import CustomerTeamForm from './CustomerTeamForm';
+import { useCustomerMutations } from '../hooks/useCustomerMutations';
 
 interface CustomerDetailProps {
   selectedNode: { type: 'COMPANY' | 'TEAM'; id: number } | null;
@@ -34,10 +38,33 @@ const CustomerDetail: React.FC<CustomerDetailProps> = ({ selectedNode }) => {
 // --- Sub-components ---
 
 const CompanyDetail: React.FC<{ id: number }> = ({ id }) => {
+  const [isEditModalOpen, setIsEditModalOpen] = React.useState(false);
+  const [isAddTeamModalOpen, setIsAddTeamModalOpen] = React.useState(false);
+  
+  const { updateCompany, createTeam } = useCustomerMutations();
+
   const { data: company, isLoading } = useQuery<CustomerCompany>({
     queryKey: ['company', id],
     queryFn: () => customerApi.fetchCompany(id),
   });
+
+  const handleEdit = async (data: any) => {
+    try {
+      await updateCompany.mutateAsync({ id, company: data });
+      setIsEditModalOpen(false);
+    } catch (error) {
+      alert('고객사 정보 수정에 실패했습니다.');
+    }
+  };
+
+  const handleAddTeam = async (data: any) => {
+    try {
+      await createTeam.mutateAsync({ companyId: id, team: data });
+      setIsAddTeamModalOpen(false);
+    } catch (error) {
+      alert('팀 생성에 실패했습니다.');
+    }
+  };
 
   if (isLoading) return <DetailSkeleton />;
   if (!company) return null;
@@ -62,14 +89,28 @@ const CompanyDetail: React.FC<{ id: number }> = ({ id }) => {
           </div>
         </div>
         <div className="flex gap-2">
-           <button className="btn-md bg-white/5 border border-white/10 hover:bg-white/10 rounded-xl px-4 flex items-center gap-2 text-xs font-bold transition-all">
+           <button 
+             onClick={() => setIsAddTeamModalOpen(true)}
+             className="btn-md bg-white/5 border border-white/10 hover:bg-white/10 rounded-xl px-4 flex items-center gap-2 text-xs font-bold transition-all"
+           >
               <Plus size={14} /> 팀 추가
            </button>
-           <button className="btn-md bg-white/5 border border-white/10 hover:bg-amber-400/20 hover:text-amber-400 rounded-xl px-4 flex items-center gap-2 text-xs font-bold transition-all">
+           <button 
+             onClick={() => setIsEditModalOpen(true)}
+             className="btn-md bg-white/5 border border-white/10 hover:bg-amber-400/20 hover:text-amber-400 rounded-xl px-4 flex items-center gap-2 text-xs font-bold transition-all"
+           >
               <Edit3 size={14} /> 수정
            </button>
         </div>
       </div>
+
+      <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="고객사 정보 수정">
+        <CustomerCompanyForm initialData={company} onSubmit={handleEdit} isLoading={updateCompany.isPending} />
+      </Modal>
+
+      <Modal isOpen={isAddTeamModalOpen} onClose={() => setIsAddTeamModalOpen(false)} title="신규 팀 등록">
+        <CustomerTeamForm companyId={id} onSubmit={handleAddTeam} isLoading={createTeam.isPending} />
+      </Modal>
 
       <div className="flex-1 bg-white/[0.02] border border-white/5 rounded-3xl p-8 flex flex-col items-center justify-center opacity-40">
          <Building2 size={48} className="text-white/10 mb-4" />
@@ -81,10 +122,22 @@ const CompanyDetail: React.FC<{ id: number }> = ({ id }) => {
 };
 
 const TeamDetail: React.FC<{ id: number }> = ({ id }) => {
+  const [isEditModalOpen, setIsEditModalOpen] = React.useState(false);
+  const { updateTeam } = useCustomerMutations();
+
   const { data: team, isLoading: teamLoading } = useQuery<CustomerTeam>({
     queryKey: ['team', id],
     queryFn: () => customerApi.fetchTeam(id),
   });
+
+  const handleEditTeam = async (data: any) => {
+    try {
+      await updateTeam.mutateAsync({ id, team: data });
+      setIsEditModalOpen(false);
+    } catch (error) {
+      alert('팀 정보 수정에 실패했습니다.');
+    }
+  };
 
   const { data: users, isLoading: usersLoading } = useQuery<CustomerUser[]>({
     queryKey: ['teamUsers', id],
@@ -117,11 +170,28 @@ const TeamDetail: React.FC<{ id: number }> = ({ id }) => {
               </div>
            </div>
            <div className="flex gap-2">
+              <button 
+                onClick={() => setIsEditModalOpen(true)}
+                className="btn-md bg-white/5 border border-white/10 hover:bg-amber-400/20 hover:text-amber-400 rounded-xl px-4 flex items-center gap-2 text-xs font-black transition-all"
+              >
+                 <Edit3 size={14} /> 팀 수정
+              </button>
               <button className="btn-md bg-white/5 border border-white/10 hover:bg-cyan-500/20 hover:text-cyan-400 rounded-xl px-4 flex items-center gap-2 text-xs font-black transition-all">
                  <UserPlus size={14} /> 사용자 초대
               </button>
            </div>
          </div>
+
+         <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="팀 정보 수정">
+            {team && (
+              <CustomerTeamForm 
+                companyId={team.customerCompanyId} 
+                initialData={team} 
+                onSubmit={handleEditTeam} 
+                isLoading={updateTeam.isPending} 
+              />
+            )}
+         </Modal>
       </div>
 
       <div className="flex-1 p-8 overflow-y-auto">
