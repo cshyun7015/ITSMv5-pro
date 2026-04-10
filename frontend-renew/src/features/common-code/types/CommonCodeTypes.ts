@@ -10,6 +10,8 @@ export interface CodeGroup {
   isSystem: boolean; // useYn -> isSystem
   createdAt?: string;
   updatedAt?: string;
+  createdBy?: string;
+  updatedBy?: string;
 }
 
 export interface CommonCode {
@@ -22,4 +24,6 @@ export interface CommonCode {
   isActive: boolean; // useYn -> isActive
   createdAt?: string;
   updatedAt?: string;
+  createdBy?: string;
+  updatedBy?: string;
 }

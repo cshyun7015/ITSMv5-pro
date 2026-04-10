@@ -1,14 +1,12 @@
 package com.itsm.system.domain.code;
 
+import com.itsm.system.domain.common.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
-import java.time.LocalDateTime;
+import org.hibernate.annotations.SQLDelete;
 
 @Entity
 @Table(name = "code_groups", schema = "system_mgmt")
@@ -17,7 +15,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CodeGroup {
+@SQLDelete(sql = "UPDATE code_groups SET is_deleted = 1 WHERE group_id = ?")
+public class CodeGroup extends BaseEntity {
     @Id
     @Column(name = "group_id", length = 50)
     private String groupId;
@@ -30,12 +29,4 @@ public class CodeGroup {
 
     @Column(name = "is_system")
     private Boolean isSystem;
-
-    @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
-
-    @UpdateTimestamp
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
 }

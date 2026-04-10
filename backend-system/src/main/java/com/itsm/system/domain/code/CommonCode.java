@@ -1,11 +1,9 @@
 package com.itsm.system.domain.code;
 
+import com.itsm.system.domain.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
-import java.time.LocalDateTime;
+import org.hibernate.annotations.SQLDelete;
 
 @Entity
 @Table(
@@ -18,7 +16,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CommonCode {
+@SQLDelete(sql = "UPDATE common_codes SET is_deleted = 1 WHERE id = ?")
+public class CommonCode extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -40,12 +39,4 @@ public class CommonCode {
 
     @Column(name = "is_active")
     private Boolean isActive;
-
-    @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
-
-    @UpdateTimestamp
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
 }

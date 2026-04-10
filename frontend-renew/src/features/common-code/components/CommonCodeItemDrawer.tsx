@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { CommonCode } from '../types/CommonCodeTypes';
+import { ShieldCheck, Edit3 } from 'lucide-react';
 
 interface Props {
   isOpen: boolean;
@@ -146,6 +147,34 @@ const CommonCodeItemDrawer: React.FC<Props> = ({
               />
             </div>
           </form>
+
+          {/* Metadata Cards (Edit 모드에서만 노출) */}
+          {isEdit && initialData && (
+            <div className="grid grid-cols-2 gap-4 mt-8 pt-8 border-t border-white/5 animate-slide-up">
+              <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <ShieldCheck size={14} className="text-brand-primary" />
+                  <h4 className="text-[9px] font-black uppercase tracking-widest text-white/40">System Metadata</h4>
+                </div>
+                <div className="space-y-2.5">
+                  <MetaItem label="Unique ID" value={initialData.id} isMono />
+                  <MetaItem label="Group Key" value={groupId} isMono />
+                </div>
+              </div>
+              <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Edit3 size={14} className="text-amber-400" />
+                  <h4 className="text-[9px] font-black uppercase tracking-widest text-white/40">Audit Information</h4>
+                </div>
+                <div className="space-y-2.5">
+                  <MetaItem label="Created At" value={initialData.createdAt} isDate />
+                  <MetaItem label="Created By" value={initialData.createdBy} />
+                  <MetaItem label="Updated At" value={initialData.updatedAt} isDate />
+                  <MetaItem label="Updated By" value={initialData.updatedBy} />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* 표준 Footer */}
@@ -170,5 +199,19 @@ const CommonCodeItemDrawer: React.FC<Props> = ({
     </div>
   );
 };
+
+const MetaItem: React.FC<{ label: string; value: any; isMono?: boolean; isDate?: boolean; isStatus?: boolean }> = ({ 
+  label, value, isMono, isDate, isStatus 
+}) => (
+  <div className="flex items-center justify-between text-[9px]">
+    <span className="text-text-muted font-bold uppercase tracking-tighter">{label}</span>
+    <span className={`
+      ${isMono ? 'font-mono text-cyan-400' : 'text-text-secondary'}
+      ${isStatus ? 'px-1.5 py-0.5 bg-brand-primary/10 text-brand-primary rounded-full font-black' : ''}
+    `}>
+      {isDate ? (value ? new Date(value).toLocaleString() : 'N/A') : (value?.toString() || 'N/A')}
+    </span>
+  </div>
+);
 
 export default CommonCodeItemDrawer;
