@@ -39,21 +39,21 @@ const OperatorTeamForm: React.FC<OperatorTeamFormProps> = ({ id, onSubmit, isLoa
     <div className="space-y-10">
       {/* 기본 정보 폼 */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-2xl">
-        <div className="space-y-2">
-          <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest pl-1">Team Name</label>
+        <div className="space-y-1">
+          <label className="label-base pl-1">Team Name</label>
           <input 
             {...register('name', { required: '팀 명칭은 필수입니다.' })}
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500/50 transition-all font-bold"
+            className="input-base font-bold"
             placeholder="팀 이름을 입력하세요"
           />
         </div>
 
         <div className="grid grid-cols-2 gap-6">
-          <div className="space-y-2">
-             <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest pl-1">Status</label>
+          <div className="space-y-1">
+             <label className="label-base pl-1">Status</label>
              <select 
                {...register('status')}
-               className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500/50 transition-all appearance-none"
+               className="select-base"
              >
                <option value="ACTIVE" className="bg-background-secondary">ACTIVE</option>
                <option value="INACTIVE" className="bg-background-secondary">INACTIVE</option>
@@ -63,7 +63,7 @@ const OperatorTeamForm: React.FC<OperatorTeamFormProps> = ({ id, onSubmit, isLoa
             <button 
               type="submit" 
               disabled={isLoading}
-              className="w-full py-3 bg-white/5 border border-blue-500/30 text-blue-400 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-blue-500 hover:text-white transition-all disabled:opacity-50"
+              className="btn-md btn-secondary w-full uppercase tracking-widest text-[10px]"
             >
               {isLoading ? 'Updating...' : 'Save Basic Info'}
             </button>

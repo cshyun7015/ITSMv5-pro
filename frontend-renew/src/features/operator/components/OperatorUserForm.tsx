@@ -52,22 +52,22 @@ const OperatorUserForm: React.FC<OperatorUserFormProps> = ({ id, onSubmit, isLoa
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6 max-w-2xl px-2">
       <div className="grid grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest pl-1">User ID</label>
+        <div className="space-y-1">
+          <label className="label-base pl-1">User ID</label>
           <input 
             {...register('userId', { required: '사용자 ID는 필수입니다.' })}
-            className={`w-full bg-white/5 border ${errors.userId ? 'border-red-500/50' : 'border-white/10'} rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500/50 transition-all font-mono`}
+            className={`input-base ${errors.userId ? 'border-red-500/50' : ''}`}
             placeholder="e.g. admin_kim"
             disabled={!!id}
           />
           {errors.userId && <p className="text-[10px] text-red-500 pl-1 font-bold">{errors.userId.message as string}</p>}
         </div>
 
-        <div className="space-y-2">
-          <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest pl-1">Full Name</label>
+        <div className="space-y-1">
+          <label className="label-base pl-1">Full Name</label>
           <input 
             {...register('name', { required: '성명은 필수입니다.' })}
-            className={`w-full bg-white/5 border ${errors.name ? 'border-red-500/50' : 'border-white/10'} rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500/50 transition-all`}
+            className={`input-base ${errors.name ? 'border-red-500/50' : ''}`}
             placeholder="성명을 입력하세요"
           />
           {errors.name && <p className="text-[10px] text-red-500 pl-1 font-bold">{errors.name.message as string}</p>}
@@ -75,8 +75,8 @@ const OperatorUserForm: React.FC<OperatorUserFormProps> = ({ id, onSubmit, isLoa
       </div>
 
       <div className="grid grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest pl-1">Email Address</label>
+        <div className="space-y-1">
+          <label className="label-base pl-1">Email Address</label>
           <input 
             {...register('email', { 
               required: '이메일은 필수입니다.',
@@ -85,19 +85,19 @@ const OperatorUserForm: React.FC<OperatorUserFormProps> = ({ id, onSubmit, isLoa
                 message: "유효한 이메일 형식이 아닙니다."
               }
             })}
-            className={`w-full bg-white/5 border ${errors.email ? 'border-red-500/50' : 'border-white/10'} rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500/50 transition-all`}
+            className={`input-base ${errors.email ? 'border-red-500/50' : ''}`}
             placeholder="example@company.com"
           />
           {errors.email && <p className="text-[10px] text-red-500 pl-1 font-bold">{errors.email.message as string}</p>}
         </div>
 
         {!id && (
-          <div className="space-y-2 text-indigo-400 p-0">
-            <label className="text-[10px] font-black uppercase tracking-widest pl-1">Initial Password</label>
+          <div className="space-y-1 p-0">
+            <label className="label-base pl-1">Initial Password</label>
             <input 
               type="password"
               {...register('password', { required: '초기 비밀번호는 필수입니다.' })}
-              className={`w-full bg-white/5 border ${errors.password ? 'border-red-500/50' : 'border-white/10'} rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500/50 transition-all`}
+              className={`input-base ${errors.password ? 'border-red-500/50' : ''}`}
               placeholder="••••••••"
             />
             {errors.password && <p className="text-[10px] text-red-500 pl-1 font-bold">{errors.password.message as string}</p>}
@@ -106,11 +106,11 @@ const OperatorUserForm: React.FC<OperatorUserFormProps> = ({ id, onSubmit, isLoa
       </div>
 
       <div className="grid grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest pl-1">Role</label>
+        <div className="space-y-1">
+          <label className="label-base pl-1">Role</label>
           <select 
             {...register('role')}
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500/50 transition-all appearance-none disabled:opacity-50"
+            className="select-base"
             disabled={codesLoading}
           >
             {codesLoading ? (
@@ -125,11 +125,11 @@ const OperatorUserForm: React.FC<OperatorUserFormProps> = ({ id, onSubmit, isLoa
           </select>
         </div>
 
-        <div className="space-y-2">
-          <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest pl-1">Account Active</label>
+        <div className="space-y-1">
+          <label className="label-base pl-1">Account Active</label>
           <select 
             {...register('isActive')}
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500/50 transition-all appearance-none"
+            className="select-base"
           >
             <option value="true" className="bg-background-secondary text-primary">ACTIVE (활성)</option>
             <option value="false" className="bg-background-secondary text-primary">INACTIVE (비활성)</option>
@@ -137,11 +137,11 @@ const OperatorUserForm: React.FC<OperatorUserFormProps> = ({ id, onSubmit, isLoa
         </div>
       </div>
 
-      <div className="pt-4">
+      <div className="pt-6">
         <button 
           type="submit" 
           disabled={isLoading}
-          className="w-full py-4 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl font-black text-xs uppercase tracking-[0.2em] hover:shadow-lg hover:shadow-indigo-500/20 active:scale-[0.98] transition-all disabled:opacity-50"
+          className="btn-md btn-primary w-full uppercase tracking-[0.2em]"
         >
           {isLoading ? 'Processing...' : id ? 'Update Operator' : 'Create Operator'}
         </button>
