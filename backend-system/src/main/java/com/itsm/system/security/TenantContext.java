@@ -9,6 +9,8 @@ import lombok.extern.slf4j.Slf4j;
 public class TenantContext {
 
     private static final ThreadLocal<String> CURRENT_TENANT = new ThreadLocal<>();
+    private static final ThreadLocal<String> USER_COMPANY = new ThreadLocal<>();
+
     public static final String DEFAULT_TENANT = "MSP";
 
     public static void setTenantId(String tenantId) {
@@ -21,8 +23,18 @@ public class TenantContext {
         return (tenantId != null) ? tenantId : DEFAULT_TENANT;
     }
 
+    public static void setUserCompanyId(String companyId) {
+        log.debug("Setting user company context to: {}", companyId);
+        USER_COMPANY.set(companyId);
+    }
+
+    public static String getUserCompanyId() {
+        return USER_COMPANY.get();
+    }
+
     public static void clear() {
-        log.debug("Clearing tenant context");
-        CURRENT_TENANT.remove();
+         log.debug("Clearing tenant context");
+         CURRENT_TENANT.remove();
+         USER_COMPANY.remove();
     }
 }

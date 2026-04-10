@@ -33,17 +33,21 @@ public class TenantFilterAspect {
         
         // Enable Tenant Filter
         String tenantId = TenantContext.getTenantId();
-        boolean isMsp = TenantContext.DEFAULT_TENANT.equals(tenantId);
+        String userCompanyId = TenantContext.getUserCompanyId();
+        
+        boolean isMspHeader = TenantContext.DEFAULT_TENANT.equals(tenantId);
+        boolean isMspUser = TenantContext.DEFAULT_TENANT.equals(userCompanyId);
 
-        if (tenantId != null && !isMsp) {
-            session.enableFilter("tenantFilter").setParameter("tenantId", tenantId);
-            // Enable Deleted Filter (default to showing only non-deleted items)
-            session.enableFilter("deletedFilter").setParameter("isDeleted", false);
-            log.trace("Activated Hibernate filters in session: tenantId={}, isDeleted=false", tenantId);
-        } else if (isMsp) {
+        if (isMspUser || isMspHeader) {
+            // Superuser bypass: Disable all filters
             session.disableFilter("tenantFilter");
             session.disableFilter("deletedFilter");
-            log.trace("Disabled Hibernate filters for MSP (SuperUser) session");
+            log.trace("Disabled Hibernate filters for MSP (SuperUser/Admin) session: userCompany={}, tenantHeader={}", userCompanyId, tenantId);
+        } else if (tenantId != null) {
+            // Regular tenant user: Enable filters
+            session.enableFilter("tenantFilter").setParameter("tenantId", tenantId);
+            session.enableFilter("deletedFilter").setParameter("isDeleted", false);
+            log.trace("Activated Hibernate filters in session: tenantId={}, isDeleted=false", tenantId);
         }
     }
 }

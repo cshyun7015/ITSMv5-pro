@@ -64,6 +64,32 @@ export const useCustomerMutations = () => {
     },
   });
 
+  // --- User Mutations ---
+  const createUser = useMutation({
+    mutationFn: ({ teamId, user }: { teamId: number; user: any }) => 
+      customerApi.createUser(teamId, user),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['teamUsers', variables.teamId] });
+    },
+  });
+
+  const updateUser = useMutation({
+    mutationFn: ({ id, user }: { id: number; user: any }) => 
+      customerApi.updateUser(id, user),
+    onSuccess: (_, variables) => {
+      // Since we don't always have the teamId here, we can invalidate all teamUsers or specific one if passed
+      queryClient.invalidateQueries({ queryKey: ['teamUsers'] });
+      queryClient.invalidateQueries({ queryKey: ['user', variables.id] });
+    },
+  });
+
+  const deleteUser = useMutation({
+    mutationFn: (id: number) => customerApi.deleteUser(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['teamUsers'] });
+    },
+  });
+
   return {
     createCompany,
     updateCompany,
@@ -71,5 +97,8 @@ export const useCustomerMutations = () => {
     updateTeam,
     deleteCompany,
     deleteTeam,
+    createUser,
+    updateUser,
+    deleteUser,
   };
 };

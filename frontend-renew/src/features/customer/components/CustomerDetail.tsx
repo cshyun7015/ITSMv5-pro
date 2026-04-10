@@ -8,6 +8,7 @@ import CustomerCompanyForm from './CustomerCompanyForm';
 import CustomerTeamForm from './CustomerTeamForm';
 import { useCustomerMutations } from '../hooks/useCustomerMutations';
 import ConfirmModal from '../../../components/common/ConfirmModal';
+import CustomerUserForm from './CustomerUserForm';
 
 interface CustomerDetailProps {
   selectedNode: { type: 'COMPANY' | 'TEAM'; id: number } | null;
@@ -151,7 +152,11 @@ const CompanyDetail: React.FC<{ id: number }> = ({ id }) => {
 const TeamDetail: React.FC<{ id: number }> = ({ id }) => {
   const [isEditModalOpen, setIsEditModalOpen] = React.useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
-  const { updateTeam, deleteTeam } = useCustomerMutations();
+  const [isAddUserModalOpen, setIsAddUserModalOpen] = React.useState(false);
+  const [editingUser, setEditingUser] = React.useState<CustomerUser | null>(null);
+  const [deletingUser, setDeletingUser] = React.useState<CustomerUser | null>(null);
+
+  const { updateTeam, deleteTeam, createUser, updateUser, deleteUser } = useCustomerMutations();
 
   const { data: team, isLoading: teamLoading } = useQuery<CustomerTeam>({
     queryKey: ['team', id],
@@ -173,6 +178,35 @@ const TeamDetail: React.FC<{ id: number }> = ({ id }) => {
       setIsDeleteModalOpen(false);
     } catch (error) {
       alert('팀 삭제에 실패했습니다.');
+    }
+  };
+
+  const handleAddUser = async (data: any) => {
+    try {
+      await createUser.mutateAsync({ teamId: id, user: data });
+      setIsAddUserModalOpen(false);
+    } catch (error) {
+      alert('사용자 등록에 실패했습니다.');
+    }
+  };
+
+  const handleUpdateUser = async (data: any) => {
+    if (!editingUser) return;
+    try {
+      await updateUser.mutateAsync({ id: editingUser.id, user: data });
+      setEditingUser(null);
+    } catch (error) {
+      alert('사용자 정보 수정에 실패했습니다.');
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    if (!deletingUser) return;
+    try {
+      await deleteUser.mutateAsync(deletingUser.id);
+      setDeletingUser(null);
+    } catch (error) {
+      alert('사용자 삭제에 실패했습니다.');
     }
   };
 
@@ -213,7 +247,10 @@ const TeamDetail: React.FC<{ id: number }> = ({ id }) => {
                >
                   <Edit3 size={14} /> 팀 수정
                </button>
-               <button className="btn-md bg-white/5 border border-white/10 hover:bg-cyan-500/20 hover:text-cyan-400 rounded-xl px-4 flex items-center gap-2 text-xs font-black transition-all">
+               <button 
+                 onClick={() => setIsAddUserModalOpen(true)}
+                 className="btn-md bg-white/5 border border-white/10 hover:bg-cyan-500/20 hover:text-cyan-400 rounded-xl px-4 flex items-center gap-2 text-xs font-black transition-all"
+               >
                   <UserPlus size={14} /> 사용자 초대
                </button>
                <button 
@@ -242,6 +279,26 @@ const TeamDetail: React.FC<{ id: number }> = ({ id }) => {
             onConfirm={handleDeleteTeam}
             title="팀 삭제"
             message={`'${team.name}' 팀 정보를 정말로 삭제하시겠습니까?`}
+            confirmLabel="삭제하기"
+            isDangerous={true}
+          />
+
+          <Modal isOpen={isAddUserModalOpen} onClose={() => setIsAddUserModalOpen(false)} title="신규 사용자 등록">
+             <CustomerUserForm onSubmit={handleAddUser} isLoading={createUser.isPending} />
+          </Modal>
+
+          <Modal isOpen={!!editingUser} onClose={() => setEditingUser(null)} title="사용자 정보 수정">
+             {editingUser && (
+               <CustomerUserForm initialData={editingUser} onSubmit={handleUpdateUser} isLoading={updateUser.isPending} />
+             )}
+          </Modal>
+
+          <ConfirmModal
+            isOpen={!!deletingUser}
+            onClose={() => setDeletingUser(null)}
+            onConfirm={handleDeleteUser}
+            title="사용자 삭제"
+            message={`'${deletingUser?.name}' 사용자를 정말로 삭제하시겠습니까?\n이 작업은 시스템 접속 권한 박탈을 의미합니다.`}
             confirmLabel="삭제하기"
             isDangerous={true}
           />
@@ -285,10 +342,22 @@ const TeamDetail: React.FC<{ id: number }> = ({ id }) => {
                            </div>
                         </div>
                      </div>
-                     <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button className="p-2 hover:bg-white/10 rounded-xl text-text-muted hover:text-amber-400 transition-all"><Edit3 size={14} /></button>
-                        <button className="p-2 hover:bg-white/10 rounded-xl text-text-muted hover:text-red-400 transition-all"><Trash2 size={14} /></button>
-                     </div>
+                      <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button 
+                          onClick={() => setEditingUser(user)}
+                          className="p-2 hover:bg-white/10 rounded-xl text-text-muted hover:text-amber-400 transition-all"
+                          title="사용자 수정"
+                        >
+                          <Edit3 size={14} />
+                        </button>
+                        <button 
+                          onClick={() => setDeletingUser(user)}
+                          className="p-2 hover:bg-white/10 rounded-xl text-text-muted hover:text-red-400 transition-all"
+                          title="사용자 삭제"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                   </div>
                ))}
             </div>
