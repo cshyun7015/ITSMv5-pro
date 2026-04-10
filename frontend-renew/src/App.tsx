@@ -49,9 +49,16 @@ const App: React.FC = () => {
                 
                 {/* 각 MFE 피처 라우팅 */}
                 <Route path="incident" element={<IncidentList />} />
-                <Route path="common-code" element={<CommonCodePage />} />
+                
+                {/* 관리자 전용 경로 */}
+                <Route element={<ProtectedRoute allowedRoles={['ROLE_OPER', 'ROLE_ADMIN']} />}>
+                  <Route element={<ProtectedRoute requiredTenantId="MSP" />}>
+                     <Route path="common-code" element={<CommonCodePage />} />
+                  </Route>
+                  <Route path="operator" element={<OperatorPage />} />
+                </Route>
+
                 <Route path="customer" element={<CustomerPage />} />
-                <Route path="operator" element={<OperatorPage />} />
                 
                 {/* 미구현 페이지 플레이스홀더 */}
                 <Route path="*" element={

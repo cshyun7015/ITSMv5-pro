@@ -30,15 +30,32 @@ const MainLayout: React.FC = () => {
     }
   };
 
-  const menuItems = [
+  const allMenuItems = [
     { name: '대시보드', path: '/dashboard', icon: LayoutDashboard },
     { name: '모니터링', path: '/monitoring', icon: Monitor },
     { name: '인시던트 관리', path: '/incident', icon: AlertCircle },
     { name: '서비스 요청', path: '/request', icon: ClipboardList },
     { name: '고객 조직 관리', path: '/customer', icon: Users },
-    { name: '운영 조직 관리', path: '/operator', icon: Users },
-    { name: '표준 코드 관리', path: '/common-code', icon: Settings },
+    { name: '운영 조직 관리', path: '/operator', icon: Users, roles: ['ROLE_OPER', 'ROLE_ADMIN'] },
+    { name: '표준 코드 관리', path: '/common-code', icon: Settings, roles: ['ROLE_OPER', 'ROLE_ADMIN'] },
   ];
+
+  // Filter menu items based on user role and tenantId
+  const menuItems = allMenuItems.filter(item => {
+    // 1. Basic Role Check
+    if (item.roles && !item.roles.includes(user?.role || '')) {
+      return false;
+    }
+
+    // 2. Specific Logic for Common Code Management (MSP Only for Operators)
+    if (item.path === '/common-code') {
+      if (user?.role === 'ROLE_OPER') {
+        return tenantId === 'MSP';
+      }
+    }
+
+    return true;
+  });
 
   return (
     <div className="flex h-screen bg-background-primary text-text-primary overflow-hidden">
