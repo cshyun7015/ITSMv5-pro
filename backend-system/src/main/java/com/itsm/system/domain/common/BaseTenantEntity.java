@@ -24,6 +24,4 @@ public abstract class BaseTenantEntity extends BaseEntity {
     @Column(name = "tenant_id", length = 50)
     private String tenantId = "MSP"; // Default for now
 
-    @Column(name = "is_deleted")
-    private Boolean isDeleted = false;
 }

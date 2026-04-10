@@ -3,6 +3,7 @@ package com.itsm.system.domain.organization.customer;
 import com.itsm.system.domain.common.BaseTenantEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLDelete;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,6 +15,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@SQLDelete(sql = "UPDATE customer_teams SET is_deleted = 1 WHERE id = ?")
 public class CustomerTeam extends BaseTenantEntity {
 
     @Id

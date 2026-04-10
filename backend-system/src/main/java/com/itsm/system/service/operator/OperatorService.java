@@ -23,6 +23,8 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class OperatorService {
 
+    private static final String SYSTEM_TENANT = "SYSTEM";
+
     private final OperatorCompanyRepository companyRepository;
     private final OperatorTeamRepository teamRepository;
     private final OperatorRepository operatorRepository;
@@ -70,12 +72,28 @@ public class OperatorService {
     }
 
     @Transactional
-    public void deleteCompany(Long id) {
-        // Cascade soft delete to teams
+    public void deleteCompany(Long id, boolean hardDelete) {
+        // Cascade to teams
         teamRepository.findByOperatorCompany_Id(id).forEach(team -> {
-            deleteTeam(team.getId());
+            deleteTeam(team.getId(), hardDelete);
         });
-        companyRepository.deleteById(id);
+
+        if (hardDelete && isAdminTenant()) {
+            // Delete related contracts first
+            entityManager.createNativeQuery("DELETE FROM msp_customer_contracts WHERE operator_company_id = :id")
+                    .setParameter("id", id)
+                    .executeUpdate();
+            
+            entityManager.flush();
+            
+            entityManager.createNativeQuery("DELETE FROM operator_companies WHERE id = :id")
+                    .setParameter("id", id)
+                    .executeUpdate();
+            
+            entityManager.clear();
+        } else {
+            companyRepository.deleteById(id);
+        }
     }
 
     public List<OperatorTeamDTO> getTeamsByCompany(Long companyId) {
@@ -124,9 +142,27 @@ public class OperatorService {
     }
 
     @Transactional
-    public void deleteTeam(Long id) {
-        teamMemberRepository.deleteByOperatorTeamId(id);
-        teamRepository.deleteById(id);
+    public void deleteTeam(Long id, boolean hardDelete) {
+        if (hardDelete && isAdminTenant()) {
+            // Unlink members
+            teamMemberRepository.deleteByOperatorTeamId(id);
+            
+            // Delete from team_customer_map
+            entityManager.createNativeQuery("DELETE FROM team_customer_map WHERE operator_team_id = :id")
+                    .setParameter("id", id)
+                    .executeUpdate();
+            
+            entityManager.flush();
+            
+            entityManager.createNativeQuery("DELETE FROM operator_teams WHERE id = :id")
+                    .setParameter("id", id)
+                    .executeUpdate();
+            
+            entityManager.clear();
+        } else {
+            teamMemberRepository.deleteByOperatorTeamId(id);
+            teamRepository.deleteById(id);
+        }
     }
 
     public List<OperatorDTO> getOperatorsByTeam(Long teamId) {
@@ -218,15 +254,20 @@ public class OperatorService {
         }
 
         boolean isTargetMsp = "MSP".equals(companyId);
-        boolean isCallerMsp = com.itsm.system.security.TenantContext.DEFAULT_TENANT.equals(com.itsm.system.security.TenantContext.getTenantId());
+        boolean isCallerMsp = isAdminTenant();
 
         if (hardDelete && isTargetMsp && isCallerMsp) {
             // Unlink from teams first (physical delete mapping)
             teamMemberRepository.deleteByOperatorId(id);
+            
+            entityManager.flush();
+            
             // Physical delete operator
             entityManager.createNativeQuery("DELETE FROM operators WHERE id = :id")
                     .setParameter("id", id)
                     .executeUpdate();
+            
+            entityManager.clear();
         } else {
             // Standard soft delete
             teamMemberRepository.deleteByOperatorId(id);
@@ -305,5 +346,11 @@ public class OperatorService {
                 .createdAt(operator.getCreatedAt())
                 .teams(teams)
                 .build();
+    }
+
+    private boolean isAdminTenant() {
+        String tenantId = com.itsm.system.security.TenantContext.getTenantId();
+        return com.itsm.system.security.TenantContext.DEFAULT_TENANT.equals(tenantId) 
+                || SYSTEM_TENANT.equals(tenantId);
     }
 }

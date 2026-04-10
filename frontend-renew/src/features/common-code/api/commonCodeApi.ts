@@ -11,17 +11,17 @@ export const commonCodeApi = {
   // --- 코드 그룹 ---
   fetchGroups: async (): Promise<CodeGroup[]> => {
     const response = await apiClient.get(`${BASE_URL}/groups`);
-    return response.data;
+    return response.data.data;
   },
   
   createGroup: async (group: Partial<CodeGroup>): Promise<CodeGroup> => {
     const response = await apiClient.post(`${BASE_URL}/groups`, group);
-    return response.data;
+    return response.data.data;
   },
   
   updateGroup: async (groupId: string, group: Partial<CodeGroup>): Promise<CodeGroup> => {
     const response = await apiClient.put(`${BASE_URL}/groups/${groupId}`, group);
-    return response.data;
+    return response.data.data;
   },
   
   deleteGroup: async (groupId: string): Promise<void> => {
@@ -31,17 +31,17 @@ export const commonCodeApi = {
   // --- 상세 코드 아이템 ---
   fetchItemsByGroup: async (groupId: string): Promise<CommonCode[]> => {
     const response = await apiClient.get(`${BASE_URL}/groups/${groupId}/items`);
-    return response.data;
+    return response.data.data;
   },
   
   createItem: async (item: Partial<CommonCode>): Promise<CommonCode> => {
     const response = await apiClient.post(`${BASE_URL}/items`, item);
-    return response.data;
+    return response.data.data;
   },
   
   updateItem: async (id: number, item: Partial<CommonCode>): Promise<CommonCode> => {
     const response = await apiClient.put(`${BASE_URL}/items/${id}`, item);
-    return response.data;
+    return response.data.data;
   },
   
   deleteItem: async (id: number): Promise<void> => {

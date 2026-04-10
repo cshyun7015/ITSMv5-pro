@@ -139,7 +139,7 @@ class OperatorServiceTest {
         when(teamRepository.findByOperatorCompany_Id(1L)).thenReturn(teams);
 
         // when
-        operatorService.deleteCompany(1L);
+        operatorService.deleteCompany(1L, false);
 
         // then
         verify(teamRepository).deleteById(1L); // deleteTeam inside deleteCompany

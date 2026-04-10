@@ -39,8 +39,8 @@ public class OperatorController {
     }
 
     @DeleteMapping("/companies/{id}")
-    public ApiResponse<Void> deleteOperatorCompany(@PathVariable Long id) {
-        operatorService.deleteCompany(id);
+    public ApiResponse<Void> deleteOperatorCompany(@PathVariable Long id, @RequestParam(required = false, defaultValue = "false") boolean hardDelete) {
+        operatorService.deleteCompany(id, hardDelete);
         return ApiResponse.success(null);
     }
 
@@ -70,8 +70,8 @@ public class OperatorController {
     }
 
     @DeleteMapping("/teams/{id}")
-    public ApiResponse<Void> deleteOperatorTeam(@PathVariable Long id) {
-        operatorService.deleteTeam(id);
+    public ApiResponse<Void> deleteOperatorTeam(@PathVariable Long id, @RequestParam(required = false, defaultValue = "false") boolean hardDelete) {
+        operatorService.deleteTeam(id, hardDelete);
         return ApiResponse.success(null);
     }
 

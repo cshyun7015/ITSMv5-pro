@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useQuery } from '@tanstack/react-query';
 import { operatorApi } from '../api/operatorApi';
+import { commonCodeApi } from '../../common-code/api/commonCodeApi';
 
 interface OperatorUserFormProps {
   id?: number;
@@ -25,6 +26,11 @@ const OperatorUserForm: React.FC<OperatorUserFormProps> = ({ id, onSubmit, isLoa
     queryKey: ['operator', id],
     queryFn: () => operatorApi.fetchOperator(id!),
     enabled: !!id,
+  });
+
+  const { data: roleCodes, isLoading: codesLoading } = useQuery({
+    queryKey: ['commonCodes', 'OPE_ROLE'],
+    queryFn: () => commonCodeApi.fetchItemsByGroup('OPE_ROLE'),
   });
 
   useEffect(() => {
@@ -104,11 +110,18 @@ const OperatorUserForm: React.FC<OperatorUserFormProps> = ({ id, onSubmit, isLoa
           <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest pl-1">Role</label>
           <select 
             {...register('role')}
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500/50 transition-all appearance-none"
+            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500/50 transition-all appearance-none disabled:opacity-50"
+            disabled={codesLoading}
           >
-            <option value="ROLE_OPER" className="bg-background-secondary text-primary">Operator (표준 운영자)</option>
-            <option value="ROLE_ADMIN" className="bg-background-secondary text-primary">Administrator (전체 관리자)</option>
-            <option value="ROLE_USER" className="bg-background-secondary text-primary">Auditor (단순 조회자)</option>
+            {codesLoading ? (
+              <option>Loading roles...</option>
+            ) : (
+              roleCodes?.map((code) => (
+                <option key={code.codeId} value={code.codeId} className="bg-background-secondary text-primary">
+                  {code.codeName} ({code.codeId})
+                </option>
+              ))
+            )}
           </select>
         </div>
 

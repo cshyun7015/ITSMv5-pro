@@ -58,7 +58,13 @@ const CommonCodeGroupList: React.FC<Props> = ({
             </tr>
           </thead>
           <tbody>
-            {(groups || []).map((group) => {
+            {(groups || []).length === 0 ? (
+              <tr>
+                <td colSpan={2} className="px-4 py-8 text-center">
+                  <p className="text-xs text-text-muted italic">등록된 코드 그룹이 없습니다.</p>
+                </td>
+              </tr>
+            ) : (groups || []).map((group) => {
               const isSelected = selectedGroupId === group.groupId;
               return (
                 <tr 

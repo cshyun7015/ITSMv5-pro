@@ -4,7 +4,6 @@ import com.itsm.system.domain.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.SQLDelete;
-import org.hibernate.annotations.SQLRestriction;
 
 @Entity
 @Table(name = "operators")
@@ -14,7 +13,6 @@ import org.hibernate.annotations.SQLRestriction;
 @AllArgsConstructor
 @Builder
 @SQLDelete(sql = "UPDATE operators SET is_deleted = 1 WHERE id = ?")
-@SQLRestriction("is_deleted = 0")
 public class Operator extends BaseEntity {
 
     @Id
