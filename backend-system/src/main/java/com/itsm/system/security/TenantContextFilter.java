@@ -26,8 +26,15 @@ public class TenantContextFilter extends OncePerRequestFilter {
         String tenantId = request.getHeader(TENANT_HEADER);
 
         if (tenantId != null && !tenantId.isEmpty()) {
-            log.debug("Found Tenant-ID in header: {}", tenantId);
-            TenantContext.setTenantId(tenantId);
+            try {
+                // Decode URL-encoded tenantId to support non-ASCII characters (e.g., Korean)
+                tenantId = java.net.URLDecoder.decode(tenantId, java.nio.charset.StandardCharsets.UTF_8);
+                log.debug("Found Tenant-ID in header: {}", tenantId);
+                TenantContext.setTenantId(tenantId);
+            } catch (Exception e) {
+                log.warn("Failed to decode Tenant-ID: {}", tenantId, e);
+                TenantContext.setTenantId(tenantId); // Fallback to raw value
+            }
         } else {
             log.trace("No Tenant-ID found in header, using default context");
         }

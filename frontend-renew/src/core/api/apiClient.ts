@@ -18,7 +18,8 @@ apiClient.interceptors.request.use(
     // 로컬 스토리지나 Zustand 스토어에서 테넌트 ID를 가져옴
     const tenantId = localStorage.getItem('X-Tenant-ID') || 'MSP';
     if (tenantId) {
-      config.headers['X-Tenant-ID'] = tenantId;
+      // encodeURIComponent to support non-ASCII characters in headers
+      config.headers['X-Tenant-ID'] = encodeURIComponent(tenantId);
     }
     
     // Auth 토큰 주입 (향구 구현 예정)

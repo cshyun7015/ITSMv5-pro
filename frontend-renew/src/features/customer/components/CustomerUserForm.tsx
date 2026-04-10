@@ -20,6 +20,7 @@ const CustomerUserForm: React.FC<CustomerUserFormProps> = ({
     name: '',
     email: '',
     position: '',
+    isActive: true,
     isVip: false,
     isApprover: false,
     userCriticality: 'NORMAL',
@@ -34,6 +35,7 @@ const CustomerUserForm: React.FC<CustomerUserFormProps> = ({
         name: initialData.name || '',
         email: initialData.email || '',
         position: initialData.position || '',
+        isActive: initialData.isActive !== false, // 기본값 true
         isVip: initialData.isVip || false,
         isApprover: initialData.isApprover || false,
         userCriticality: initialData.userCriticality || 'NORMAL',
@@ -181,17 +183,34 @@ const CustomerUserForm: React.FC<CustomerUserFormProps> = ({
         </div>
       </div>
 
-      <div className="space-y-1">
-        <label className="label-base pl-1">User Criticality</label>
-        <select
-          name="userCriticality"
-          value={formData.userCriticality}
-          onChange={handleChange}
-          className="select-base"
-        >
-          <option value="NORMAL" className="bg-background-secondary text-primary">NORMAL</option>
-          <option value="HIGH" className="bg-background-secondary text-primary">HIGH (중점 관리 대상)</option>
-        </select>
+      <div className="grid grid-cols-2 gap-6">
+        <div className="space-y-1">
+          <label className="label-base pl-1">User Criticality</label>
+          <select
+            name="userCriticality"
+            value={formData.userCriticality}
+            onChange={handleChange}
+            className="select-base"
+          >
+            <option value="NORMAL" className="bg-background-secondary text-primary">NORMAL</option>
+            <option value="HIGH" className="bg-background-secondary text-primary">HIGH (중점 관리 대상)</option>
+          </select>
+        </div>
+        <div className="space-y-1">
+          <label className="label-base pl-1">Account Active</label>
+          <select
+            name="isActive"
+            value={formData.isActive ? 'true' : 'false'}
+            onChange={(e) => {
+              const val = e.target.value === 'true';
+              setFormData(prev => ({ ...prev, isActive: val }));
+            }}
+            className="select-base font-bold"
+          >
+            <option value="true" className="bg-background-secondary text-green-400">ACTIVE (사용 중)</option>
+            <option value="false" className="bg-background-secondary text-red-400">INACTIVE (접속 차단)</option>
+          </select>
+        </div>
       </div>
 
       <div className="flex gap-3 pt-6">

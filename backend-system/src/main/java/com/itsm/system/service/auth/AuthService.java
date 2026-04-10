@@ -14,6 +14,7 @@ import com.itsm.system.dto.auth.SignupRequest;
 import com.itsm.system.dto.auth.AuthResponse;
 import com.itsm.system.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -24,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Slf4j
 public class AuthService {
 
     private final AuthenticationManager authenticationManager;
@@ -36,22 +38,46 @@ public class AuthService {
     private final com.itsm.system.repository.operator.mapping.OperatorTeamMemberRepository operatorTeamMemberRepository;
     private final com.itsm.system.repository.operator.OperatorCompanyRepository operatorCompanyRepository;
     private final com.itsm.system.repository.operator.OperatorTeamRepository operatorTeamRepository;
+    private final jakarta.persistence.EntityManager entityManager;
 
     public AuthResponse login(LoginRequest request) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getUserId(), request.getPassword())
-        );
+        log.debug("Login attempt for User: {}, Tenant Header: {}", request.getUserId(), com.itsm.system.security.TenantContext.getTenantId());
+        
+        // During login, we should be able to find the user and their related company/team data 
+        // regardless of the current session's tenant filter, which might be stale or incorrect.
+        org.hibernate.Session session = entityManager.unwrap(org.hibernate.Session.class);
+        session.disableFilter("tenantFilter");
+
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(request.getUserId(), request.getPassword())
+            );
+            log.info("Authentication successful for user: {}", request.getUserId());
+        } catch (BadCredentialsException e) {
+            log.warn("Authentication failed for user: {} - Invalid credentials", request.getUserId());
+            throw new BadCredentialsException("아이디 또는 비밀번호가 일치하지 않습니다.");
+        } catch (org.springframework.security.authentication.DisabledException e) {
+            log.warn("Authentication failed for user: {} - Account disabled", request.getUserId());
+            throw e;
+        } catch (Exception e) {
+            log.error("Authentication error for user: {}", request.getUserId(), e);
+            throw new BadCredentialsException("로그인 처리 중 오류가 발생했습니다.");
+        }
 
         return getUserProfile(request.getUserId());
     }
 
     public AuthResponse getUserProfile(String userId) {
+        log.debug("Fetching profile for user: {}", userId);
         // Try Operator first
         return operatorRepository.findByUserId(userId)
                 .map(this::mapOperatorToAuthResponse)
                 .orElseGet(() -> customerUserRepository.findByUserId(userId)
                         .map(this::mapCustomerToAuthResponse)
-                        .orElseThrow(() -> new BadCredentialsException("User not found")));
+                        .orElseThrow(() -> {
+                            log.error("User profile not found after authentication: {}", userId);
+                            return new BadCredentialsException("User profile not found");
+                        }));
     }
 
     private AuthResponse mapOperatorToAuthResponse(Operator operator) {
@@ -93,6 +119,12 @@ public class AuthService {
         if (!Boolean.TRUE.equals(customerUser.getIsActive())) {
             throw new BadCredentialsException("Account is inactive");
         }
+
+        if (customerUser.getCustomerTeam() == null || customerUser.getCustomerTeam().getCustomerCompany() == null) {
+            log.error("Customer user {} does not have associated team or company", customerUser.getUserId());
+            throw new BadCredentialsException("사용자의 팀 또는 회사 정보가 설정되지 않았습니다.");
+        }
+
         CustomerCompany company = customerUser.getCustomerTeam().getCustomerCompany();
         return AuthResponse.builder()
                 .userId(customerUser.getUserId())

@@ -221,7 +221,7 @@ public class OperatorService {
                 .name(dto.getName())
                 .email(dto.getEmail())
                 .role(role)
-                .isActive(true)
+                .isActive(dto.getIsActive() != null ? dto.getIsActive() : true)
                 .build();
 
         // Link to team
