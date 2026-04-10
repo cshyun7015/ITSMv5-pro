@@ -401,21 +401,25 @@ INSERT IGNORE INTO common_codes (group_id, code_id, code_name, sort_order, is_ac
 -- ('operator2', '$2a$10$9wEuO9flJ2.1D7ik6Cfsp.dwf7e1mOZEGN/wDCKXgE2PLcK8FCYKi', '운영자2', 'op2@msp.com', 'ROLE_OPER', 'MSP'),
 -- ('user1', '$2a$10$9wEuO9flJ2.1D7ik6Cfsp.dwf7e1mOZEGN/wDCKXgE2PLcK8FCYKi', '사용자1', 'user1@comp1.com', 'ROLE_USER', '126-81-03725');
 
--- 6-4. Refactored Organization Data (Meaningful Only)
-INSERT IGNORE INTO customer_companies (id, tenant_id, customer_id, name, business_number, representative_name, phone, email, address, status, is_deleted, created_at, updated_at) VALUES
-(1, 'SYSTEM', '126-81-03725', '하이닉스', '031-5185-4114', '곽노정', NULL, NULL, NULL, 'ACTIVE', 0, '2026-04-05 06:53:15', '2026-04-10 00:32:47'),
-(2, 'SYSTEM', '124-81-00998', '삼성전자', '02-2255-0114', '한종희', NULL, NULL, NULL, 'ACTIVE', 0, '2026-04-05 06:53:15', '2026-04-10 00:32:47'),
-(4, 'SYSTEM', 'MSP', 'MSP(삭제불가)', '000-00-00000', '운영관리자', NULL, NULL, NULL, 'ACTIVE', 0, '2026-04-05 07:08:42', '2026-04-10 00:32:47'),
-(246, 'SYSTEM', 'google', 'google', '123-45-67890', 'google', '012-3456-7890', 'google@google.com', 'Google Atlanta\n1105 W Peachtree St NW, Atlanta, GA 30309', 'ACTIVE', 0, '2026-04-10 07:56:45', '2026-04-10 07:56:45');
+-- 6-4. Refactored Organization Data (Latest Sync)
+INSERT IGNORE INTO customer_companies (id, tenant_id, customer_id, name, business_number, representative_name, phone, email, address, status, is_deleted, created_at, updated_at, created_by, updated_by) VALUES
+(1, '126-81-03725', '126-81-03725', '하이닉스', '031-5185-4114', '곽노정', NULL, NULL, NULL, 'ACTIVE', 0, '2026-04-05 06:53:15', NOW(), NULL, NULL),
+(2, '124-81-00998', '124-81-00998', '삼성전자', '02-2255-0114', '한종희', NULL, NULL, NULL, 'ACTIVE', 0, '2026-04-05 06:53:15', NOW(), NULL, NULL),
+(4, 'MSP', 'MSP', 'MSP(삭제불가)', '000-00-00000', '운영관리자', NULL, NULL, NULL, 'ACTIVE', 0, '2026-04-05 07:08:42', NOW(), NULL, NULL),
+(246, 'google', 'google', 'google', '123-45-67890', 'google', '012-3456-7890', 'google@google.com', 'Google Atlanta\n1105 W Peachtree St NW, Atlanta, GA 30309', 'ACTIVE', 0, '2026-04-10 07:56:45', NOW(), 'SYSTEM', 'SYSTEM');
 
-INSERT IGNORE INTO customer_teams (id, tenant_id, customer_company_id, parent_team_id, name, description, is_deleted, created_at, status) VALUES
-(1, 'MSP', 2, NULL, '기본팀', '마이그레이션 자동 생성', 0, '2026-04-05 06:53:15', 'ACTIVE'),
-(2, 'MSP', 1, NULL, '기본팀', '마이그레이션 자동 생성', 0, '2026-04-05 06:53:15', 'ACTIVE'),
-(4, 'MSP', 4, NULL, '기본팀', '마이그레이션 자동 생성', 0, '2026-04-05 07:08:49', 'ACTIVE'),
-(154, 'SYSTEM', 246, NULL, 'T1', '모든 것은 다 처리한다.', 0, '2026-04-10 07:58:30', 'ACTIVE');
+INSERT IGNORE INTO customer_teams (id, tenant_id, customer_company_id, parent_team_id, name, description, is_deleted, created_at, cost_center, service_hours, created_by, updated_at, updated_by, status) VALUES
+(1, '124-81-00998', 2, NULL, '휴대폰팀', '마이그레이션 자동 생성', 0, '2026-04-05 06:53:15', NULL, NULL, NULL, NOW(), 'SYSTEM', 'ACTIVE'),
+(2, '126-81-03725', 1, NULL, '정보기획팀', '마이그레이션 자동 생성', 0, '2026-04-05 06:53:15', NULL, NULL, NULL, NOW(), 'SYSTEM', 'ACTIVE'),
+(4, 'MSP', 4, NULL, 'AWS팀', '마이그레이션 자동 생성', 0, '2026-04-05 07:08:49', NULL, NULL, NULL, NOW(), 'SYSTEM', 'ACTIVE'),
+(6, '124-81-00998', 2, NULL, '냉장고팀', '마이그레이션 자동 생성', 0, '2026-04-05 09:53:36', NULL, NULL, NULL, NOW(), 'SYSTEM', 'ACTIVE'),
+(7, '126-81-03725', 1, NULL, '거버넌스팀', '마이그레이션 자동 생성', 0, '2026-04-05 09:53:36', NULL, NULL, NULL, NOW(), 'SYSTEM', 'ACTIVE'),
+(8, 'MSP', 4, NULL, 'Azure팀', '마이그레이션 자동 생성', 0, '2026-04-05 09:53:36', NULL, NULL, NULL, NOW(), 'SYSTEM', 'ACTIVE'),
+(154, 'google', 246, NULL, 'T1', '모든 것은 다 처리한다.', 0, '2026-04-10 07:58:30', 'T1', '24x7', 'SYSTEM', NOW(), 'SYSTEM', 'ACTIVE');
 
-INSERT IGNORE INTO customer_users (id, tenant_id, customer_team_id, user_id, password, name, email, role, is_active, is_deleted) VALUES
-(1, 'MSP', 2, 'user1', '$2a$10$9wEuO9flJ2.1D7ik6Cfsp.dwf7e1mOZEGN/wDCKXgE2PLcK8FCYKi', '사용자1', 'user1@comp1.com', 'ROLE_USER', 1, 0);
+INSERT IGNORE INTO customer_users (id, tenant_id, customer_team_id, user_id, password, name, email, role, is_active, created_at, updated_at, position, is_vip, location_id, is_approver, user_criticality, is_deleted, created_by, updated_by) VALUES
+(1, '126-81-03725', 2, 'user1', '$2a$10$9wEuO9flJ2.1D7ik6Cfsp.dwf7e1mOZEGN/wDCKXgE2PLcK8FCYKi', '사용자1', 'user1@comp1.com', 'ROLE_USER', 1, '2026-04-05 06:53:15', NOW(), NULL, 0, NULL, 0, NULL, 0, NULL, NULL),
+(75, 'MSP', 4, 'admin', '$2a$10$4U89Asoi5p2R7a2NssCXiOF9makPV4eXnp9ZBcxO9lSKLk72FEPzC', '관리자', 'admin@msp.com', 'ROLE_USER', 1, '2026-04-10 09:46:47', NOW(), 'Manager', 1, NULL, 1, 'HIGH', 0, 'SYSTEM', 'SYSTEM');
 
 -- Operators and Teams (MSP)
 INSERT IGNORE INTO operator_companies (operator_company_id, name, business_number, status, representative_name) VALUES
@@ -445,5 +449,6 @@ INSERT IGNORE INTO events (event_number, company_id, source_code, category_code,
 -- 7-2. Incident Management
 USE incident_mgmt;
 INSERT IGNORE INTO incidents (incident_id, title, description, tenant_id, category_id, impact, urgency, priority, status, requester_id, sla_due_date) VALUES 
-('INC-20260404-001', 'Critical: Global Payment Gateway Unresponsive', 'All credit card transactions are failing globally.', 'SYSTEM', 'NETWORK', 'HIGH', 'HIGH', 'P1', 'NEW', 'admin', DATE_ADD(NOW(), INTERVAL 4 HOUR)),
-('INC-20260404-002', 'High: Database Replication Lag in Asia-East Region', 'Replication lag increased to 300s.', 'SYSTEM', 'DATABASE', 'HIGH', 'MEDIUM', 'P2', 'IN_PROGRESS', 'system', DATE_ADD(NOW(), INTERVAL 8 HOUR));
+('INC-20260405-001', 'Network Connectivity Issue', 'Users report slow connection in Building A', '124-81-00998', 1, 'MEDIUM', 'HIGH', 'HIGH', 'IN_PROGRESS', 'samsung_admin', DATE_ADD(NOW(), INTERVAL 4 HOUR)),
+('INC-20260405-002', 'Login Failure', 'Unable to login to ERP system', '126-81-03725', 2, 'HIGH', 'HIGH', 'CRITICAL', 'OPEN', 'hynix_user', DATE_ADD(NOW(), INTERVAL 2 HOUR)),
+('INC-20260408-001', 'Test Incident for Deletion', 'Testing soft and hard delete', 'CUST-ORG-1775643412753', 1, 'LOW', 'LOW', 'LOW', 'RESOLVED', 'system', NOW());
