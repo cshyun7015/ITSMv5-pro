@@ -18,6 +18,7 @@ public class OperatorDTO {
     private String email;
     private String role;
     private Boolean isActive;
+    private String tenantId;
     private LocalDateTime createdAt;
     private List<OperatorTeamDTO> teams; // 다중 소속 지원
 }

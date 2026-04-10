@@ -9,17 +9,22 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CustomerTeamDTO {
+public class CustomerUserDTO {
     private Long id;
-    private Long customerCompanyId;
+    private Long customerTeamId;
+    private String customerTeamName;
     private String customerCompanyName;
-    private Long parentTeamId;
-    private String parentTeamName;
+    private String userId;
+    private String password;
     private String name;
-    private String description;
-    private String costCenter;
-    private String serviceHours;
-    private String status;
+    private String email;
+    private String position;
+    private String role;
+    private Boolean isActive;
+    private Boolean isVip;
+    private Boolean isApprover;
+    private String userCriticality;
+    private String tenantId;
     
     // Audit fields
     private LocalDateTime createdAt;

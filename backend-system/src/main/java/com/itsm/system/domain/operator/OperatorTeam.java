@@ -1,6 +1,6 @@
 package com.itsm.system.domain.organization.operator;
 
-import com.itsm.system.domain.common.BaseEntity;
+import com.itsm.system.domain.common.BaseTenantEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.SQLDelete;
@@ -13,7 +13,7 @@ import org.hibernate.annotations.SQLDelete;
 @AllArgsConstructor
 @Builder
 @SQLDelete(sql = "UPDATE operator_teams SET is_deleted = 1 WHERE id = ?")
-public class OperatorTeam extends BaseEntity {
+public class OperatorTeam extends BaseTenantEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

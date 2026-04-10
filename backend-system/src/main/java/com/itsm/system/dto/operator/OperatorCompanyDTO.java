@@ -18,5 +18,6 @@ public class OperatorCompanyDTO {
     private String status;
     private Integer teamCount;
     private Integer operatorCount;
+    private String tenantId;
     private LocalDateTime createdAt;
 }
