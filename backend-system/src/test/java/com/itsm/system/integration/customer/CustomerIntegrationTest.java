@@ -1,9 +1,9 @@
 package com.itsm.system.integration.customer;
 
 import com.itsm.system.security.TenantContext;
-import com.itsm.system.dto.organization.customer.CustomerCompanyDTO;
-import com.itsm.system.dto.organization.customer.CustomerTeamDTO;
-import com.itsm.system.dto.organization.customer.CustomerUserDTO;
+import com.itsm.system.dto.customer.CustomerCompanyDTO;
+import com.itsm.system.dto.customer.CustomerTeamDTO;
+import com.itsm.system.dto.customer.CustomerUserDTO;
 import com.itsm.system.service.customer.CustomerService;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.AfterEach;

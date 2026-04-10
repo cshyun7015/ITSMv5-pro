@@ -1,9 +1,10 @@
 package com.itsm.system.service.auth;
 
-import com.itsm.system.domain.organization.customer.CustomerCompany;
-import com.itsm.system.domain.organization.customer.CustomerTeam;
-import com.itsm.system.domain.organization.customer.CustomerUser;
-import com.itsm.system.domain.organization.operator.Operator;
+import com.itsm.system.domain.operator.mapping.OperatorTeamMember;
+import com.itsm.system.domain.customer.CustomerCompany;
+import com.itsm.system.domain.customer.CustomerTeam;
+import com.itsm.system.domain.customer.CustomerUser;
+import com.itsm.system.domain.operator.Operator;
 import com.itsm.system.repository.customer.CustomerCompanyRepository;
 import com.itsm.system.repository.customer.CustomerTeamRepository;
 import com.itsm.system.repository.customer.CustomerUserRepository;
@@ -138,7 +139,7 @@ public class AuthService {
 
         operatorRepository.save(operator);
 
-        var membership = com.itsm.system.domain.organization.mapping.OperatorTeamMember.builder()
+        var membership = OperatorTeamMember.builder()
                 .operator(operator)
                 .operatorTeam(team)
                 .build();

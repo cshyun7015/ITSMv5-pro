@@ -1,10 +1,10 @@
 package com.itsm.system.service.operator.mapping;
 
-import com.itsm.system.domain.organization.customer.CustomerCompany;
-import com.itsm.system.domain.organization.mapping.TeamCustomerMap;
-import com.itsm.system.domain.organization.mapping.TeamCustomerMap.TeamCustomerMapId;
-import com.itsm.system.domain.organization.operator.OperatorTeam;
-import com.itsm.system.dto.organization.mapping.TeamCustomerMapDTO;
+import com.itsm.system.domain.customer.CustomerCompany;
+import com.itsm.system.domain.operator.mapping.TeamCustomerMap;
+import com.itsm.system.domain.operator.mapping.TeamCustomerMap.TeamCustomerMapId;
+import com.itsm.system.domain.operator.OperatorTeam;
+import com.itsm.system.dto.mapping.TeamCustomerMapDTO;
 import com.itsm.system.repository.customer.CustomerCompanyRepository;
 import com.itsm.system.repository.operator.mapping.TeamCustomerMapRepository;
 import com.itsm.system.repository.operator.OperatorTeamRepository;

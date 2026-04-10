@@ -127,7 +127,12 @@ const CompanyDetail: React.FC<{ id: number }> = ({ id }) => {
       </Modal>
 
       <Modal isOpen={isAddTeamModalOpen} onClose={() => setIsAddTeamModalOpen(false)} title="신규 팀 등록">
-        <CustomerTeamForm companyId={id} onSubmit={handleAddTeam} isLoading={createTeam.isPending} />
+        <CustomerTeamForm 
+          companyId={id} 
+          defaultTenantId={company.tenantId} 
+          onSubmit={handleAddTeam} 
+          isLoading={createTeam.isPending} 
+        />
       </Modal>
 
       <ConfirmModal
@@ -284,7 +289,11 @@ const TeamDetail: React.FC<{ id: number }> = ({ id }) => {
           />
 
           <Modal isOpen={isAddUserModalOpen} onClose={() => setIsAddUserModalOpen(false)} title="신규 사용자 등록">
-             <CustomerUserForm onSubmit={handleAddUser} isLoading={createUser.isPending} />
+             <CustomerUserForm 
+               defaultTenantId={team.tenantId} 
+               onSubmit={handleAddUser} 
+               isLoading={createUser.isPending} 
+             />
           </Modal>
 
           <Modal isOpen={!!editingUser} onClose={() => setEditingUser(null)} title="사용자 정보 수정">

@@ -1,10 +1,10 @@
 package com.itsm.system.integration.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.itsm.system.domain.organization.operator.Operator;
-import com.itsm.system.domain.organization.operator.OperatorCompany;
-import com.itsm.system.domain.organization.operator.OperatorTeam;
-import com.itsm.system.domain.organization.mapping.OperatorTeamMember;
+import com.itsm.system.domain.operator.Operator;
+import com.itsm.system.domain.operator.OperatorCompany;
+import com.itsm.system.domain.operator.OperatorTeam;
+import com.itsm.system.domain.operator.mapping.OperatorTeamMember;
 import com.itsm.system.dto.auth.LoginRequest;
 import com.itsm.system.repository.operator.OperatorRepository;
 import com.itsm.system.repository.operator.OperatorCompanyRepository;

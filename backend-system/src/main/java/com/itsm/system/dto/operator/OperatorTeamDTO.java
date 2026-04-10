@@ -1,4 +1,4 @@
-package com.itsm.system.dto.organization.operator;
+package com.itsm.system.dto.operator;
 
 import lombok.*;
 

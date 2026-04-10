@@ -1,9 +1,9 @@
 package com.itsm.system.controller.customer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.itsm.system.dto.organization.customer.CustomerCompanyDTO;
-import com.itsm.system.dto.organization.customer.CustomerTeamDTO;
-import com.itsm.system.dto.organization.customer.CustomerUserDTO;
+import com.itsm.system.dto.customer.CustomerCompanyDTO;
+import com.itsm.system.dto.customer.CustomerTeamDTO;
+import com.itsm.system.dto.customer.CustomerUserDTO;
 import com.itsm.system.security.JwtAuthenticationFilter;
 import com.itsm.system.security.JwtTokenProvider;
 import com.itsm.system.security.TenantContextFilter;

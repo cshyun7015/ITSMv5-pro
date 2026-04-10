@@ -1,6 +1,6 @@
 package com.itsm.system.repository.customer;
 
-import com.itsm.system.domain.organization.customer.CustomerUser;
+import com.itsm.system.domain.customer.CustomerUser;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.querydsl.QuerydslPredicateExecutor;
 import org.springframework.stereotype.Repository;

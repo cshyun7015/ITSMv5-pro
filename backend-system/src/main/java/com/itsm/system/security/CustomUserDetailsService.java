@@ -1,7 +1,7 @@
 package com.itsm.system.security;
 
-import com.itsm.system.domain.organization.customer.CustomerUser;
-import com.itsm.system.domain.organization.operator.Operator;
+import com.itsm.system.domain.customer.CustomerUser;
+import com.itsm.system.domain.operator.Operator;
 import com.itsm.system.repository.customer.CustomerUserRepository;
 import com.itsm.system.repository.operator.OperatorRepository;
 import lombok.RequiredArgsConstructor;

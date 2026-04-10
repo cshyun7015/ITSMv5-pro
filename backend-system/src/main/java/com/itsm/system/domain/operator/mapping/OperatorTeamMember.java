@@ -1,7 +1,7 @@
-package com.itsm.system.domain.organization.mapping;
+package com.itsm.system.domain.operator.mapping;
 
-import com.itsm.system.domain.organization.operator.Operator;
-import com.itsm.system.domain.organization.operator.OperatorTeam;
+import com.itsm.system.domain.operator.Operator;
+import com.itsm.system.domain.operator.OperatorTeam;
 import jakarta.persistence.*;
 import lombok.*;
 

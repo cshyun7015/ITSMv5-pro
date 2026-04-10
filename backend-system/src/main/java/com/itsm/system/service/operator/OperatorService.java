@@ -1,11 +1,12 @@
 package com.itsm.system.service.operator;
 
-import com.itsm.system.domain.organization.operator.Operator;
-import com.itsm.system.domain.organization.operator.OperatorCompany;
-import com.itsm.system.domain.organization.operator.OperatorTeam;
-import com.itsm.system.dto.organization.operator.OperatorCompanyDTO;
-import com.itsm.system.dto.organization.operator.OperatorDTO;
-import com.itsm.system.dto.organization.operator.OperatorTeamDTO;
+import com.itsm.system.domain.operator.Operator;
+import com.itsm.system.domain.operator.OperatorCompany;
+import com.itsm.system.domain.operator.OperatorTeam;
+import com.itsm.system.domain.operator.mapping.OperatorTeamMember;
+import com.itsm.system.dto.operator.OperatorCompanyDTO;
+import com.itsm.system.dto.operator.OperatorDTO;
+import com.itsm.system.dto.operator.OperatorTeamDTO;
 import com.itsm.system.repository.operator.OperatorRepository;
 import com.itsm.system.repository.operator.mapping.OperatorTeamMemberRepository;
 import com.itsm.system.repository.operator.OperatorCompanyRepository;
@@ -57,6 +58,11 @@ public class OperatorService {
                 .representativeName(dto.getRepresentativeName())
                 .status(dto.getStatus() != null ? dto.getStatus() : "ACTIVE")
                 .build();
+
+        if (dto.getTenantId() != null && isAdminTenant()) {
+            company.setTenantId(dto.getTenantId());
+        }
+
         return convertToCompanyDTO(companyRepository.save(company));
     }
 
@@ -68,6 +74,11 @@ public class OperatorService {
         company.setBusinessNumber(dto.getBusinessNumber());
         company.setRepresentativeName(dto.getRepresentativeName());
         company.setStatus(dto.getStatus());
+
+        if (dto.getTenantId() != null && isAdminTenant()) {
+            company.setTenantId(dto.getTenantId());
+        }
+
         return convertToCompanyDTO(companyRepository.save(company));
     }
 
@@ -129,6 +140,14 @@ public class OperatorService {
                 .name(dto.getName())
                 .description(dto.getDescription())
                 .build();
+
+        // Inherit or set tenantId
+        if (dto.getTenantId() != null && isAdminTenant()) {
+            team.setTenantId(dto.getTenantId());
+        } else if (company.getTenantId() != null) {
+            team.setTenantId(company.getTenantId());
+        }
+
         return convertToTeamDTO(teamRepository.save(team));
     }
 
@@ -138,6 +157,11 @@ public class OperatorService {
                 .orElseThrow(() -> new RuntimeException("Operator team not found"));
         team.setName(dto.getName());
         team.setDescription(dto.getDescription());
+
+        if (dto.getTenantId() != null && isAdminTenant()) {
+            team.setTenantId(dto.getTenantId());
+        }
+
         return convertToTeamDTO(teamRepository.save(team));
     }
 
@@ -199,13 +223,22 @@ public class OperatorService {
                 .role(role)
                 .isActive(true)
                 .build();
-        Operator saved = operatorRepository.save(operator);
-        
+
         // Link to team
         OperatorTeam team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new RuntimeException("Team not found"));
-        com.itsm.system.domain.organization.mapping.OperatorTeamMember member = 
-            com.itsm.system.domain.organization.mapping.OperatorTeamMember.builder()
+
+        // Inherit or set tenantId
+        if (dto.getTenantId() != null && isAdminTenant()) {
+            operator.setTenantId(dto.getTenantId());
+        } else if (team.getOperatorCompany() != null && team.getOperatorCompany().getTenantId() != null) {
+            operator.setTenantId(team.getOperatorCompany().getTenantId());
+        }
+
+        Operator saved = operatorRepository.save(operator);
+        
+        OperatorTeamMember member =
+            OperatorTeamMember.builder()
                 .operator(saved)
                 .operatorTeam(team)
                 .build();
@@ -231,6 +264,10 @@ public class OperatorService {
         operator.setName(dto.getName());
         operator.setEmail(dto.getEmail());
         operator.setIsActive(dto.getIsActive() != null ? dto.getIsActive() : operator.getIsActive());
+
+        if (dto.getTenantId() != null && isAdminTenant()) {
+            operator.setTenantId(dto.getTenantId());
+        }
         
         return convertToOperatorDTO(operatorRepository.save(operator));
     }
@@ -248,7 +285,7 @@ public class OperatorService {
 
         // Get company ID to check if it's MSP
         String companyId = null;
-        List<com.itsm.system.domain.organization.mapping.OperatorTeamMember> memberships = teamMemberRepository.findByOperatorId(id);
+        List<OperatorTeamMember> memberships = teamMemberRepository.findByOperatorId(id);
         if (!memberships.isEmpty()) {
             companyId = memberships.get(0).getOperatorTeam().getOperatorCompany().getOperatorCompanyId();
         }
@@ -277,8 +314,8 @@ public class OperatorService {
 
     @Transactional
     public void assignTeam(Long operatorId, Long teamId) {
-        com.itsm.system.domain.organization.mapping.OperatorTeamMember.OperatorTeamMemberId id = 
-            new com.itsm.system.domain.organization.mapping.OperatorTeamMember.OperatorTeamMemberId(operatorId, teamId);
+        OperatorTeamMember.OperatorTeamMemberId id =
+            new OperatorTeamMember.OperatorTeamMemberId(operatorId, teamId);
             
         if (teamMemberRepository.existsById(id)) {
             return; // Already mapped
@@ -289,8 +326,8 @@ public class OperatorService {
         OperatorTeam team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new RuntimeException("Team not found"));
         
-        com.itsm.system.domain.organization.mapping.OperatorTeamMember member = 
-            com.itsm.system.domain.organization.mapping.OperatorTeamMember.builder()
+        OperatorTeamMember member =
+            OperatorTeamMember.builder()
                 .operator(operator)
                 .operatorTeam(team)
                 .build();
@@ -299,8 +336,8 @@ public class OperatorService {
 
     @Transactional
     public void unassignTeam(Long operatorId, Long teamId) {
-        com.itsm.system.domain.organization.mapping.OperatorTeamMember.OperatorTeamMemberId id = 
-            new com.itsm.system.domain.organization.mapping.OperatorTeamMember.OperatorTeamMemberId(operatorId, teamId);
+        OperatorTeamMember.OperatorTeamMemberId id =
+            new OperatorTeamMember.OperatorTeamMemberId(operatorId, teamId);
         teamMemberRepository.deleteById(id);
     }
 
@@ -314,6 +351,7 @@ public class OperatorService {
                 .status(company.getStatus())
                 .teamCount((int) teamRepository.countByOperatorCompany_Id(company.getId()))
                 .operatorCount((int) teamMemberRepository.countByCompanyId(company.getId()))
+                .tenantId(company.getTenantId())
                 .createdAt(company.getCreatedAt())
                 .build();
     }
@@ -325,6 +363,7 @@ public class OperatorService {
                 .operatorCompanyName(team.getOperatorCompany().getName())
                 .name(team.getName())
                 .description(team.getDescription())
+                .tenantId(team.getTenantId())
                 .createdAt(team.getCreatedAt())
                 .build();
     }
@@ -343,6 +382,7 @@ public class OperatorService {
                 .email(operator.getEmail())
                 .role(operator.getRole())
                 .isActive(operator.getIsActive())
+                .tenantId(operator.getTenantId())
                 .createdAt(operator.getCreatedAt())
                 .teams(teams)
                 .build();

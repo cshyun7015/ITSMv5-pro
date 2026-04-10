@@ -1,4 +1,4 @@
-package com.itsm.system.dto.organization.customer;
+package com.itsm.system.dto.customer;
 
 import lombok.*;
 

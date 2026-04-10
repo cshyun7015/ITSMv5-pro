@@ -1,6 +1,6 @@
 package com.itsm.system.controller.operator;
 
-import com.itsm.system.dto.organization.operator.OperatorCompanyDTO;
+import com.itsm.system.dto.operator.OperatorCompanyDTO;
 import com.itsm.system.service.operator.OperatorService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

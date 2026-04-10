@@ -4,11 +4,18 @@ import { CustomerTeam } from '../types/customerType';
 interface CustomerTeamFormProps {
   initialData?: CustomerTeam;
   companyId: number;
+  defaultTenantId?: string;
   onSubmit: (data: Partial<CustomerTeam>) => void;
   isLoading: boolean;
 }
 
-const CustomerTeamForm: React.FC<CustomerTeamFormProps> = ({ initialData, companyId, onSubmit, isLoading }) => {
+const CustomerTeamForm: React.FC<CustomerTeamFormProps> = ({ 
+  initialData, 
+  companyId, 
+  defaultTenantId, 
+  onSubmit, 
+  isLoading 
+}) => {
   const [formData, setFormData] = useState<Partial<CustomerTeam>>(
     initialData || {
       name: '',
@@ -16,6 +23,7 @@ const CustomerTeamForm: React.FC<CustomerTeamFormProps> = ({ initialData, compan
       costCenter: '',
       serviceHours: '',
       status: 'ACTIVE',
+      tenantId: defaultTenantId || 'MSP',
       customerCompanyId: companyId,
     }
   );
@@ -32,60 +40,86 @@ const CustomerTeamForm: React.FC<CustomerTeamFormProps> = ({ initialData, compan
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="space-y-2">
-        <label className="text-[10px] font-black uppercase tracking-widest text-text-muted">팀 명칭</label>
-        <input
-          name="name"
-          value={formData.name}
-          onChange={handleChange}
-          placeholder="팀 이름 입력 (예: IT 운영팀)"
-          required
-          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-cyan-500/50 focus:bg-white/10 outline-none transition-all"
-        />
+      <div className="grid grid-cols-2 gap-6">
+        <div className="space-y-1">
+          <label className="label-base pl-1">Tenant ID</label>
+          <input
+            name="tenantId"
+            value={formData.tenantId}
+            onChange={handleChange}
+            placeholder="시스템 식별자 (예: MSP)"
+            required
+            className="input-base"
+          />
+        </div>
+        <div className="space-y-1">
+          <label className="label-base pl-1">팀 명칭</label>
+          <input
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            placeholder="팀 이름 (예: IT 운영팀)"
+            required
+            className="input-base font-bold"
+          />
+        </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase tracking-widest text-text-muted">코스트 센터 (CC)</label>
+      <div className="grid grid-cols-2 gap-6">
+        <div className="space-y-1">
+          <label className="label-base pl-1">코스트 센터 (CC)</label>
           <input
             name="costCenter"
             value={formData.costCenter}
             onChange={handleChange}
             placeholder="CC001"
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-cyan-500/50 focus:bg-white/10 outline-none transition-all"
+            className="input-base"
           />
         </div>
-        <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase tracking-widest text-text-muted">서비스 시간대</label>
+        <div className="space-y-1">
+          <label className="label-base pl-1">서비스 시간대</label>
           <input
             name="serviceHours"
             value={formData.serviceHours}
             onChange={handleChange}
             placeholder="예: 24x7, 9x18"
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-cyan-500/50 focus:bg-white/10 outline-none transition-all"
+            className="input-base font-mono"
           />
         </div>
       </div>
 
-      <div className="space-y-2">
-        <label className="text-[10px] font-black uppercase tracking-widest text-text-muted">팀 상세 설명</label>
+      <div className="space-y-1">
+        <label className="label-base pl-1">팀 상세 설명</label>
         <textarea
           name="description"
           value={formData.description}
           onChange={handleChange}
           rows={3}
-          placeholder="팀의 주요 역할 및 책임 기술"
-          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-cyan-500/50 focus:bg-white/10 outline-none transition-all resize-none"
+          placeholder="팀의 주요 역할 및 책임 기술을 입력하세요"
+          className="input-base h-auto py-3 resize-none"
         />
+      </div>
+
+      <div className="space-y-1">
+        <label className="label-base pl-1">운영 상태</label>
+        <select 
+          name="status"
+          value={formData.status}
+          onChange={handleChange}
+          className="select-base"
+        >
+          <option value="ACTIVE" className="bg-background-secondary text-primary">ACTIVE (활성)</option>
+          <option value="INACTIVE" className="bg-background-secondary text-primary">INACTIVE (비활성)</option>
+        </select>
       </div>
 
       <div className="flex justify-end gap-3 pt-4">
         <button
           type="submit"
           disabled={isLoading}
-          className="bg-brand-primary text-white hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 px-8 py-3 rounded-xl font-bold text-sm transition-all shadow-lg shadow-brand-primary/20"
+          className="btn-md btn-primary px-10"
         >
-          {isLoading ? '저장 중...' : initialData ? '팀 정보 수정' : '팀 생성'}
+          {isLoading ? 'Processing...' : initialData ? '팀 정보 수정' : '신규 팀 생성'}
         </button>
       </div>
     </form>

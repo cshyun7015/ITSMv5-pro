@@ -1,7 +1,7 @@
 package com.itsm.system.integration.auth;
 
-import com.itsm.system.domain.organization.customer.CustomerCompany;
-import com.itsm.system.domain.organization.customer.CustomerTeam;
+import com.itsm.system.domain.customer.CustomerCompany;
+import com.itsm.system.domain.customer.CustomerTeam;
 import com.itsm.system.dto.auth.AuthResponse;
 import com.itsm.system.dto.auth.LoginRequest;
 import com.itsm.system.dto.auth.SignupRequest;

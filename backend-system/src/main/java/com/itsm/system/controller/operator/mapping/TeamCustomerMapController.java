@@ -1,7 +1,7 @@
 package com.itsm.system.controller.operator.mapping;
 
 import com.itsm.system.domain.common.ApiResponse;
-import com.itsm.system.dto.organization.mapping.TeamCustomerMapDTO;
+import com.itsm.system.dto.mapping.TeamCustomerMapDTO;
 import com.itsm.system.service.operator.mapping.TeamCustomerMapService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;

@@ -1,9 +1,9 @@
 package com.itsm.system.controller.customer;
 
 import com.itsm.system.domain.common.ApiResponse;
-import com.itsm.system.dto.organization.customer.CustomerCompanyDTO;
-import com.itsm.system.dto.organization.customer.CustomerTeamDTO;
-import com.itsm.system.dto.organization.customer.CustomerUserDTO;
+import com.itsm.system.dto.customer.CustomerCompanyDTO;
+import com.itsm.system.dto.customer.CustomerTeamDTO;
+import com.itsm.system.dto.customer.CustomerUserDTO;
 import com.itsm.system.service.customer.CustomerService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

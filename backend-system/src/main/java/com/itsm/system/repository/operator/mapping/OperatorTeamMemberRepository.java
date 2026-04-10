@@ -1,7 +1,7 @@
 package com.itsm.system.repository.operator.mapping;
 
-import com.itsm.system.domain.organization.mapping.OperatorTeamMember;
-import com.itsm.system.domain.organization.mapping.OperatorTeamMember.OperatorTeamMemberId;
+import com.itsm.system.domain.operator.mapping.OperatorTeamMember;
+import com.itsm.system.domain.operator.mapping.OperatorTeamMember.OperatorTeamMemberId;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

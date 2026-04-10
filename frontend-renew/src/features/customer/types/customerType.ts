@@ -7,6 +7,7 @@ export interface CustomerCompany {
   phone?: string;
   email?: string;
   address?: string;
+  tenantId?: string;
   status: string;
   createdAt?: string;
   updatedAt?: string;
@@ -23,6 +24,7 @@ export interface CustomerTeam {
   costCenter?: string;
   serviceHours?: string;
   status: string;
+  tenantId?: string;
   createdAt?: string;
 }
 
@@ -39,6 +41,7 @@ export interface CustomerUser {
   isVip: boolean;
   isApprover: boolean;
   userCriticality?: string;
+  tenantId?: string;
 }
 
 export interface ApiResponse<T> {

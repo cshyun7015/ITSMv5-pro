@@ -1,4 +1,4 @@
-package com.itsm.system.domain.organization.operator;
+package com.itsm.system.domain.operator;
 
 import com.itsm.system.domain.common.BaseTenantEntity;
 import jakarta.persistence.*;

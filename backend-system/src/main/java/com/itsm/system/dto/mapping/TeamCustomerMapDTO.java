@@ -1,4 +1,4 @@
-package com.itsm.system.dto.organization.mapping;
+package com.itsm.system.dto.mapping;
 import lombok.*;
 
 @Getter

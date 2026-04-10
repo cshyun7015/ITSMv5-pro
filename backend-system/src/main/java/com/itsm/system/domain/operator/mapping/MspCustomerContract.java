@@ -1,7 +1,7 @@
-package com.itsm.system.domain.organization.mapping;
+package com.itsm.system.domain.operator.mapping;
 
-import com.itsm.system.domain.organization.customer.CustomerCompany;
-import com.itsm.system.domain.organization.operator.OperatorCompany;
+import com.itsm.system.domain.customer.CustomerCompany;
+import com.itsm.system.domain.operator.OperatorCompany;
 import jakarta.persistence.*;
 import lombok.*;
 

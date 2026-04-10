@@ -7,12 +7,13 @@ import { TeamCustomerMappingForm } from './TeamCustomerMappingForm';
 interface OperatorTeamFormProps {
   id?: number;
   companyId?: number; // Needed for new team creation
+  defaultTenantId?: string;
   onSubmit: (data: any) => void;
   isLoading: boolean;
 }
 
-const OperatorTeamForm: React.FC<OperatorTeamFormProps> = ({ id, onSubmit, isLoading }) => {
-  const { register, handleSubmit, reset } = useForm();
+const OperatorTeamForm: React.FC<OperatorTeamFormProps> = ({ id, defaultTenantId, onSubmit, isLoading }) => {
+  const { register, handleSubmit, reset, formState: { errors } } = useForm();
 
   const { data: team, isLoading: dataLoading } = useQuery({
     queryKey: ['operatorTeam', id],
@@ -27,9 +28,15 @@ const OperatorTeamForm: React.FC<OperatorTeamFormProps> = ({ id, onSubmit, isLoa
         description: team.description,
         status: team.status,
         parentTeamId: team.parentTeamId,
+        tenantId: team.tenantId,
+      });
+    } else {
+      reset({
+        status: 'ACTIVE',
+        tenantId: defaultTenantId || 'MSP',
       });
     }
-  }, [team, reset]);
+  }, [team, reset, defaultTenantId]);
 
   if (id && dataLoading) {
     return <div className="text-sm text-text-muted animate-pulse">Loading team data...</div>;
@@ -39,13 +46,26 @@ const OperatorTeamForm: React.FC<OperatorTeamFormProps> = ({ id, onSubmit, isLoa
     <div className="space-y-10">
       {/* 기본 정보 폼 */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-2xl">
-        <div className="space-y-1">
-          <label className="label-base pl-1">Team Name</label>
-          <input 
-            {...register('name', { required: '팀 명칭은 필수입니다.' })}
-            className="input-base font-bold"
-            placeholder="팀 이름을 입력하세요"
-          />
+        <div className="grid grid-cols-2 gap-6">
+          <div className="space-y-1">
+            <label className="label-base pl-1">Tenant ID</label>
+            <input 
+              {...register('tenantId', { required: 'Tenant ID는 필수입니다.' })}
+              className={`input-base ${errors.tenantId ? 'border-red-500/50' : ''} font-mono`}
+              placeholder="e.g. MSP"
+            />
+            {errors.tenantId && <p className="text-[10px] text-red-500 pl-1">{String(errors.tenantId.message)}</p>}
+          </div>
+
+          <div className="space-y-1">
+            <label className="label-base pl-1">Team Name</label>
+            <input 
+              {...register('name', { required: '팀 명칭은 필수입니다.' })}
+          className={`input-base ${errors.name ? 'border-red-500/50' : ''} font-bold`}
+              placeholder="팀 이름을 입력하세요"
+            />
+            {errors.name && <p className="text-[10px] text-red-500 pl-1">{String(errors.name.message)}</p>}
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-6">

@@ -1,4 +1,4 @@
-package com.itsm.system.domain.organization.customer;
+package com.itsm.system.domain.customer;
 
 import com.itsm.system.domain.common.BaseTenantEntity;
 import jakarta.persistence.*;

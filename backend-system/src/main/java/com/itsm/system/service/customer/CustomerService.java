@@ -1,11 +1,11 @@
 package com.itsm.system.service.customer;
 
-import com.itsm.system.domain.organization.customer.CustomerCompany;
-import com.itsm.system.domain.organization.customer.CustomerTeam;
-import com.itsm.system.domain.organization.customer.CustomerUser;
-import com.itsm.system.dto.organization.customer.CustomerCompanyDTO;
-import com.itsm.system.dto.organization.customer.CustomerTeamDTO;
-import com.itsm.system.dto.organization.customer.CustomerUserDTO;
+import com.itsm.system.domain.customer.CustomerCompany;
+import com.itsm.system.domain.customer.CustomerTeam;
+import com.itsm.system.domain.customer.CustomerUser;
+import com.itsm.system.dto.customer.CustomerCompanyDTO;
+import com.itsm.system.dto.customer.CustomerTeamDTO;
+import com.itsm.system.dto.customer.CustomerUserDTO;
 import com.itsm.system.repository.customer.CustomerCompanyRepository;
 import com.itsm.system.repository.customer.CustomerTeamRepository;
 import com.itsm.system.repository.customer.CustomerUserRepository;
@@ -77,6 +77,11 @@ public class CustomerService {
         company.setEmail(dto.getEmail());
         company.setAddress(dto.getAddress());
         company.setStatus(dto.getStatus());
+        
+        if (dto.getTenantId() != null && isAdminTenant()) {
+            company.setTenantId(dto.getTenantId());
+        }
+
         if (dto.getIsDeleted() != null) {
             company.setIsDeleted(dto.getIsDeleted());
         }
@@ -127,7 +132,16 @@ public class CustomerService {
             teamBuilder.parentTeam(parent);
         }
 
-        return convertToTeamDTO(teamRepository.save(teamBuilder.build()));
+        CustomerTeam team = teamBuilder.build();
+        
+        // Inherit or set tenantId
+        if (dto.getTenantId() != null && isAdminTenant()) {
+            team.setTenantId(dto.getTenantId());
+        } else if (company.getTenantId() != null) {
+            team.setTenantId(company.getTenantId());
+        }
+
+        return convertToTeamDTO(teamRepository.save(team));
     }
 
     @Transactional
@@ -140,6 +154,10 @@ public class CustomerService {
         team.setCostCenter(dto.getCostCenter());
         team.setServiceHours(dto.getServiceHours());
         team.setStatus(dto.getStatus());
+
+        if (dto.getTenantId() != null && isAdminTenant()) {
+            team.setTenantId(dto.getTenantId());
+        }
 
         if (dto.getParentTeamId() != null) {
             if (dto.getParentTeamId().equals(id)) {
@@ -199,6 +217,13 @@ public class CustomerService {
                 .userCriticality(dto.getUserCriticality())
                 .build();
 
+        // Inherit or set tenantId
+        if (dto.getTenantId() != null && isAdminTenant()) {
+            user.setTenantId(dto.getTenantId());
+        } else if (team.getTenantId() != null) {
+            user.setTenantId(team.getTenantId());
+        }
+
         return convertToUserDTO(userRepository.save(user));
     }
 
@@ -214,6 +239,10 @@ public class CustomerService {
         user.setIsVip(dto.getIsVip());
         user.setIsApprover(dto.getIsApprover());
         user.setUserCriticality(dto.getUserCriticality());
+
+        if (dto.getTenantId() != null && isAdminTenant()) {
+            user.setTenantId(dto.getTenantId());
+        }
 
         if (dto.getCustomerTeamId() != null) {
             CustomerTeam team = teamRepository.findById(dto.getCustomerTeamId())
@@ -271,6 +300,7 @@ public class CustomerService {
                 .costCenter(team.getCostCenter())
                 .serviceHours(team.getServiceHours())
                 .status(team.getStatus())
+                .tenantId(team.getTenantId())
                 .createdAt(team.getCreatedAt())
                 .updatedAt(team.getUpdatedAt())
                 .createdBy(team.getCreatedBy())
@@ -299,10 +329,16 @@ public class CustomerService {
                 .isVip(user.getIsVip())
                 .isApprover(user.getIsApprover())
                 .userCriticality(user.getUserCriticality())
+                .tenantId(user.getTenantId())
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .createdBy(user.getCreatedBy())
                 .updatedBy(user.getUpdatedBy())
                 .build();
+    }
+
+    private boolean isAdminTenant() {
+        String tenantId = TenantContext.getTenantId();
+        return TenantContext.DEFAULT_TENANT.equals(tenantId) || "SYSTEM".equals(tenantId);
     }
 }

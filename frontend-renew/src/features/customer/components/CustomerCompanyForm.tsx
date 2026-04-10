@@ -10,6 +10,7 @@ interface CustomerCompanyFormProps {
 const CustomerCompanyForm: React.FC<CustomerCompanyFormProps> = ({ initialData, onSubmit, isLoading }) => {
   const [formData, setFormData] = useState<Partial<CustomerCompany>>(
     initialData || {
+      tenantId: 'MSP',
       customerId: '',
       name: '',
       businessNumber: '',
@@ -33,9 +34,20 @@ const CustomerCompanyForm: React.FC<CustomerCompanyFormProps> = ({ initialData, 
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2 col-span-2 md:col-span-1">
-          <label className="text-[10px] font-black uppercase tracking-widest text-text-muted">고객사 ID</label>
+      <div className="grid grid-cols-2 gap-6">
+        <div className="space-y-1">
+          <label className="label-base pl-1">Tenant ID</label>
+          <input
+            name="tenantId"
+            value={formData.tenantId}
+            onChange={handleChange}
+            placeholder="시스템 식별자 (예: MSP)"
+            required
+            className="input-base"
+          />
+        </div>
+        <div className="space-y-1">
+          <label className="label-base pl-1">고객사 식별 ID</label>
           <input
             name="customerId"
             value={formData.customerId}
@@ -43,82 +55,83 @@ const CustomerCompanyForm: React.FC<CustomerCompanyFormProps> = ({ initialData, 
             placeholder="예: C-001"
             required
             disabled={!!initialData}
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-cyan-500/50 focus:bg-white/10 outline-none transition-all disabled:opacity-50"
-          />
-        </div>
-        <div className="space-y-2 col-span-2 md:col-span-1">
-          <label className="text-[10px] font-black uppercase tracking-widest text-text-muted">고객사명</label>
-          <input
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            placeholder="상호명 입력"
-            required
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-cyan-500/50 focus:bg-white/10 outline-none transition-all"
+            className="input-base font-mono"
           />
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase tracking-widest text-text-muted">사업자 번호</label>
+      <div className="space-y-1">
+        <label className="label-base pl-1">고객사 명칭</label>
+        <input
+          name="name"
+          value={formData.name}
+          onChange={handleChange}
+          placeholder="공식 상호명 입력"
+          required
+          className="input-base font-bold"
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-6">
+        <div className="space-y-1">
+          <label className="label-base pl-1">사업자 번호</label>
           <input
             name="businessNumber"
             value={formData.businessNumber}
             onChange={handleChange}
             placeholder="000-00-00000"
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-cyan-500/50 focus:bg-white/10 outline-none transition-all"
+            className="input-base"
           />
         </div>
-        <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase tracking-widest text-text-muted">대표자명</label>
+        <div className="space-y-1">
+          <label className="label-base pl-1">대표자 성명</label>
           <input
             name="representativeName"
             value={formData.representativeName}
             onChange={handleChange}
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-cyan-500/50 focus:bg-white/10 outline-none transition-all"
+            className="input-base"
           />
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase tracking-widest text-text-muted">연락처</label>
+      <div className="grid grid-cols-2 gap-6">
+        <div className="space-y-1">
+          <label className="label-base pl-1">대표 연락처</label>
           <input
             name="phone"
             value={formData.phone}
             onChange={handleChange}
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-cyan-500/50 focus:bg-white/10 outline-none transition-all"
+            className="input-base"
           />
         </div>
-        <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase tracking-widest text-text-muted">이메일</label>
+        <div className="space-y-1">
+          <label className="label-base pl-1">대표 이메일</label>
           <input
             name="email"
             type="email"
             value={formData.email}
             onChange={handleChange}
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-cyan-500/50 focus:bg-white/10 outline-none transition-all"
+            className="input-base"
           />
         </div>
       </div>
 
-      <div className="space-y-2">
-        <label className="text-[10px] font-black uppercase tracking-widest text-text-muted">주소</label>
+      <div className="space-y-1">
+        <label className="label-base pl-1">본사 주소</label>
         <textarea
           name="address"
           value={formData.address}
           onChange={handleChange}
           rows={2}
-          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-cyan-500/50 focus:bg-white/10 outline-none transition-all resize-none"
+          className="input-base h-auto py-3 resize-none"
         />
       </div>
 
-      <div className="flex justify-end gap-3 pt-4">
+      <div className="flex justify-end gap-3 pt-6">
         <button
           type="submit"
           disabled={isLoading}
-          className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 px-8 py-3 rounded-xl font-bold text-sm text-white transition-all shadow-lg shadow-cyan-500/20"
+          className="btn-md btn-primary px-10"
         >
           {isLoading ? '저장 중...' : initialData ? '정보 수정' : '고객사 등록'}
         </button>

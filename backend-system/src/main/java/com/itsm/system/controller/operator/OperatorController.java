@@ -1,9 +1,9 @@
 package com.itsm.system.controller.operator;
 
 import com.itsm.system.domain.common.ApiResponse;
-import com.itsm.system.dto.organization.operator.OperatorCompanyDTO;
-import com.itsm.system.dto.organization.operator.OperatorDTO;
-import com.itsm.system.dto.organization.operator.OperatorTeamDTO;
+import com.itsm.system.dto.operator.OperatorCompanyDTO;
+import com.itsm.system.dto.operator.OperatorDTO;
+import com.itsm.system.dto.operator.OperatorTeamDTO;
 import com.itsm.system.service.operator.OperatorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;

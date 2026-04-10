@@ -21,7 +21,7 @@ const OperatorTreeList: React.FC<OperatorTreeListProps> = ({ onSelectNode, selec
   
   const [editingCompany, setEditingCompany] = useState<OperatorCompany | null>(null);
   const [addingTeamTo, setAddingTeamTo] = useState<number | null>(null);
-  const [addingOperatorTo, setAddingOperatorTo] = useState<number | null>(null);
+  const [addingOperatorTo, setAddingOperatorTo] = useState<{ teamId: number; tenantId?: string } | null>(null);
   const [deletingNode, setDeletingNode] = useState<{ type: 'COMPANY' | 'TEAM' | 'OPERATOR'; id: number; name: string } | null>(null);
 
   const { createCompany, updateCompany, createTeam, createOperator, deleteCompany, deleteTeam, deleteOperator } = useOperatorMutations();
@@ -91,7 +91,7 @@ const OperatorTreeList: React.FC<OperatorTreeListProps> = ({ onSelectNode, selec
               selectedNode={selectedNode}
               onSelectNode={onSelectNode}
               onDeleteNode={(type, id, name) => setDeletingNode({ type, id, name })}
-              onAddOperator={(teamId) => setAddingOperatorTo(teamId)}
+              onAddOperator={(teamId, tenantId) => setAddingOperatorTo({ teamId, tenantId })}
             />
           ))
         ) : (
@@ -125,6 +125,7 @@ const OperatorTreeList: React.FC<OperatorTreeListProps> = ({ onSelectNode, selec
         {addingTeamTo && (
           <OperatorTeamForm 
             companyId={addingTeamTo} 
+            defaultTenantId={companies?.find(c => c.id === addingTeamTo)?.tenantId}
             onSubmit={async (data: any) => {
               await createTeam.mutateAsync({ companyId: addingTeamTo, team: data });
               setAddingTeamTo(null);
@@ -142,8 +143,9 @@ const OperatorTreeList: React.FC<OperatorTreeListProps> = ({ onSelectNode, selec
       >
         {addingOperatorTo && (
           <OperatorUserForm 
+            defaultTenantId={addingOperatorTo.tenantId}
             onSubmit={async (data: any) => {
-              await createOperator.mutateAsync({ teamId: addingOperatorTo, operator: data });
+              await createOperator.mutateAsync({ teamId: addingOperatorTo.teamId, operator: data });
               setAddingOperatorTo(null);
             }} 
             isLoading={createOperator.isPending} 
@@ -178,7 +180,7 @@ interface CompanyNodeProps {
   selectedNode: any;
   onSelectNode: any;
   onDeleteNode: (type: 'COMPANY' | 'TEAM' | 'OPERATOR', id: number, name: string) => void;
-  onAddOperator: (teamId: number) => void;
+  onAddOperator: (teamId: number, tenantId?: string) => void;
 }
 
 const CompanyNode: React.FC<CompanyNodeProps> = ({ 
@@ -253,7 +255,7 @@ interface TeamNodeProps {
   selectedNode: any;
   onSelectNode: (type: 'COMPANY' | 'TEAM' | 'OPERATOR', id: number) => void;
   onDeleteNode: (type: 'COMPANY' | 'TEAM' | 'OPERATOR', id: number, name: string) => void;
-  onAddOperator: (teamId: number) => void;
+  onAddOperator: (teamId: number, tenantId?: string) => void;
 }
 
 const TeamNode: React.FC<TeamNodeProps> = ({ 
@@ -282,7 +284,7 @@ const TeamNode: React.FC<TeamNodeProps> = ({
           <span className="text-xs font-medium truncate">{team.name}</span>
         </div>
         <div className="flex items-center gap-1">
-          <button onClick={(e) => { e.stopPropagation(); onAddOperator(team.id); }} className="opacity-0 group-hover:opacity-100 p-1 hover:text-cyan-400" title="운영자 추가"><Plus size={12} /></button>
+          <button onClick={(e) => { e.stopPropagation(); onAddOperator(team.id, team.tenantId); }} className="opacity-0 group-hover:opacity-100 p-1 hover:text-cyan-400" title="운영자 추가"><Plus size={12} /></button>
           <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="opacity-0 group-hover:opacity-100 p-1 hover:text-red-400" title="팀 삭제"><Trash2 size={12} /></button>
         </div>
       </div>

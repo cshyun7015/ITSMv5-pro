@@ -1,11 +1,11 @@
 package com.itsm.system.service.operator;
 
 import com.itsm.system.domain.code.CommonCodeRepository;
-import com.itsm.system.domain.organization.operator.Operator;
-import com.itsm.system.domain.organization.operator.OperatorCompany;
-import com.itsm.system.domain.organization.operator.OperatorTeam;
-import com.itsm.system.dto.organization.operator.OperatorCompanyDTO;
-import com.itsm.system.dto.organization.operator.OperatorDTO;
+import com.itsm.system.domain.operator.Operator;
+import com.itsm.system.domain.operator.OperatorCompany;
+import com.itsm.system.domain.operator.OperatorTeam;
+import com.itsm.system.dto.operator.OperatorCompanyDTO;
+import com.itsm.system.dto.operator.OperatorDTO;
 import com.itsm.system.repository.operator.OperatorCompanyRepository;
 import com.itsm.system.repository.operator.OperatorRepository;
 import com.itsm.system.repository.operator.OperatorTeamRepository;

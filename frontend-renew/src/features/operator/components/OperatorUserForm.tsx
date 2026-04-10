@@ -6,11 +6,12 @@ import { commonCodeApi } from '../../common-code/api/commonCodeApi';
 
 interface OperatorUserFormProps {
   id?: number;
+  defaultTenantId?: string;
   onSubmit: (data: any) => void;
   isLoading: boolean;
 }
 
-const OperatorUserForm: React.FC<OperatorUserFormProps> = ({ id, onSubmit, isLoading }) => {
+const OperatorUserForm: React.FC<OperatorUserFormProps> = ({ id, defaultTenantId, onSubmit, isLoading }) => {
   const { register, handleSubmit, reset, formState: { errors } } = useForm();
 
   const handleFormSubmit = (data: any) => {
@@ -41,9 +42,15 @@ const OperatorUserForm: React.FC<OperatorUserFormProps> = ({ id, onSubmit, isLoa
         email: operator.email,
         role: operator.role,
         isActive: operator.isActive,
+        tenantId: operator.tenantId,
+      });
+    } else {
+      reset({
+        isActive: true,
+        tenantId: defaultTenantId || 'MSP',
       });
     }
-  }, [operator, reset]);
+  }, [operator, reset, defaultTenantId]);
 
   if (id && dataLoading) {
     return <div className="text-sm text-text-muted animate-pulse">Loading operator user data...</div>;
@@ -51,6 +58,16 @@ const OperatorUserForm: React.FC<OperatorUserFormProps> = ({ id, onSubmit, isLoa
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6 max-w-2xl px-2">
+      <div className="space-y-1">
+        <label className="label-base pl-1">Tenant ID</label>
+        <input 
+          {...register('tenantId', { required: 'Tenant ID는 필수입니다.' })}
+          className={`input-base ${errors.tenantId ? 'border-red-500/50' : ''} font-mono`}
+          placeholder="e.g. MSP"
+        />
+        {errors.tenantId && <p className="text-[10px] text-red-500 pl-1 font-bold">{errors.tenantId.message as string}</p>}
+      </div>
+
       <div className="grid grid-cols-2 gap-6">
         <div className="space-y-1">
           <label className="label-base pl-1">User ID</label>

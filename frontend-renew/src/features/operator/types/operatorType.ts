@@ -8,6 +8,7 @@ export interface OperatorCompany {
   name: string;
   description?: string;
   status: 'ACTIVE' | 'INACTIVE';
+  tenantId?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -18,6 +19,7 @@ export interface OperatorTeam {
   name: string;
   description?: string;
   status: 'ACTIVE' | 'INACTIVE';
+  tenantId?: string;
   parentTeamId?: number;
   createdAt?: string;
   updatedAt?: string;
@@ -31,6 +33,7 @@ export interface Operator {
   phone?: string;
   role: 'ROLE_ADMIN' | 'ROLE_OPER' | 'ROLE_USER';
   isActive: boolean;
+  tenantId?: string;
   operatorTeamId?: number;
   isDeleted: number;
   createdAt?: string;
