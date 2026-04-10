@@ -9,6 +9,7 @@ ARG VITE_ENABLE_MOCKS
 ENV VITE_API_URL=$VITE_API_URL
 ENV VITE_ENABLE_MOCKS=$VITE_ENABLE_MOCKS
 RUN npm install
+RUN npx msw init public
 
 # 소스 복사 및 빌드 (COPY 명령어 수정)
 COPY . .

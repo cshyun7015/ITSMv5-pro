@@ -3,6 +3,8 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, AlertCircle, ClipboardList, Monitor, Users, Settings, LogOut, ChevronRight, ChevronLeft } from 'lucide-react';
 import { useAuthStore } from '../auth/useAuthStore';
 
+import MockController from '../../components/common/MockController';
+
 /**
  * ITSM v5 Core Main Layout (Shell)
  * - MFE 모듈의 통합 및 네비게이션 담당
@@ -121,6 +123,9 @@ const MainLayout: React.FC = () => {
         <div className="flex-1 overflow-y-auto p-8 fade-in">
           <Outlet />
         </div>
+        
+        {/* Mocking Control (Zap Icon) */}
+        <MockController />
       </main>
     </div>
   );
