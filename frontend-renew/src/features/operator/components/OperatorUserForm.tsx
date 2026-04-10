@@ -59,7 +59,7 @@ const OperatorUserForm: React.FC<OperatorUserFormProps> = ({ id, defaultTenantId
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6 max-w-2xl px-2">
       <div className="space-y-1">
-        <label className="label-base pl-1">Tenant ID</label>
+        <label className="label-base">Tenant ID</label>
         <input 
           {...register('tenantId', { required: 'Tenant ID는 필수입니다.' })}
           className={`input-base ${errors.tenantId ? 'border-red-500/50' : ''} font-mono`}
@@ -70,7 +70,7 @@ const OperatorUserForm: React.FC<OperatorUserFormProps> = ({ id, defaultTenantId
 
       <div className="grid grid-cols-2 gap-6">
         <div className="space-y-1">
-          <label className="label-base pl-1">User ID</label>
+          <label className="label-base">User ID</label>
           <input 
             {...register('userId', { required: '사용자 ID는 필수입니다.' })}
             className={`input-base ${errors.userId ? 'border-red-500/50' : ''}`}
@@ -81,7 +81,7 @@ const OperatorUserForm: React.FC<OperatorUserFormProps> = ({ id, defaultTenantId
         </div>
 
         <div className="space-y-1">
-          <label className="label-base pl-1">Full Name</label>
+          <label className="label-base">Full Name</label>
           <input 
             {...register('name', { required: '성명은 필수입니다.' })}
             className={`input-base ${errors.name ? 'border-red-500/50' : ''}`}
@@ -93,7 +93,7 @@ const OperatorUserForm: React.FC<OperatorUserFormProps> = ({ id, defaultTenantId
 
       <div className="grid grid-cols-2 gap-6">
         <div className="space-y-1">
-          <label className="label-base pl-1">Email Address</label>
+          <label className="label-base">Email Address</label>
           <input 
             {...register('email', { 
               required: '이메일은 필수입니다.',
@@ -110,7 +110,7 @@ const OperatorUserForm: React.FC<OperatorUserFormProps> = ({ id, defaultTenantId
 
         {!id && (
           <div className="space-y-1 p-0">
-            <label className="label-base pl-1">Initial Password</label>
+            <label className="label-base">Initial Password</label>
             <input 
               type="password"
               {...register('password', { required: '초기 비밀번호는 필수입니다.' })}
@@ -124,7 +124,7 @@ const OperatorUserForm: React.FC<OperatorUserFormProps> = ({ id, defaultTenantId
 
       <div className="grid grid-cols-2 gap-6">
         <div className="space-y-1">
-          <label className="label-base pl-1">Role</label>
+          <label className="label-base">Role</label>
           <select 
             {...register('role')}
             className="select-base"
@@ -143,7 +143,7 @@ const OperatorUserForm: React.FC<OperatorUserFormProps> = ({ id, defaultTenantId
         </div>
 
         <div className="space-y-1">
-          <label className="label-base pl-1">Account Active</label>
+          <label className="label-base">Account Active</label>
           <select 
             {...register('isActive')}
             className="select-base"
@@ -160,7 +160,7 @@ const OperatorUserForm: React.FC<OperatorUserFormProps> = ({ id, defaultTenantId
           disabled={isLoading}
           className="btn-md btn-primary w-full uppercase tracking-[0.2em]"
         >
-          {isLoading ? 'Processing...' : id ? 'Update Operator' : 'Create Operator'}
+          {isLoading ? '처리 중...' : id ? '운영자 정보 수정' : '신규 운영자 등록'}
         </button>
       </div>
     </form>

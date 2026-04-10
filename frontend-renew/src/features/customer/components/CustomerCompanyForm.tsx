@@ -36,7 +36,7 @@ const CustomerCompanyForm: React.FC<CustomerCompanyFormProps> = ({ initialData, 
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid grid-cols-2 gap-6">
         <div className="space-y-1">
-          <label className="label-base pl-1">Tenant ID</label>
+          <label className="label-base">Tenant ID</label>
           <input
             name="tenantId"
             value={formData.tenantId}
@@ -47,7 +47,7 @@ const CustomerCompanyForm: React.FC<CustomerCompanyFormProps> = ({ initialData, 
           />
         </div>
         <div className="space-y-1">
-          <label className="label-base pl-1">고객사 식별 ID</label>
+          <label className="label-base">고객사 식별 ID</label>
           <input
             name="customerId"
             value={formData.customerId}
@@ -61,7 +61,7 @@ const CustomerCompanyForm: React.FC<CustomerCompanyFormProps> = ({ initialData, 
       </div>
 
       <div className="space-y-1">
-        <label className="label-base pl-1">고객사 명칭</label>
+        <label className="label-base">고객사 명칭</label>
         <input
           name="name"
           value={formData.name}
@@ -74,7 +74,7 @@ const CustomerCompanyForm: React.FC<CustomerCompanyFormProps> = ({ initialData, 
 
       <div className="grid grid-cols-2 gap-6">
         <div className="space-y-1">
-          <label className="label-base pl-1">사업자 번호</label>
+          <label className="label-base">사업자 번호</label>
           <input
             name="businessNumber"
             value={formData.businessNumber}
@@ -84,7 +84,7 @@ const CustomerCompanyForm: React.FC<CustomerCompanyFormProps> = ({ initialData, 
           />
         </div>
         <div className="space-y-1">
-          <label className="label-base pl-1">대표자 성명</label>
+          <label className="label-base">대표자 성명</label>
           <input
             name="representativeName"
             value={formData.representativeName}
@@ -96,7 +96,7 @@ const CustomerCompanyForm: React.FC<CustomerCompanyFormProps> = ({ initialData, 
 
       <div className="grid grid-cols-2 gap-6">
         <div className="space-y-1">
-          <label className="label-base pl-1">대표 연락처</label>
+          <label className="label-base">대표 연락처</label>
           <input
             name="phone"
             value={formData.phone}
@@ -105,7 +105,7 @@ const CustomerCompanyForm: React.FC<CustomerCompanyFormProps> = ({ initialData, 
           />
         </div>
         <div className="space-y-1">
-          <label className="label-base pl-1">대표 이메일</label>
+          <label className="label-base">대표 이메일</label>
           <input
             name="email"
             type="email"
@@ -118,7 +118,7 @@ const CustomerCompanyForm: React.FC<CustomerCompanyFormProps> = ({ initialData, 
 
       <div className="grid grid-cols-2 gap-6">
         <div className="space-y-1">
-          <label className="label-base pl-1">본사 주소</label>
+          <label className="label-base">본사 주소</label>
           <textarea
             name="address"
             value={formData.address}
@@ -128,7 +128,7 @@ const CustomerCompanyForm: React.FC<CustomerCompanyFormProps> = ({ initialData, 
           />
         </div>
         <div className="space-y-1">
-          <label className="label-base pl-1">운영 상태</label>
+          <label className="label-base">운영 상태</label>
           <select
             name="status"
             value={formData.status}

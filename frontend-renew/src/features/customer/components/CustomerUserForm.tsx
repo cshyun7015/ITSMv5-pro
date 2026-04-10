@@ -69,7 +69,7 @@ const CustomerUserForm: React.FC<CustomerUserFormProps> = ({
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid grid-cols-2 gap-6">
         <div className="space-y-1">
-          <label className="label-base pl-1">Tenant ID</label>
+          <label className="label-base">Tenant ID</label>
           <input
             type="text"
             name="tenantId"
@@ -81,7 +81,7 @@ const CustomerUserForm: React.FC<CustomerUserFormProps> = ({
           />
         </div>
         <div className="space-y-1">
-          <label className="label-base pl-1">User ID</label>
+          <label className="label-base">User ID</label>
           <input
             type="text"
             name="userId"
@@ -97,7 +97,7 @@ const CustomerUserForm: React.FC<CustomerUserFormProps> = ({
 
       <div className="grid grid-cols-2 gap-6">
         <div className="space-y-1">
-          <label className="label-base pl-1">User Name</label>
+          <label className="label-base">User Name</label>
           <input
             type="text"
             name="name"
@@ -110,7 +110,7 @@ const CustomerUserForm: React.FC<CustomerUserFormProps> = ({
         </div>
         {!initialData ? (
           <div className="space-y-1">
-            <label className="label-base pl-1">Initial Password</label>
+            <label className="label-base">Initial Password</label>
             <input
               type="password"
               name="password"
@@ -123,7 +123,7 @@ const CustomerUserForm: React.FC<CustomerUserFormProps> = ({
           </div>
         ) : (
           <div className="space-y-1">
-            <label className="label-base pl-1">Position</label>
+            <label className="label-base">Position</label>
             <input
               type="text"
               name="position"
@@ -138,7 +138,7 @@ const CustomerUserForm: React.FC<CustomerUserFormProps> = ({
 
       <div className="grid grid-cols-2 gap-6">
         <div className="space-y-1">
-          <label className="label-base pl-1">Email</label>
+          <label className="label-base">Email</label>
           <input
             type="email"
             name="email"
@@ -151,7 +151,7 @@ const CustomerUserForm: React.FC<CustomerUserFormProps> = ({
         </div>
         {!initialData && (
           <div className="space-y-1">
-            <label className="label-base pl-1">Position</label>
+            <label className="label-base">Position</label>
             <input
               type="text"
               name="position"
@@ -164,7 +164,7 @@ const CustomerUserForm: React.FC<CustomerUserFormProps> = ({
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-6 p-5 bg-white/[0.03] border border-white/10 rounded-2xl">
+      <div className="grid grid-cols-2 gap-6 p-5 bg-white/5 border border-white/5 rounded-3xl">
         <div className="flex items-center justify-between">
            <div className="flex flex-col">
               <span className="text-xs font-bold text-text-secondary">VIP 사용자</span>
@@ -195,7 +195,7 @@ const CustomerUserForm: React.FC<CustomerUserFormProps> = ({
 
       <div className="grid grid-cols-2 gap-6">
         <div className="space-y-1">
-          <label className="label-base pl-1">User Criticality</label>
+          <label className="label-base">User Criticality</label>
           <select
             name="userCriticality"
             value={formData.userCriticality}
@@ -207,7 +207,7 @@ const CustomerUserForm: React.FC<CustomerUserFormProps> = ({
           </select>
         </div>
         <div className="space-y-1">
-          <label className="label-base pl-1">User Role</label>
+          <label className="label-base">User Role</label>
           <select
             name="role"
             value={formData.role}
@@ -226,7 +226,7 @@ const CustomerUserForm: React.FC<CustomerUserFormProps> = ({
 
       <div className="grid grid-cols-2 gap-6">
         <div className="space-y-1">
-          <label className="label-base pl-1">Account Active</label>
+          <label className="label-base">Account Active</label>
           <select
             name="isActive"
             value={formData.isActive ? 'true' : 'false'}
@@ -248,7 +248,7 @@ const CustomerUserForm: React.FC<CustomerUserFormProps> = ({
           disabled={isLoading}
           className="btn-md btn-primary w-full"
         >
-          {isLoading ? 'Processing...' : initialData ? '정보 수정 내용 저장' : '신규 사용자 등록 완료'}
+          {isLoading ? '처리 중...' : initialData ? '정보 수정 내용 저장' : '신규 사용자 등록 완료'}
         </button>
       </div>
     </form>

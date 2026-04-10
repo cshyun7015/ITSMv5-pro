@@ -48,7 +48,7 @@ const OperatorTeamForm: React.FC<OperatorTeamFormProps> = ({ id, defaultTenantId
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-2xl">
         <div className="grid grid-cols-2 gap-6">
           <div className="space-y-1">
-            <label className="label-base pl-1">Tenant ID</label>
+            <label className="label-base">Tenant ID</label>
             <input 
               {...register('tenantId', { required: 'Tenant ID는 필수입니다.' })}
               className={`input-base ${errors.tenantId ? 'border-red-500/50' : ''} font-mono`}
@@ -58,7 +58,7 @@ const OperatorTeamForm: React.FC<OperatorTeamFormProps> = ({ id, defaultTenantId
           </div>
 
           <div className="space-y-1">
-            <label className="label-base pl-1">Team Name</label>
+            <label className="label-base">Team Name</label>
             <input 
               {...register('name', { required: '팀 명칭은 필수입니다.' })}
           className={`input-base ${errors.name ? 'border-red-500/50' : ''} font-bold`}
@@ -70,7 +70,7 @@ const OperatorTeamForm: React.FC<OperatorTeamFormProps> = ({ id, defaultTenantId
 
         <div className="grid grid-cols-2 gap-6">
           <div className="space-y-1">
-             <label className="label-base pl-1">Status</label>
+             <label className="label-base">Status</label>
              <select 
                {...register('status')}
                className="select-base"
@@ -85,7 +85,7 @@ const OperatorTeamForm: React.FC<OperatorTeamFormProps> = ({ id, defaultTenantId
               disabled={isLoading}
               className="btn-md btn-primary w-full uppercase tracking-[0.2em] font-black"
             >
-              {isLoading ? 'Updating...' : 'Save Basic Info'}
+              {isLoading ? '저장 중...' : '기본 정보 저장'}
             </button>
           </div>
         </div>

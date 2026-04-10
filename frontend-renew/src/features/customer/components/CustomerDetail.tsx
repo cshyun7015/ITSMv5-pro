@@ -149,7 +149,7 @@ const CompanyDetail: React.FC<{ id: number }> = ({ id }) => {
         <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-6">
            <div className="flex items-center gap-2 mb-4">
               <ShieldCheck size={16} className="text-cyan-400" />
-              <h4 className="text-xs font-black uppercase tracking-widest text-white/60">System Metadata</h4>
+              <h4 className="text-xs font-black uppercase tracking-widest text-text-muted">System Metadata</h4>
            </div>
            <div className="space-y-3">
               <MetaItem label="Record ID" value={company.id} isMono />
@@ -158,14 +158,15 @@ const CompanyDetail: React.FC<{ id: number }> = ({ id }) => {
            </div>
         </div>
         <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-6">
-           <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center gap-2 mb-4">
               <Edit3 size={16} className="text-amber-400" />
-              <h4 className="text-xs font-black uppercase tracking-widest text-white/60">Audit Information</h4>
+              <h4 className="text-xs font-black uppercase tracking-widest text-text-muted">Audit Information</h4>
            </div>
            <div className="space-y-3">
               <MetaItem label="Created At" value={company.createdAt} isDate />
               <MetaItem label="Created By" value={company.createdBy} />
               <MetaItem label="Updated At" value={company.updatedAt} isDate />
+              <MetaItem label="Updated By" value={company.updatedBy} />
            </div>
         </div>
       </div>
@@ -268,7 +269,10 @@ const TeamDetail: React.FC<{ id: number }> = ({ id }) => {
                  <div>
                     <div className="flex items-center gap-2">
                        <h3 className="text-2xl font-black tracking-tight">{team.name}</h3>
-                       <span className="text-[10px] px-2 py-0.5 bg-white/5 border border-white/10 rounded-full font-bold text-text-muted uppercase tracking-tighter">Team</span>
+                       <span className="flex items-center gap-1.5 px-2 py-0.5 bg-brand-primary/10 border border-brand-primary/20 rounded-full text-[9px] font-black text-brand-primary tracking-tighter uppercase">
+                          <span className="w-1 h-1 rounded-full bg-brand-primary animate-pulse" />
+                          Team
+                       </span>
                     </div>
                     <p className="text-xs text-text-muted mt-1 italic">{team.customerCompanyName} {team.parentTeamName && `> ${team.parentTeamName}`}</p>
                  </div>
@@ -413,9 +417,9 @@ const TeamDetail: React.FC<{ id: number }> = ({ id }) => {
 
       <div className="p-8 pt-0 grid grid-cols-2 gap-4">
         <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-6">
-           <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center gap-2 mb-4">
               <ShieldCheck size={16} className="text-cyan-400" />
-              <h4 className="text-xs font-black uppercase tracking-widest text-white/60">System Metadata</h4>
+              <h4 className="text-xs font-black uppercase tracking-widest text-text-muted">System Metadata</h4>
            </div>
            <div className="space-y-3">
               <MetaItem label="Team ID" value={team.id} isMono />
@@ -424,14 +428,15 @@ const TeamDetail: React.FC<{ id: number }> = ({ id }) => {
            </div>
         </div>
         <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-6">
-           <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center gap-2 mb-4">
               <Edit3 size={16} className="text-amber-400" />
-              <h4 className="text-xs font-black uppercase tracking-widest text-white/60">Audit Information</h4>
+              <h4 className="text-xs font-black uppercase tracking-widest text-text-muted">Audit Information</h4>
            </div>
            <div className="space-y-3">
               <MetaItem label="Created At" value={team.createdAt} isDate />
               <MetaItem label="Created By" value={team.createdBy} />
               <MetaItem label="Updated At" value={team.updatedAt} isDate />
+              <MetaItem label="Updated By" value={team.updatedBy} />
            </div>
         </div>
       </div>

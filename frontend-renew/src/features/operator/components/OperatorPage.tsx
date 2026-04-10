@@ -44,13 +44,13 @@ const OperatorPage: React.FC = () => {
           </p>
         </div>
         <div className="flex gap-3">
-          <button className="flex items-center gap-2 btn-md bg-white/5 border border-white/10 hover:bg-white/10 px-6 font-black tracking-widest text-[10px] rounded-xl transition-all">
+          <button className="flex items-center gap-2 btn-md btn-secondary px-6 font-black tracking-widest text-sm rounded-xl">
             <Download size={14} />
             데이터 내보내기
           </button>
           <button 
             onClick={handleAddCompany}
-            className="flex items-center gap-2 btn-md bg-gradient-to-r from-cyan-500 to-blue-600 hover:scale-105 active:scale-95 px-6 shadow-xl shadow-cyan-500/20 font-bold tracking-widest text-[10px] rounded-xl transition-all text-white"
+            className="flex items-center gap-2 btn-md btn-primary px-6 shadow-xl shadow-brand-primary/20 font-bold tracking-widest text-sm rounded-xl"
           >
             <Plus size={16} />
             신규 운영사 등록

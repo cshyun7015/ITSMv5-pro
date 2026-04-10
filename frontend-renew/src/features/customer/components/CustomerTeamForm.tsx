@@ -51,7 +51,7 @@ const CustomerTeamForm: React.FC<CustomerTeamFormProps> = ({
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid grid-cols-2 gap-6">
         <div className="space-y-1">
-          <label className="label-base pl-1">Tenant ID</label>
+          <label className="label-base">Tenant ID</label>
           <input
             name="tenantId"
             value={formData.tenantId}
@@ -62,7 +62,7 @@ const CustomerTeamForm: React.FC<CustomerTeamFormProps> = ({
           />
         </div>
         <div className="space-y-1">
-          <label className="label-base pl-1">팀 명칭</label>
+          <label className="label-base">팀 명칭</label>
           <input
             name="name"
             value={formData.name}
@@ -76,7 +76,7 @@ const CustomerTeamForm: React.FC<CustomerTeamFormProps> = ({
 
       <div className="grid grid-cols-2 gap-6">
         <div className="space-y-1">
-          <label className="label-base pl-1">코스트 센터 (CC)</label>
+          <label className="label-base">코스트 센터 (CC)</label>
           <input
             name="costCenter"
             value={formData.costCenter}
@@ -86,7 +86,7 @@ const CustomerTeamForm: React.FC<CustomerTeamFormProps> = ({
           />
         </div>
         <div className="space-y-1">
-          <label className="label-base pl-1">서비스 시간대</label>
+          <label className="label-base">서비스 시간대</label>
           <input
             name="serviceHours"
             value={formData.serviceHours}
@@ -98,7 +98,7 @@ const CustomerTeamForm: React.FC<CustomerTeamFormProps> = ({
       </div>
 
       <div className="space-y-1">
-        <label className="label-base pl-1">팀 상세 설명</label>
+        <label className="label-base">팀 상세 설명</label>
         <textarea
           name="description"
           value={formData.description}
@@ -111,7 +111,7 @@ const CustomerTeamForm: React.FC<CustomerTeamFormProps> = ({
 
       <div className="grid grid-cols-2 gap-6">
         <div className="space-y-1">
-          <label className="label-base pl-1">상위 팀</label>
+          <label className="label-base">상위 팀</label>
           <select 
             name="parentTeamId"
             value={formData.parentTeamId || ''}
@@ -125,7 +125,7 @@ const CustomerTeamForm: React.FC<CustomerTeamFormProps> = ({
           </select>
         </div>
         <div className="space-y-1">
-          <label className="label-base pl-1">운영 상태</label>
+          <label className="label-base">운영 상태</label>
           <select 
             name="status"
             value={formData.status}
@@ -144,7 +144,7 @@ const CustomerTeamForm: React.FC<CustomerTeamFormProps> = ({
           disabled={isLoading}
           className="btn-md btn-primary px-10"
         >
-          {isLoading ? 'Processing...' : initialData ? '팀 정보 수정' : '신규 팀 생성'}
+          {isLoading ? '저장 중...' : initialData ? '팀 정보 수정' : '신규 팀 생성'}
         </button>
       </div>
     </form>

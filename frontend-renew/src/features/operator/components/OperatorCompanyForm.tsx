@@ -49,7 +49,7 @@ const OperatorCompanyForm: React.FC<OperatorCompanyFormProps> = ({ id, onSubmit,
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-2xl">
       <div className="grid grid-cols-2 gap-6">
         <div className="space-y-1">
-          <label className="label-base pl-1">Tenant ID</label>
+          <label className="label-base">Tenant ID</label>
           <input 
             {...register('tenantId', { required: 'Tenant ID는 필수입니다.' })}
             className={`input-base ${errors.tenantId ? 'border-red-500/50' : ''} font-mono`}
@@ -59,7 +59,7 @@ const OperatorCompanyForm: React.FC<OperatorCompanyFormProps> = ({ id, onSubmit,
         </div>
 
         <div className="space-y-1">
-          <label className="label-base pl-1">Operator Company ID</label>
+          <label className="label-base">Operator Company ID</label>
           <input 
             {...register('operatorCompanyId', { required: '운영사 ID는 필수입니다.' })}
             className={`input-base ${errors.operatorCompanyId ? 'border-red-500/50' : ''} font-mono`}
@@ -71,7 +71,7 @@ const OperatorCompanyForm: React.FC<OperatorCompanyFormProps> = ({ id, onSubmit,
       </div>
 
       <div className="space-y-1">
-        <label className="label-base pl-1">Company Name</label>
+        <label className="label-base">Company Name</label>
         <input 
           {...register('name', { required: '운영사 명칭은 필수입니다.' })}
           className={`input-base ${errors.name ? 'border-red-500/50' : ''} font-bold`}
@@ -81,7 +81,7 @@ const OperatorCompanyForm: React.FC<OperatorCompanyFormProps> = ({ id, onSubmit,
       </div>
 
       <div className="space-y-1">
-        <label className="label-base pl-1">Business Description</label>
+        <label className="label-base">Business Description</label>
         <textarea 
           {...register('description')}
           rows={3}
@@ -92,7 +92,7 @@ const OperatorCompanyForm: React.FC<OperatorCompanyFormProps> = ({ id, onSubmit,
 
       <div className="grid grid-cols-2 gap-6">
         <div className="space-y-1">
-          <label className="label-base pl-1">Business Number</label>
+          <label className="label-base">Business Number</label>
           <input 
             {...register('businessNumber')}
             className="input-base font-mono"
@@ -101,7 +101,7 @@ const OperatorCompanyForm: React.FC<OperatorCompanyFormProps> = ({ id, onSubmit,
         </div>
 
         <div className="space-y-1">
-          <label className="label-base pl-1">Representative Name</label>
+          <label className="label-base">Representative Name</label>
           <input 
             {...register('representativeName')}
             className="input-base"
@@ -111,7 +111,7 @@ const OperatorCompanyForm: React.FC<OperatorCompanyFormProps> = ({ id, onSubmit,
       </div>
 
       <div className="space-y-1">
-        <label className="label-base pl-1">Operational Status</label>
+        <label className="label-base">Operational Status</label>
         <select 
           {...register('status')}
           className="select-base"
@@ -127,7 +127,7 @@ const OperatorCompanyForm: React.FC<OperatorCompanyFormProps> = ({ id, onSubmit,
           disabled={isLoading}
           className="btn-md btn-primary w-full uppercase tracking-[0.2em] font-black"
         >
-          {isLoading ? 'Processing...' : id ? 'Update Company Info' : 'Register New Company'}
+          {isLoading ? '저장 중...' : id ? '운영사 정보 변경' : '신규 운영사 등록'}
         </button>
       </div>
     </form>

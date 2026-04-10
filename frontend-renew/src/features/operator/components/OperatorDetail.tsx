@@ -69,7 +69,7 @@ const OperatorDetail: React.FC<OperatorDetailProps> = ({ selectedNode }) => {
         <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-6">
            <div className="flex items-center gap-2 mb-4">
               <ShieldCheck size={16} className="text-cyan-400" />
-              <h4 className="text-[10px] font-black uppercase tracking-widest text-white/60">System Metadata</h4>
+              <h4 className="text-[10px] font-black uppercase tracking-widest text-text-muted">System Metadata</h4>
            </div>
            <div className="space-y-3">
               {items.map((item, idx) => (
@@ -80,7 +80,7 @@ const OperatorDetail: React.FC<OperatorDetailProps> = ({ selectedNode }) => {
         <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-6">
            <div className="flex items-center gap-2 mb-4">
               <Edit3 size={16} className="text-amber-400" />
-              <h4 className="text-[10px] font-black uppercase tracking-widest text-white/60">Audit Information</h4>
+              <h4 className="text-[10px] font-black uppercase tracking-widest text-text-muted">Audit Information</h4>
            </div>
            <div className="space-y-3">
               <MetaItem label="Created At" value={data.createdAt} isDate />
