@@ -2,11 +2,20 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { applyTenantTheme } from '../../shared/constants/tenant_config';
 
+export interface User {
+  userId: string;
+  name: string;
+  role: string;
+  companyId: string;
+  companyName: string;
+  isSuperCompany: boolean;
+}
+
 interface AuthState {
-  user: any | null;
+  user: User | null;
   tenantId: string;
   isLoggedIn: boolean;
-  loginBatch: (user: any, tenantId: string) => void;
+  loginBatch: (user: User, tenantId: string) => void;
   logout: () => void;
   setTenant: (tenantId: string) => void;
 }
@@ -31,8 +40,15 @@ export const useAuthStore = create<AuthState>()(
       logout: () => {
         set({ user: null, tenantId: 'default', isLoggedIn: false });
         localStorage.removeItem('X-Tenant-ID');
-        localStorage.removeItem('auth_token');
+        localStorage.removeItem('auth_token'); // Clear token if stored
         applyTenantTheme('default');
+        
+        // Clear all cookies (optional but recommended for security)
+        document.cookie.split(";").forEach((c) => {
+          document.cookie = c
+            .replace(/^ +/, "")
+            .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+        });
       },
       
       setTenant: (tenantId) => {

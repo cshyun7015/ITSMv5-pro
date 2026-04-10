@@ -1,7 +1,8 @@
 import React from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, AlertCircle, ClipboardList, Monitor, Users, Settings, LogOut, ChevronRight, ChevronLeft } from 'lucide-react';
 import { useAuthStore } from '../auth/useAuthStore';
+import { authService } from '../../features/auth/services/authService';
 
 import MockController from '../../components/common/MockController';
 
@@ -12,17 +13,22 @@ import MockController from '../../components/common/MockController';
  */
 const MainLayout: React.FC = () => {
   const location = useLocation();
-  const { tenantId, isLoggedIn, loginBatch, logout } = useAuthStore();
+  const navigate = useNavigate();
+  const { user, tenantId, logout: clearStore } = useAuthStore();
   const [isCollapsed, setIsCollapsed] = React.useState(false);
 
-  // --- [MOCK SESSION INJECTION] ---
-  // 로그인 기능 미구현 상태에서 백엔드 보안 필터 통과를 위한 임시 조치
-  React.useEffect(() => {
-    if (!isLoggedIn || tenantId !== 'SYSTEM') {
-      console.warn('Simulating authenticated session for development...');
-      loginBatch({ id: 'admin', name: 'Mock Admin' }, 'SYSTEM');
+  const handleLogout = async () => {
+    try {
+      await authService.logout();
+      clearStore();
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout failed:', error);
+      // Even if API fails, clear local store and redirect to login for CX
+      clearStore();
+      navigate('/login');
     }
-  }, [isLoggedIn, tenantId, loginBatch]);
+  };
 
   const menuItems = [
     { name: '대시보드', path: '/dashboard', icon: LayoutDashboard },
@@ -85,7 +91,8 @@ const MainLayout: React.FC = () => {
 
         <div className={`p-4 border-t border-white/5 flex flex-col gap-2 transition-all duration-300 ${isCollapsed ? 'items-center px-2' : ''}`}>
           <button 
-            onClick={logout}
+            onClick={handleLogout}
+            data-testid="logout-btn"
             className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} w-full px-4 py-3 text-text-muted hover:text-red-400 hover:bg-red-400/10 rounded-xl transition-all`}
             title={isCollapsed ? '로그아웃' : ''}
           >
@@ -106,14 +113,14 @@ const MainLayout: React.FC = () => {
             </span>
           </div>
 
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-6" data-testid="user-profile-header">
             <div className="flex flex-col items-end">
               <span className="text-xs font-black text-cyan-400 leading-none">{tenantId.toUpperCase()}</span>
-              <span className="text-[10px] text-text-muted mt-1 leading-none">Enterprise License</span>
+              <span className="text-[10px] text-text-muted mt-1 leading-none">{user?.name || 'Guest User'}</span>
             </div>
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 p-[1px]">
-              <div className="w-full h-full rounded-full bg-background-primary flex items-center justify-center font-bold text-xs">
-                AD
+              <div className="w-full h-full rounded-full bg-background-primary flex items-center justify-center font-bold text-xs uppercase">
+                {user?.userId.substring(0, 2) || '??'}
               </div>
             </div>
           </div>
