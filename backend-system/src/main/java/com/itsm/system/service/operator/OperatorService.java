@@ -207,7 +207,7 @@ public class OperatorService {
 
     @Transactional
     public void deleteOperator(Long id, boolean hardDelete) {
-        Operator operator = operatorRepository.findById(id)
+        operatorRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Operator not found"));
 
         // Get company ID to check if it's MSP

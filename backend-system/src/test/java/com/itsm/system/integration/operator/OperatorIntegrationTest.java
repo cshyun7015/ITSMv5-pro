@@ -109,8 +109,80 @@ class OperatorIntegrationTest {
         assertThat(operators.get(0).getName()).isEqualTo("이순신");
 
         // 5. Delete Operator (Soft Delete handled by @SQLDelete, but service.delete method is used)
-        operatorService.deleteOperator(operator.getId());
+        operatorService.deleteOperator(operator.getId(), false);
         // Since we are using @Where(clause = "is_deleted = 0"), findById should return empty
+        assertThat(operatorRepository.findById(operator.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("MSP 운영자의 물리적 삭제(Hard Delete) 기능 검증")
+    void operator_HardDelete_PhysicalRemoval_Success() {
+        // 1. Create MSP Company
+        OperatorCompanyDTO mspCompany = operatorService.createCompany(OperatorCompanyDTO.builder()
+                .operatorCompanyId("MSP") // Criteria: Company ID must be 'MSP'
+                .name("MSP Organization")
+                .build());
+
+        // 2. Create Team for MSP
+        OperatorTeamDTO team = operatorService.createTeam(mspCompany.getId(), OperatorTeamDTO.builder()
+                .name("MSP Support Team")
+                .build());
+
+        // 3. Create MSP Operator
+        OperatorDTO operator = operatorService.createOperator(team.getId(), OperatorDTO.builder()
+                .userId("msp_admin_" + System.currentTimeMillis())
+                .name("MSP 관리자")
+                .password("msp123")
+                .role("ROLE_OPER")
+                .build());
+
+        entityManager.flush();
+        entityManager.clear();
+
+        // 4. Perform Hard Delete (Allowed because caller is MSP (default) and target is MSP)
+        operatorService.deleteOperator(operator.getId(), true);
+
+        // 5. Verify physical removal using Native Query (Wait, repo.findById filtered by @SQLRestriction won't tell if it's hard deleted)
+        // Check if the record exists in the table even with is_deleted=1 (Native query)
+        Long count = (Long) entityManager.createNativeQuery("SELECT count(*) FROM operators WHERE id = :id")
+                .setParameter("id", operator.getId())
+                .getSingleResult();
+        
+        assertThat(count).isEqualTo(0L); // Should be 0 if physically deleted
+    }
+
+    @Test
+    @DisplayName("일반 운영자의 물리적 삭제 시도 시 논리 삭제로 처리되는지 검증")
+    void operator_HardDelete_NonMspTarget_ShouldPerformSoftDelete() {
+        // 1. NON-MSP Company
+        OperatorCompanyDTO company = operatorService.createCompany(OperatorCompanyDTO.builder()
+                .operatorCompanyId("GUEST-COMP-" + System.currentTimeMillis())
+                .name("일반운영사")
+                .build());
+
+        OperatorTeamDTO team = operatorService.createTeam(company.getId(), OperatorTeamDTO.builder().name("일반팀").build());
+        
+        OperatorDTO operator = operatorService.createOperator(team.getId(), OperatorDTO.builder()
+                .userId("guest_oper_" + System.currentTimeMillis())
+                .name("방문자")
+                .password("guest123")
+                .role("ROLE_OPER")
+                .build());
+
+        entityManager.flush();
+        entityManager.clear();
+
+        // 2. Attempt Hard Delete on non-MSP target
+        operatorService.deleteOperator(operator.getId(), true);
+
+        // 3. Verify it is actually a Soft Delete
+        Long count = (Long) entityManager.createNativeQuery("SELECT count(*) FROM operators WHERE id = :id")
+                .setParameter("id", operator.getId())
+                .getSingleResult();
+        
+        assertThat(count).isEqualTo(1L); // Not physically removed
+        
+        // But id-based query should return empty due to @SQLRestriction
         assertThat(operatorRepository.findById(operator.getId())).isEmpty();
     }
 
