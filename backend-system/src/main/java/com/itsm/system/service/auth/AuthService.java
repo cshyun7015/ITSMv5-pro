@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class AuthService {
 
     private final AuthenticationManager authenticationManager;
@@ -32,6 +33,8 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider tokenProvider;
     private final com.itsm.system.repository.operator.mapping.OperatorTeamMemberRepository operatorTeamMemberRepository;
+    private final com.itsm.system.repository.operator.OperatorCompanyRepository operatorCompanyRepository;
+    private final com.itsm.system.repository.operator.OperatorTeamRepository operatorTeamRepository;
 
     public AuthResponse login(LoginRequest request) {
         authenticationManager.authenticate(
@@ -106,6 +109,51 @@ public class AuthService {
             throw new RuntimeException("User ID already exists");
         }
 
+        if ("OPERATOR".equalsIgnoreCase(request.getType())) {
+            return signupOperator(request);
+        } else {
+            return signupCustomer(request);
+        }
+    }
+
+    private AuthResponse signupOperator(SignupRequest request) {
+        var company = operatorCompanyRepository.findByOperatorCompanyId(request.getCompanyId())
+                .orElseThrow(() -> new RuntimeException("Operator Company not found"));
+
+        var team = (request.getTeamId() != null)
+                ? operatorTeamRepository.findById(request.getTeamId())
+                    .orElseThrow(() -> new RuntimeException("Team not found"))
+                : operatorTeamRepository.findByOperatorCompany_Id(company.getId()).stream()
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("No teams found for this company"));
+
+        Operator operator = Operator.builder()
+                .userId(request.getUserId())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .name(request.getName())
+                .email(request.getEmail())
+                .role("ROLE_OPER")
+                .isActive(true)
+                .build();
+
+        operatorRepository.save(operator);
+
+        var membership = com.itsm.system.domain.organization.mapping.OperatorTeamMember.builder()
+                .operator(operator)
+                .operatorTeam(team)
+                .build();
+        operatorTeamMemberRepository.save(membership);
+
+        return AuthResponse.builder()
+                .userId(operator.getUserId())
+                .name(operator.getName())
+                .role(operator.getRole())
+                .companyId(company.getOperatorCompanyId())
+                .companyName(company.getName())
+                .build();
+    }
+
+    private AuthResponse signupCustomer(SignupRequest request) {
         // Default signup as Customer User
         CustomerCompany company = customerCompanyRepository.findByCustomerId(request.getCompanyId())
                 .orElseThrow(() -> new RuntimeException("Company not found"));

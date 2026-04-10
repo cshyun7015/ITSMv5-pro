@@ -35,14 +35,20 @@ export const operatorHandlers = [
   // Fetch Companies
   http.get(`${BASE_URL}/companies`, async () => {
     await delay(500);
-    return HttpResponse.json({ data: mockCompanies });
+    return HttpResponse.json({ 
+      status: 'success',
+      data: mockCompanies 
+    });
   }),
 
   // Fetch Teams by Company
   http.get(`${BASE_URL}/companies/:companyId/teams`, async ({ params }) => {
     const companyId = Number(params.companyId);
     await delay(300);
-    return HttpResponse.json({ data: mockTeams[companyId] || [] });
+    return HttpResponse.json({ 
+      status: 'success',
+      data: mockTeams[companyId] || [] 
+    });
   }),
 
   // Fetch Operators by Team

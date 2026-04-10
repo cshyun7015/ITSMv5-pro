@@ -34,4 +34,5 @@ export interface SignupRequest {
   role: string;
   companyId: string;
   type: 'CUSTOMER' | 'OPERATOR';
+  teamId?: number;
 }

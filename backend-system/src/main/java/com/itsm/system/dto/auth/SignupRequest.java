@@ -13,4 +13,6 @@ public class SignupRequest {
     private String name;
     private String email;
     private String companyId;
+    private String type; // CUSTOMER, OPERATOR
+    private Long teamId;
 }

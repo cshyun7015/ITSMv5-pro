@@ -29,11 +29,24 @@ export const authService = {
     await apiClient.post('/v1/auth/logout');
   },
 
-  /**
-   * 현재 로그인된 사용자 정보 조회 (세션 유지 확인용)
-   */
   getMe: async (): Promise<AuthResponse> => {
     const response = await apiClient.get<AuthResponse>('/v1/auth/me');
     return response.data;
+  },
+
+  /**
+   * 운영사 목록 조회
+   */
+  getOperatorCompanies: async (): Promise<any[]> => {
+    const response = await apiClient.get('/v1/operator/companies');
+    return response.data.data; // ApiResponse format
+  },
+
+  /**
+   * 운영사별 팀 목록 조회
+   */
+  getOperatorTeams: async (companyId: number): Promise<any[]> => {
+    const response = await apiClient.get(`/v1/operator/companies/${companyId}/teams`);
+    return response.data.data;
   }
 };
