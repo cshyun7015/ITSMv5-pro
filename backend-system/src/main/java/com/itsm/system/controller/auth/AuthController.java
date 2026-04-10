@@ -57,9 +57,11 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<AuthResponse> me(@RequestHeader(value = "X-User-ID", required = false) String userId) {
-        // This is a placeholder for session verification
-        // In a real app, the JwtAuthenticationFilter would have set the SecurityContext
-        return ResponseEntity.ok().build(); 
+    public ResponseEntity<AuthResponse> me() {
+        String userId = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+        if ("anonymousUser".equals(userId)) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.ok(authService.getUserProfile(userId));
     }
 }

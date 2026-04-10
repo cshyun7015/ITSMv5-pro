@@ -13,4 +13,5 @@ public class AuthResponse {
     private String role;
     private String companyId;
     private String companyName;
+    private Boolean isSuperCompany;
 }

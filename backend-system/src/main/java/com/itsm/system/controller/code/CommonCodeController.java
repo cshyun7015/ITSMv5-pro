@@ -1,11 +1,11 @@
 package com.itsm.system.controller.code;
 
+import com.itsm.system.domain.common.ApiResponse;
 import com.itsm.system.dto.code.CodeGroupDTO;
 import com.itsm.system.dto.code.CommonCodeDTO;
 import com.itsm.system.service.code.CommonCodeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,53 +18,53 @@ public class CommonCodeController {
     private final CommonCodeService commonCodeService;
 
     // --- Group Endpoints ---
-
     @GetMapping("/groups")
-    public List<CodeGroupDTO> getAllGroups() {
-        return commonCodeService.getAllGroups();
+    public ApiResponse<List<CodeGroupDTO>> getAllGroups() {
+        return ApiResponse.success(commonCodeService.getAllGroups());
     }
 
     @GetMapping("/groups/{groupId}")
-    public CodeGroupDTO getGroup(@PathVariable String groupId) {
-        return commonCodeService.getGroup(groupId);
+    public ApiResponse<CodeGroupDTO> getGroup(@PathVariable String groupId) {
+        return ApiResponse.success(commonCodeService.getGroup(groupId));
     }
 
     @PostMapping("/groups")
-    public ResponseEntity<CodeGroupDTO> createGroup(@RequestBody CodeGroupDTO dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(commonCodeService.createGroup(dto));
+    @ResponseStatus(HttpStatus.CREATED)
+    public ApiResponse<CodeGroupDTO> createGroup(@RequestBody CodeGroupDTO dto) {
+        return ApiResponse.success(commonCodeService.createGroup(dto));
     }
 
     @PutMapping("/groups/{groupId}")
-    public CodeGroupDTO updateGroup(@PathVariable String groupId, @RequestBody CodeGroupDTO dto) {
-        return commonCodeService.updateGroup(groupId, dto);
+    public ApiResponse<CodeGroupDTO> updateGroup(@PathVariable String groupId, @RequestBody CodeGroupDTO dto) {
+        return ApiResponse.success(commonCodeService.updateGroup(groupId, dto));
     }
 
     @DeleteMapping("/groups/{groupId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteGroup(@PathVariable String groupId) {
+    public ApiResponse<Void> deleteGroup(@PathVariable String groupId) {
         commonCodeService.deleteGroup(groupId);
+        return ApiResponse.success(null);
     }
 
     // --- Code Endpoints ---
-
     @GetMapping("/groups/{groupId}/items")
-    public List<CommonCodeDTO> getCodesByGroup(@PathVariable String groupId) {
-        return commonCodeService.getCodesByGroup(groupId);
+    public ApiResponse<List<CommonCodeDTO>> getCodesByGroup(@PathVariable String groupId) {
+        return ApiResponse.success(commonCodeService.getCodesByGroup(groupId));
     }
 
     @PostMapping("/items")
-    public ResponseEntity<CommonCodeDTO> createCode(@RequestBody CommonCodeDTO dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(commonCodeService.createCode(dto));
+    @ResponseStatus(HttpStatus.CREATED)
+    public ApiResponse<CommonCodeDTO> createCode(@RequestBody CommonCodeDTO dto) {
+        return ApiResponse.success(commonCodeService.createCode(dto));
     }
 
     @PutMapping("/items/{id}")
-    public CommonCodeDTO updateCode(@PathVariable Long id, @RequestBody CommonCodeDTO dto) {
-        return commonCodeService.updateCode(id, dto);
+    public ApiResponse<CommonCodeDTO> updateCode(@PathVariable Long id, @RequestBody CommonCodeDTO dto) {
+        return ApiResponse.success(commonCodeService.updateCode(id, dto));
     }
 
     @DeleteMapping("/items/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteCode(@PathVariable Long id) {
+    public ApiResponse<Void> deleteCode(@PathVariable Long id) {
         commonCodeService.deleteCode(id);
+        return ApiResponse.success(null);
     }
 }

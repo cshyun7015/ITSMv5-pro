@@ -6,6 +6,7 @@ import com.itsm.system.dto.auth.LoginRequest;
 import com.itsm.system.dto.auth.SignupRequest;
 import com.itsm.system.security.JwtAuthenticationFilter;
 import com.itsm.system.security.JwtTokenProvider;
+import com.itsm.system.security.TenantContextFilter;
 import com.itsm.system.service.auth.AuthService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -42,6 +43,9 @@ class AuthControllerTest {
     @MockBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    @MockBean
+    private TenantContextFilter tenantContextFilter;
+
     @Test
     @DisplayName("로그인 성공 시 세션 쿠키와 응답 데이터 반환")
     void login_Success_ReturnsCookieAndResponse() throws Exception {
@@ -55,7 +59,7 @@ class AuthControllerTest {
         given(tokenProvider.createHttpOnlyCookie("mock-token")).willReturn(cookie);
 
         // when & then
-        mockMvc.perform(post("/api/v1/auth/login")
+        mockMvc.perform(post("/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -82,7 +86,7 @@ class AuthControllerTest {
         given(tokenProvider.createHttpOnlyCookie("signup-token")).willReturn(cookie);
 
         // when & then
-        mockMvc.perform(post("/api/v1/auth/signup")
+        mockMvc.perform(post("/v1/auth/signup")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -92,7 +96,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("로그아웃 시 세션 쿠키 만료 처리")
     void logout_Success_ClearsCookie() throws Exception {
-        mockMvc.perform(post("/api/v1/auth/logout"))
+        mockMvc.perform(post("/v1/auth/logout"))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Set-Cookie", org.hamcrest.Matchers.containsString("Max-Age=0")));
     }

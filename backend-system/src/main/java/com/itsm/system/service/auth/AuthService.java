@@ -14,6 +14,7 @@ import com.itsm.system.dto.auth.AuthResponse;
 import com.itsm.system.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -30,34 +31,64 @@ public class AuthService {
     private final CustomerCompanyRepository customerCompanyRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider tokenProvider;
+    private final com.itsm.system.repository.operator.mapping.OperatorTeamMemberRepository operatorTeamMemberRepository;
 
     public AuthResponse login(LoginRequest request) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getUserId(), request.getPassword())
         );
 
+        return getUserProfile(request.getUserId());
+    }
+
+    public AuthResponse getUserProfile(String userId) {
         // Try Operator first
-        return operatorRepository.findByUserId(request.getUserId())
+        return operatorRepository.findByUserId(userId)
                 .map(this::mapOperatorToAuthResponse)
-                .orElseGet(() -> customerUserRepository.findByUserId(request.getUserId())
+                .orElseGet(() -> customerUserRepository.findByUserId(userId)
                         .map(this::mapCustomerToAuthResponse)
-                        .orElseThrow(() -> new RuntimeException("User not found")));
+                        .orElseThrow(() -> new BadCredentialsException("User not found")));
     }
 
     private AuthResponse mapOperatorToAuthResponse(Operator operator) {
-        // Operators are linked to OperatorCompanies via OperatorTeams
-        // For simplicity in login response, we'll try to find their primary company ID
-        // Note: Actual company mapping might need more complex logic if they belong to multiple
+        if (Boolean.TRUE.equals(operator.getIsDeleted())) {
+            throw new BadCredentialsException("Account is deleted");
+        }
+        if (!Boolean.TRUE.equals(operator.getIsActive())) {
+            throw new BadCredentialsException("Account is inactive");
+        }
+
+        // Find primary company from team membership
+        var memberships = operatorTeamMemberRepository.findByOperatorId(operator.getId());
+        
+        String companyId = "MSP";
+        String companyName = "Management Service Provider";
+        boolean isSuper = false;
+
+        if (!memberships.isEmpty()) {
+            var company = memberships.get(0).getOperatorTeam().getOperatorCompany();
+            companyId = company.getOperatorCompanyId();
+            companyName = company.getName();
+            isSuper = Boolean.TRUE.equals(company.getIsSuperCompany());
+        }
+
         return AuthResponse.builder()
                 .userId(operator.getUserId())
                 .name(operator.getName())
                 .role(operator.getRole())
-                .companyId("MSP") // Placeholder or lookup
-                .companyName("Management Service Provider")
+                .companyId(companyId)
+                .companyName(companyName)
+                .isSuperCompany(isSuper)
                 .build();
     }
 
     private AuthResponse mapCustomerToAuthResponse(CustomerUser customerUser) {
+        if (Boolean.TRUE.equals(customerUser.getIsDeleted())) {
+            throw new BadCredentialsException("Account is deleted");
+        }
+        if (!Boolean.TRUE.equals(customerUser.getIsActive())) {
+            throw new BadCredentialsException("Account is inactive");
+        }
         CustomerCompany company = customerUser.getCustomerTeam().getCustomerCompany();
         return AuthResponse.builder()
                 .userId(customerUser.getUserId())
@@ -65,6 +96,7 @@ public class AuthService {
                 .role(customerUser.getRole())
                 .companyId(company.getCustomerId())
                 .companyName(company.getName())
+                .isSuperCompany(false)
                 .build();
     }
 

@@ -19,8 +19,6 @@ import org.hibernate.annotations.ParamDef;
 @Setter
 @FilterDef(name = "tenantFilter", parameters = @ParamDef(name = "tenantId", type = String.class))
 @Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
-@FilterDef(name = "deletedFilter", parameters = @ParamDef(name = "isDeleted", type = Boolean.class))
-@Filter(name = "deletedFilter", condition = "is_deleted = :isDeleted")
 public abstract class BaseTenantEntity extends BaseEntity {
 
     @Column(name = "tenant_id", length = 50)

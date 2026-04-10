@@ -3,6 +3,7 @@ package com.itsm.system.domain.organization.customer;
 import com.itsm.system.domain.common.BaseTenantEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLDelete;
 
 @Entity
 @Table(name = "customer_users")
@@ -11,6 +12,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@SQLDelete(sql = "UPDATE customer_users SET is_deleted = 1 WHERE id = ?")
 public class CustomerUser extends BaseTenantEntity {
 
     @Id

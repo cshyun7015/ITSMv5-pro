@@ -7,7 +7,6 @@ import com.itsm.system.domain.code.CommonCodeRepository;
 import com.itsm.system.dto.organization.operator.OperatorCompanyDTO;
 import com.itsm.system.dto.organization.operator.OperatorDTO;
 import com.itsm.system.dto.organization.operator.OperatorTeamDTO;
-import com.itsm.system.repository.operator.OperatorRepository;
 import com.itsm.system.service.operator.OperatorService;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,9 +29,6 @@ class OperatorIntegrationTest {
 
     @Autowired
     private OperatorService operatorService;
-
-    @Autowired
-    private OperatorRepository operatorRepository;
 
     @Autowired
     private EntityManager entityManager;
@@ -108,10 +104,22 @@ class OperatorIntegrationTest {
         assertThat(operators).hasSize(1);
         assertThat(operators.get(0).getName()).isEqualTo("이순신");
 
-        // 5. Delete Operator (Soft Delete handled by @SQLDelete, but service.delete method is used)
+        // Delete Operator
         operatorService.deleteOperator(operator.getId(), false);
-        // Since we are using @Where(clause = "is_deleted = 0"), findById should return empty
-        assertThat(operatorRepository.findById(operator.getId())).isEmpty();
+
+        // Force clearing Hibernate session to ensure Filter is applied on next query
+        entityManager.flush();
+        entityManager.clear();
+
+        // Verify invisibility from a non-MSP context via Service (triggers AOP Filter)
+        com.itsm.system.security.TenantContext.setTenantId("T-TEMP");
+        try {
+            assertThatThrownBy(() -> operatorService.getOperator(operator.getId()))
+                    .isInstanceOf(RuntimeException.class)
+                    .hasMessageContaining("not found");
+        } finally {
+            com.itsm.system.security.TenantContext.clear();
+        }
     }
 
     @Test
@@ -172,18 +180,29 @@ class OperatorIntegrationTest {
         entityManager.flush();
         entityManager.clear();
 
-        // 2. Attempt Hard Delete on non-MSP target
+        // 2. Attempt Hard Delete on non-MSP target (yields soft delete)
         operatorService.deleteOperator(operator.getId(), true);
 
-        // 3. Verify it is actually a Soft Delete
+        // Force clearing Hibernate session to ensure Filter is applied on next query
+        entityManager.flush();
+        entityManager.clear();
+
+        // Verify it is actually a Soft Delete
         Long count = (Long) entityManager.createNativeQuery("SELECT count(*) FROM operators WHERE id = :id")
                 .setParameter("id", operator.getId())
                 .getSingleResult();
         
         assertThat(count).isEqualTo(1L); // Not physically removed
         
-        // But id-based query should return empty due to @SQLRestriction
-        assertThat(operatorRepository.findById(operator.getId())).isEmpty();
+        // Verify invisibility from a non-MSP context via Service (where deletedFilter is active)
+        com.itsm.system.security.TenantContext.setTenantId("T-TEMP");
+        try {
+            assertThatThrownBy(() -> operatorService.getOperator(operator.getId()))
+                    .isInstanceOf(RuntimeException.class)
+                    .hasMessageContaining("not found");
+        } finally {
+            com.itsm.system.security.TenantContext.clear();
+        }
     }
 
     @Test

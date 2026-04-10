@@ -5,8 +5,13 @@ import com.itsm.system.service.operator.OperatorService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import com.itsm.system.security.JwtAuthenticationFilter;
+import com.itsm.system.security.JwtTokenProvider;
+import com.itsm.system.security.TenantContextFilter;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
@@ -18,7 +23,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(OperatorController.class)
+@WebMvcTest(controllers = OperatorController.class, excludeAutoConfiguration = SecurityAutoConfiguration.class)
+@AutoConfigureMockMvc(addFilters = false)
 class OperatorControllerTest {
 
     @Autowired
@@ -26,6 +32,15 @@ class OperatorControllerTest {
 
     @MockBean
     private OperatorService operatorService;
+
+    @MockBean
+    private JwtTokenProvider tokenProvider;
+
+    @MockBean
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @MockBean
+    private TenantContextFilter tenantContextFilter;
 
     @Test
     @WithMockUser(roles = "OPER")

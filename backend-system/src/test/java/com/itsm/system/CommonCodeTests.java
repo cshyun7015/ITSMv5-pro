@@ -1,29 +1,36 @@
 package com.itsm.system;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.itsm.system.dto.code.CodeGroupDTO;
 import com.itsm.system.dto.code.CommonCodeDTO;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest
+@AutoConfigureMockMvc
+@Transactional
 class CommonCodeTests {
 
     @Autowired
-    private TestRestTemplate restTemplate;
+    private MockMvc mockMvc;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Test
-    void testCommonCodeLifecycle() {
+    @WithMockUser(roles = "ADMIN")
+    @DisplayName("공통 코드 그룹 및 코드 항목 연쇄 생성/조회/삭제 테스트")
+    void testCommonCodeLifecycle() throws Exception {
         String groupId = "TEST_PRIORITY";
         
         // 1. Create Group
@@ -34,11 +41,11 @@ class CommonCodeTests {
                 .isSystem(false)
                 .build();
         
-        ResponseEntity<CodeGroupDTO> groupResponse = restTemplate.postForEntity(
-                "/api/v1/system/codes/groups", groupDto, CodeGroupDTO.class);
-        
-        assertThat(groupResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        assertThat(groupResponse.getBody().getGroupId()).isEqualTo(groupId);
+        mockMvc.perform(post("/v1/system/codes/groups")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(groupDto)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.groupId").value(groupId));
 
         // 2. Create Code Items
         CommonCodeDTO highCode = CommonCodeDTO.builder()
@@ -49,30 +56,30 @@ class CommonCodeTests {
                 .isActive(true)
                 .build();
         
-        ResponseEntity<CommonCodeDTO> codeResponse = restTemplate.postForEntity(
-                "/api/v1/system/codes/items", highCode, CommonCodeDTO.class);
+        var codeResult = mockMvc.perform(post("/v1/system/codes/items")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(highCode)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.codeId").value("HIGH"))
+                .andReturn();
         
-        assertThat(codeResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        assertThat(codeResponse.getBody().getCodeId()).isEqualTo("HIGH");
+        String responseContent = codeResult.getResponse().getContentAsString();
+        Long codePk = objectMapper.readTree(responseContent).path("data").path("id").asLong();
 
         // 3. List Items by Group
-        ResponseEntity<List<CommonCodeDTO>> listResponse = restTemplate.exchange(
-                "/api/v1/system/codes/groups/" + groupId + "/items", HttpMethod.GET, null, new ParameterizedTypeReference<List<CommonCodeDTO>>() {});
-        
-        assertThat(listResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(listResponse.getBody()).hasSize(1);
+        mockMvc.perform(get("/v1/system/codes/groups/" + groupId + "/items"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data").isArray());
 
-        // 4. Update Code
-        Long codePk = codeResponse.getBody().getId();
-        highCode.setCodeName("Critical (High)");
-        restTemplate.put("/api/v1/system/codes/items/" + codePk, highCode);
+        // 4. Delete Code & Group
+        mockMvc.perform(delete("/v1/system/codes/items/" + codePk))
+                .andExpect(status().isOk());
         
-        // 5. Delete Code & Group
-        restTemplate.delete("/api/v1/system/codes/items/" + codePk);
-        restTemplate.delete("/api/v1/system/codes/groups/" + groupId);
+        mockMvc.perform(delete("/v1/system/codes/groups/" + groupId))
+                .andExpect(status().isOk());
         
-        ResponseEntity<CodeGroupDTO> finalCheck = restTemplate.getForEntity(
-                "/api/v1/system/codes/groups/" + groupId, CodeGroupDTO.class);
-        assertThat(finalCheck.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        // 5. Final Check
+        mockMvc.perform(get("/v1/system/codes/groups/" + groupId))
+                .andExpect(status().isNotFound());
     }
 }

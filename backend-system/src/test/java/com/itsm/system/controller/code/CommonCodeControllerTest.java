@@ -6,6 +6,7 @@ import com.itsm.system.dto.code.CommonCodeDTO;
 import com.itsm.system.service.code.CommonCodeService;
 import com.itsm.system.security.JwtAuthenticationFilter;
 import com.itsm.system.security.JwtTokenProvider;
+import com.itsm.system.security.TenantContextFilter;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
@@ -43,7 +45,11 @@ class CommonCodeControllerTest {
     @MockBean
     private JwtTokenProvider jwtTokenProvider;
 
+    @MockBean
+    private TenantContextFilter tenantContextFilter;
+
     @Test
+    @WithMockUser(roles = "ADMIN")
     @DisplayName("공통 코드 그룹 리스트 조회 - 성공")
     void getAllGroups_ReturnsList_Success() throws Exception {
         // given
@@ -63,6 +69,7 @@ class CommonCodeControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     @DisplayName("공통 코드 그룹 생성 - 성공")
     void createGroup_ValidDto_ReturnsCreated() throws Exception {
         // given
@@ -82,6 +89,7 @@ class CommonCodeControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     @DisplayName("특정 코드 그룹 상세 조회 - 성공")
     void getGroup_ValidId_ReturnsDto() throws Exception {
         // given
@@ -100,6 +108,7 @@ class CommonCodeControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     @DisplayName("특정 코드 그룹 수정 - 성공")
     void updateGroup_ValidDto_ReturnsUpdatedDto() throws Exception {
         // given
@@ -123,17 +132,19 @@ class CommonCodeControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     @DisplayName("특정 코드 그룹 삭제 - 성공")
     void deleteGroup_ValidId_ReturnsNoContent() throws Exception {
         // given
         doNothing().when(commonCodeService).deleteGroup("PRIORITY");
 
         // when & then
-        mockMvc.perform(delete("/api/v1/system/codes/groups/PRIORITY"))
-                .andExpect(status().isNoContent());
+        mockMvc.perform(delete("/v1/system/codes/groups/PRIORITY"))
+                .andExpect(status().isOk());
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     @DisplayName("특정 그룹의 공통 코드 리스트 조회 - 성공")
     void getCodesByGroup_ValidGroupId_ReturnsList() throws Exception {
         // given
@@ -154,6 +165,7 @@ class CommonCodeControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     @DisplayName("공통 코드 생성 - 성공")
     void createCode_ValidDto_ReturnsCreated() throws Exception {
         // given
@@ -174,6 +186,7 @@ class CommonCodeControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     @DisplayName("공통 코드 수정 - 성공")
     void updateCode_ValidDto_ReturnsUpdatedDto() throws Exception {
         // given
@@ -197,13 +210,14 @@ class CommonCodeControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     @DisplayName("특정 공통 코드 삭제 - 성공")
     void deleteCode_ValidId_ReturnsNoContent() throws Exception {
         // given
         doNothing().when(commonCodeService).deleteCode(1L);
 
         // when & then
-        mockMvc.perform(delete("/api/v1/system/codes/items/1"))
-                .andExpect(status().isNoContent());
+        mockMvc.perform(delete("/v1/system/codes/items/1"))
+                .andExpect(status().isOk());
     }
 }

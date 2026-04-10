@@ -34,6 +34,8 @@ public class CustomUserDetailsService implements UserDetailsService {
         return new org.springframework.security.core.userdetails.User(
                 operator.getUserId(),
                 operator.getPassword(),
+                Boolean.TRUE.equals(operator.getIsActive()),
+                true, true, true,
                 List.of(new SimpleGrantedAuthority(operator.getRole()))
         );
     }
@@ -42,6 +44,8 @@ public class CustomUserDetailsService implements UserDetailsService {
         return new org.springframework.security.core.userdetails.User(
                 customerUser.getUserId(),
                 customerUser.getPassword(),
+                Boolean.TRUE.equals(customerUser.getIsActive()),
+                true, true, true,
                 List.of(new SimpleGrantedAuthority(customerUser.getRole()))
         );
     }

@@ -38,8 +38,4 @@ public class Operator extends BaseEntity {
 
     @Column(name = "is_active")
     private Boolean isActive;
-
-    @Builder.Default
-    @Column(name = "is_deleted")
-    private Integer isDeleted = 0;
 }
