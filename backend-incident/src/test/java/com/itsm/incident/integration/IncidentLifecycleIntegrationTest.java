@@ -42,9 +42,7 @@ public class IncidentLifecycleIntegrationTest {
     private static final String MSP_X = "MSP-ALPHA";        // 운영사 X
     private static final String MSP_Y = "MSP_BETA";         // 운영사 Y
     private static final String OP_X1 = "OPERATOR-X1";     // 운영사 X 소속 운영자
-    private static final String OP_Y1 = "OPERATOR-Y1";     // 운영사 Y 소속 운영자
     private static final String USER_A = "USER-A1";        // 고객사 A 소속 사용자
-    private static final String USER_B = "USER-B1";        // 고객사 B 소속 사용자
 
     @BeforeEach
     void clearDatabase() {

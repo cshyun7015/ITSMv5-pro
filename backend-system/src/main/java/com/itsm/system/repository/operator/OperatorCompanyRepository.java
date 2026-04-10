@@ -9,4 +9,5 @@ import java.util.Optional;
 @Repository
 public interface OperatorCompanyRepository extends JpaRepository<OperatorCompany, Long> {
     Optional<OperatorCompany> findByOperatorCompanyId(String operatorCompanyId);
+    boolean existsByOperatorCompanyId(String operatorCompanyId);
 }

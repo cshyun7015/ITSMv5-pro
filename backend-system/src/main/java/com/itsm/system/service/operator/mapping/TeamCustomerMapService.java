@@ -24,6 +24,13 @@ public class TeamCustomerMapService {
     private final CustomerCompanyRepository customerRepository;
 
     @Transactional(readOnly = true)
+    public List<TeamCustomerMapDTO> getAllMappings() {
+        return repository.findAll().stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
     public List<TeamCustomerMapDTO> getMappingsByTeam(Long teamId) {
         return repository.findByOperatorTeamId(teamId).stream()
                 .map(this::convertToDTO)
@@ -39,14 +46,18 @@ public class TeamCustomerMapService {
 
     @Transactional
     public TeamCustomerMapDTO assignTeamToCustomer(Long teamId, Long customerId) {
+        TeamCustomerMapId mappingId = new TeamCustomerMapId(teamId, customerId);
+        if (repository.existsById(mappingId)) {
+            return convertToDTO(repository.getReferenceById(mappingId));
+        }
+
         OperatorTeam team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new RuntimeException("Operator Team not found"));
         CustomerCompany customer = customerRepository.findById(customerId)
                 .orElseThrow(() -> new RuntimeException("Customer Company not found"));
 
-        TeamCustomerMapId id = new TeamCustomerMapId(teamId, customerId);
         TeamCustomerMap map = TeamCustomerMap.builder()
-                .id(id)
+                .id(mappingId)
                 .operatorTeam(team)
                 .customerCompany(customer)
                 .build();

@@ -242,7 +242,11 @@ CREATE TABLE IF NOT EXISTS operator_companies (
   business_number VARCHAR(50),
   status VARCHAR(20) DEFAULT 'ACTIVE',
   representative_name VARCHAR(100),
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  is_deleted TINYINT(1) DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  created_by VARCHAR(50),
+  updated_by VARCHAR(50)
 );
 
 CREATE TABLE IF NOT EXISTS operator_teams (
@@ -250,7 +254,11 @@ CREATE TABLE IF NOT EXISTS operator_teams (
   operator_company_id BIGINT,
   name VARCHAR(100) NOT NULL,
   description TEXT,
+  is_deleted TINYINT(1) DEFAULT 0,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  created_by VARCHAR(50),
+  updated_by VARCHAR(50),
   FOREIGN KEY (operator_company_id) REFERENCES operator_companies(id)
 );
 
@@ -262,7 +270,11 @@ CREATE TABLE IF NOT EXISTS operators (
   email VARCHAR(100),
   role VARCHAR(50) DEFAULT 'ROLE_OPER',
   is_active TINYINT(1) DEFAULT 1,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  is_deleted TINYINT(1) DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  created_by VARCHAR(50),
+  updated_by VARCHAR(50)
 );
 
 CREATE TABLE IF NOT EXISTS operator_team_members (

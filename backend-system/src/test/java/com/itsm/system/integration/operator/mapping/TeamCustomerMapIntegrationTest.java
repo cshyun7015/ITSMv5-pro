@@ -8,11 +8,13 @@ import com.itsm.system.repository.customer.CustomerCompanyRepository;
 import com.itsm.system.repository.operator.OperatorCompanyRepository;
 import com.itsm.system.repository.operator.OperatorTeamRepository;
 import com.itsm.system.service.operator.mapping.TeamCustomerMapService;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -21,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
+@ActiveProfiles("test")
 @Transactional
 class TeamCustomerMapIntegrationTest {
 
@@ -35,6 +38,9 @@ class TeamCustomerMapIntegrationTest {
 
     @Autowired
     private CustomerCompanyRepository customerRepository;
+
+    @Autowired
+    private EntityManager entityManager;
 
     private OperatorTeam savedTeam;
     private CustomerCompany savedCustomer;
@@ -57,6 +63,9 @@ class TeamCustomerMapIntegrationTest {
                 .name("고객사A")
                 .status("ACTIVE")
                 .build());
+        
+        entityManager.flush();
+        entityManager.clear();
     }
 
     @Test

@@ -44,6 +44,9 @@ public class OperatorService {
 
     @Transactional
     public OperatorCompanyDTO createCompany(OperatorCompanyDTO dto) {
+        if (companyRepository.existsByOperatorCompanyId(dto.getOperatorCompanyId())) {
+            throw new IllegalArgumentException("Operator Company ID already exists: " + dto.getOperatorCompanyId());
+        }
         OperatorCompany company = OperatorCompany.builder()
                 .operatorCompanyId(dto.getOperatorCompanyId())
                 .name(dto.getName())
@@ -67,11 +70,15 @@ public class OperatorService {
 
     @Transactional
     public void deleteCompany(Long id) {
+        // Cascade soft delete to teams
+        teamRepository.findByOperatorCompany_Id(id).forEach(team -> {
+            deleteTeam(team.getId());
+        });
         companyRepository.deleteById(id);
     }
 
     public List<OperatorTeamDTO> getTeamsByCompany(Long companyId) {
-        return teamRepository.findByOperatorCompanyId(companyId).stream()
+        return teamRepository.findByOperatorCompany_Id(companyId).stream()
                 .map(this::convertToTeamDTO)
                 .collect(Collectors.toList());
     }
@@ -179,9 +186,15 @@ public class OperatorService {
             validateRole(dto.getRole());
             operator.setRole(dto.getRole());
         }
+
+        if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
+            operator.setPassword(passwordEncoder.encode(dto.getPassword()));
+        }
         
         operator.setName(dto.getName());
         operator.setEmail(dto.getEmail());
+        operator.setIsActive(dto.getIsActive() != null ? dto.getIsActive() : operator.getIsActive());
+        
         return convertToOperatorDTO(operatorRepository.save(operator));
     }
 
@@ -199,6 +212,13 @@ public class OperatorService {
 
     @Transactional
     public void assignTeam(Long operatorId, Long teamId) {
+        com.itsm.system.domain.organization.mapping.OperatorTeamMember.OperatorTeamMemberId id = 
+            new com.itsm.system.domain.organization.mapping.OperatorTeamMember.OperatorTeamMemberId(operatorId, teamId);
+            
+        if (teamMemberRepository.existsById(id)) {
+            return; // Already mapped
+        }
+
         Operator operator = operatorRepository.findById(operatorId)
                 .orElseThrow(() -> new RuntimeException("Operator not found"));
         OperatorTeam team = teamRepository.findById(teamId)
@@ -227,7 +247,7 @@ public class OperatorService {
                 .businessNumber(company.getBusinessNumber())
                 .representativeName(company.getRepresentativeName())
                 .status(company.getStatus())
-                .teamCount((int) teamRepository.countByOperatorCompanyId(company.getId()))
+                .teamCount((int) teamRepository.countByOperatorCompany_Id(company.getId()))
                 .operatorCount((int) teamMemberRepository.countByCompanyId(company.getId()))
                 .createdAt(company.getCreatedAt())
                 .build();

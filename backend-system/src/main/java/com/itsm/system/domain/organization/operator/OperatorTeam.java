@@ -1,10 +1,10 @@
 package com.itsm.system.domain.organization.operator;
 
+import com.itsm.system.domain.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-
-import java.time.LocalDateTime;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 
 @Entity
 @Table(name = "operator_teams")
@@ -13,7 +13,9 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class OperatorTeam {
+@SQLDelete(sql = "UPDATE operator_teams SET is_deleted = 1 WHERE id = ?")
+@SQLRestriction("is_deleted = 0")
+public class OperatorTeam extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,7 +31,7 @@ public class OperatorTeam {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
+    @Builder.Default
+    @Column(name = "is_deleted")
+    private Integer isDeleted = 0;
 }

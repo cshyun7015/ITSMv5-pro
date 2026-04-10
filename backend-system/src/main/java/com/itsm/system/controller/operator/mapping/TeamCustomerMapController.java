@@ -1,9 +1,10 @@
 package com.itsm.system.controller.operator.mapping;
 
+import com.itsm.system.domain.common.ApiResponse;
 import com.itsm.system.dto.organization.mapping.TeamCustomerMapDTO;
 import com.itsm.system.service.operator.mapping.TeamCustomerMapService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -11,32 +12,38 @@ import java.util.List;
 @RestController
 @RequestMapping("/v1/operator/mapping")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('ROLE_ADMIN')")
 public class TeamCustomerMapController {
 
     private final TeamCustomerMapService mappingService;
 
+    @GetMapping
+    public ApiResponse<List<TeamCustomerMapDTO>> getAllMappings() {
+        return ApiResponse.success(mappingService.getAllMappings());
+    }
+
     @GetMapping("/team/{teamId}")
-    public ResponseEntity<List<TeamCustomerMapDTO>> getMappingsByTeam(@PathVariable Long teamId) {
-        return ResponseEntity.ok(mappingService.getMappingsByTeam(teamId));
+    public ApiResponse<List<TeamCustomerMapDTO>> getMappingsByTeam(@PathVariable Long teamId) {
+        return ApiResponse.success(mappingService.getMappingsByTeam(teamId));
     }
 
     @GetMapping("/customer/{customerId}")
-    public ResponseEntity<List<TeamCustomerMapDTO>> getMappingsByCustomer(@PathVariable Long customerId) {
-        return ResponseEntity.ok(mappingService.getMappingsByCustomer(customerId));
+    public ApiResponse<List<TeamCustomerMapDTO>> getMappingsByCustomer(@PathVariable Long customerId) {
+        return ApiResponse.success(mappingService.getMappingsByCustomer(customerId));
     }
 
     @PostMapping("/{teamId}/{customerId}")
-    public ResponseEntity<TeamCustomerMapDTO> assignTeamToCustomer(
+    public ApiResponse<TeamCustomerMapDTO> assignTeamToCustomer(
             @PathVariable Long teamId,
             @PathVariable Long customerId) {
-        return ResponseEntity.ok(mappingService.assignTeamToCustomer(teamId, customerId));
+        return ApiResponse.success(mappingService.assignTeamToCustomer(teamId, customerId));
     }
 
     @DeleteMapping("/{teamId}/{customerId}")
-    public ResponseEntity<Void> unassignTeamFromCustomer(
+    public ApiResponse<Void> unassignTeamFromCustomer(
             @PathVariable Long teamId,
             @PathVariable Long customerId) {
         mappingService.unassignTeamFromCustomer(teamId, customerId);
-        return ResponseEntity.noContent().build();
+        return ApiResponse.success(null);
     }
 }

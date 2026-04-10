@@ -55,10 +55,11 @@ class CommonCodeControllerTest {
         given(commonCodeService.getAllGroups()).willReturn(List.of(groupDto));
 
         // when & then
-        mockMvc.perform(get("/api/v1/system/codes/groups"))
+        mockMvc.perform(get("/v1/system/codes/groups"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].groupId").value("PRIORITY"))
-                .andExpect(jsonPath("$[0].name").value("우선순위"));
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data[0].groupId").value("PRIORITY"))
+                .andExpect(jsonPath("$.data[0].name").value("우선순위"));
     }
 
     @Test
@@ -72,11 +73,12 @@ class CommonCodeControllerTest {
         given(commonCodeService.createGroup(any(CodeGroupDTO.class))).willReturn(inputDto);
 
         // when & then
-        mockMvc.perform(post("/api/v1/system/codes/groups")
+        mockMvc.perform(post("/v1/system/codes/groups")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(inputDto)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.groupId").value("STATUS"));
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.groupId").value("STATUS"));
     }
 
     @Test
@@ -90,10 +92,11 @@ class CommonCodeControllerTest {
         given(commonCodeService.getGroup("PRIORITY")).willReturn(groupDto);
 
         // when & then
-        mockMvc.perform(get("/api/v1/system/codes/groups/PRIORITY"))
+        mockMvc.perform(get("/v1/system/codes/groups/PRIORITY"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.groupId").value("PRIORITY"))
-                .andExpect(jsonPath("$.name").value("우선순위"));
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.groupId").value("PRIORITY"))
+                .andExpect(jsonPath("$.data.name").value("우선순위"));
     }
 
     @Test
@@ -111,11 +114,12 @@ class CommonCodeControllerTest {
         given(commonCodeService.updateGroup(any(String.class), any(CodeGroupDTO.class))).willReturn(resultDto);
 
         // when & then
-        mockMvc.perform(put("/api/v1/system/codes/groups/PRIORITY")
+        mockMvc.perform(put("/v1/system/codes/groups/PRIORITY")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDto)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("수정된 우선순위"));
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.name").value("수정된 우선순위"));
     }
 
     @Test
@@ -142,10 +146,11 @@ class CommonCodeControllerTest {
         given(commonCodeService.getCodesByGroup("PRIORITY")).willReturn(List.of(codeDto));
 
         // when & then
-        mockMvc.perform(get("/api/v1/system/codes/groups/PRIORITY/items"))
+        mockMvc.perform(get("/v1/system/codes/groups/PRIORITY/items"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].codeId").value("HIGH"))
-                .andExpect(jsonPath("$[0].codeName").value("높음"));
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data[0].codeId").value("HIGH"))
+                .andExpect(jsonPath("$.data[0].codeName").value("높음"));
     }
 
     @Test
@@ -160,11 +165,12 @@ class CommonCodeControllerTest {
         given(commonCodeService.createCode(any(CommonCodeDTO.class))).willReturn(inputDto);
 
         // when & then
-        mockMvc.perform(post("/api/v1/system/codes/items")
+        mockMvc.perform(post("/v1/system/codes/items")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(inputDto)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.codeId").value("EMERGENCY"));
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.codeId").value("EMERGENCY"));
     }
 
     @Test
@@ -182,11 +188,12 @@ class CommonCodeControllerTest {
         given(commonCodeService.updateCode(any(Long.class), any(CommonCodeDTO.class))).willReturn(resultDto);
 
         // when & then
-        mockMvc.perform(put("/api/v1/system/codes/items/1")
+        mockMvc.perform(put("/v1/system/codes/items/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDto)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.codeName").value("매우 높음"));
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.codeName").value("매우 높음"));
     }
 
     @Test
