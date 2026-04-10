@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { customerApi } from '../api/customerApi';
 import { CustomerTeam } from '../types/customerType';
 
 interface CustomerTeamFormProps {
@@ -16,6 +18,13 @@ const CustomerTeamForm: React.FC<CustomerTeamFormProps> = ({
   onSubmit, 
   isLoading 
 }) => {
+  // 동일 고객사의 팀 목록 조회 (상위 팀 선택용)
+  const { data: teams } = useQuery<CustomerTeam[]>({
+    queryKey: ['companyTeams', companyId],
+    queryFn: () => customerApi.fetchTeamsByCompany(companyId),
+    enabled: !!companyId,
+  });
+
   const [formData, setFormData] = useState<Partial<CustomerTeam>>(
     initialData || {
       name: '',
@@ -100,17 +109,33 @@ const CustomerTeamForm: React.FC<CustomerTeamFormProps> = ({
         />
       </div>
 
-      <div className="space-y-1">
-        <label className="label-base pl-1">운영 상태</label>
-        <select 
-          name="status"
-          value={formData.status}
-          onChange={handleChange}
-          className="select-base"
-        >
-          <option value="ACTIVE" className="bg-background-secondary text-primary">ACTIVE (활성)</option>
-          <option value="INACTIVE" className="bg-background-secondary text-primary">INACTIVE (비활성)</option>
-        </select>
+      <div className="grid grid-cols-2 gap-6">
+        <div className="space-y-1">
+          <label className="label-base pl-1">상위 팀</label>
+          <select 
+            name="parentTeamId"
+            value={formData.parentTeamId || ''}
+            onChange={handleChange}
+            className="select-base"
+          >
+            <option value="" className="bg-background-secondary text-text-muted italic">--- 상위 팀 없음 (최상위) ---</option>
+            {teams?.filter(t => t.id !== initialData?.id).map(t => (
+              <option key={t.id} value={t.id} className="bg-background-secondary text-primary">{t.name}</option>
+            ))}
+          </select>
+        </div>
+        <div className="space-y-1">
+          <label className="label-base pl-1">운영 상태</label>
+          <select 
+            name="status"
+            value={formData.status}
+            onChange={handleChange}
+            className="select-base font-bold"
+          >
+            <option value="ACTIVE" className="bg-background-secondary text-green-400">ACTIVE (정상 운영)</option>
+            <option value="INACTIVE" className="bg-background-secondary text-red-400">INACTIVE (임시 중단)</option>
+          </select>
+        </div>
       </div>
 
       <div className="flex justify-end gap-3 pt-4">

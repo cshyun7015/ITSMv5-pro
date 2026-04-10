@@ -24,6 +24,8 @@ const OperatorCompanyForm: React.FC<OperatorCompanyFormProps> = ({ id, onSubmit,
         operatorCompanyId: company.operatorCompanyId,
         name: company.name,
         description: company.description,
+        businessNumber: company.businessNumber,
+        representativeName: company.representativeName,
         status: company.status,
         tenantId: company.tenantId || 'MSP',
       });
@@ -86,6 +88,26 @@ const OperatorCompanyForm: React.FC<OperatorCompanyFormProps> = ({ id, onSubmit,
           className="input-base h-auto py-3 resize-none"
           placeholder="운영사에 대한 상세 설명을 입력하세요"
         />
+      </div>
+
+      <div className="grid grid-cols-2 gap-6">
+        <div className="space-y-1">
+          <label className="label-base pl-1">Business Number</label>
+          <input 
+            {...register('businessNumber')}
+            className="input-base font-mono"
+            placeholder="e.g. 000-00-00000"
+          />
+        </div>
+
+        <div className="space-y-1">
+          <label className="label-base pl-1">Representative Name</label>
+          <input 
+            {...register('representativeName')}
+            className="input-base"
+            placeholder="대표자 성함을 입력하세요"
+          />
+        </div>
       </div>
 
       <div className="space-y-1">

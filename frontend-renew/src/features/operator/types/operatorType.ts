@@ -7,10 +7,14 @@ export interface OperatorCompany {
   operatorCompanyId: string; // Business ID (e.g., OP-001)
   name: string;
   description?: string;
+  businessNumber?: string;
+  representativeName?: string;
   status: 'ACTIVE' | 'INACTIVE';
   tenantId?: string;
   createdAt?: string;
   updatedAt?: string;
+  createdBy?: string;
+  updatedBy?: string;
 }
 
 export interface OperatorTeam {
@@ -23,6 +27,8 @@ export interface OperatorTeam {
   parentTeamId?: number;
   createdAt?: string;
   updatedAt?: string;
+  createdBy?: string;
+  updatedBy?: string;
 }
 
 export interface Operator {
@@ -37,6 +43,9 @@ export interface Operator {
   operatorTeamId?: number;
   isDeleted: number;
   createdAt?: string;
+  updatedAt?: string;
+  createdBy?: string;
+  updatedBy?: string;
 }
 
 export interface TeamCustomerMap {

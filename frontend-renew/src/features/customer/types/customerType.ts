@@ -11,6 +11,8 @@ export interface CustomerCompany {
   status: string;
   createdAt?: string;
   updatedAt?: string;
+  createdBy?: string;
+  updatedBy?: string;
 }
 
 export interface CustomerTeam {
@@ -26,6 +28,9 @@ export interface CustomerTeam {
   status: string;
   tenantId?: string;
   createdAt?: string;
+  updatedAt?: string;
+  createdBy?: string;
+  updatedBy?: string;
 }
 
 export interface CustomerUser {
@@ -42,6 +47,10 @@ export interface CustomerUser {
   isApprover: boolean;
   userCriticality?: string;
   tenantId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  createdBy?: string;
+  updatedBy?: string;
 }
 
 export interface ApiResponse<T> {

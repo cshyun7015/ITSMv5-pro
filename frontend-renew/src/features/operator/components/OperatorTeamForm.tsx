@@ -83,7 +83,7 @@ const OperatorTeamForm: React.FC<OperatorTeamFormProps> = ({ id, defaultTenantId
             <button 
               type="submit" 
               disabled={isLoading}
-              className="btn-md btn-secondary w-full uppercase tracking-widest text-[10px]"
+              className="btn-md btn-primary w-full uppercase tracking-[0.2em] font-black"
             >
               {isLoading ? 'Updating...' : 'Save Basic Info'}
             </button>

@@ -28,4 +28,8 @@ public class OperatorTeam extends BaseTenantEntity {
 
     @Column(columnDefinition = "TEXT")
     private String description;
+
+    @Builder.Default
+    @Column(length = 20)
+    private String status = "ACTIVE";
 }

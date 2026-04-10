@@ -34,6 +34,9 @@ public class OperatorCompany extends BaseTenantEntity {
     @Column(length = 20)
     private String status;
 
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
     @Builder.Default
     @Column(name = "is_super_company")
     private Boolean isSuperCompany = false;

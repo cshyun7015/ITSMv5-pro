@@ -145,14 +145,47 @@ const CompanyDetail: React.FC<{ id: number }> = ({ id }) => {
         isDangerous={true}
       />
 
-      <div className="flex-1 bg-white/[0.02] border border-white/5 rounded-3xl p-8 flex flex-col items-center justify-center opacity-40">
-         <Building2 size={48} className="text-white/10 mb-4" />
-         <p className="text-sm font-bold tracking-widest uppercase">Company Dashboard Placeholder</p>
-         <p className="text-[10px] text-text-muted mt-1 italic">고객사별 통계 및 전용 설정 영역입니다.</p>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-6">
+           <div className="flex items-center gap-2 mb-4">
+              <ShieldCheck size={16} className="text-cyan-400" />
+              <h4 className="text-xs font-black uppercase tracking-widest text-white/60">System Metadata</h4>
+           </div>
+           <div className="space-y-3">
+              <MetaItem label="Record ID" value={company.id} isMono />
+              <MetaItem label="Status" value={company.status} isStatus />
+              <MetaItem label="Tenant" value={company.tenantId} />
+           </div>
+        </div>
+        <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-6">
+           <div className="flex items-center gap-2 mb-4">
+              <Edit3 size={16} className="text-amber-400" />
+              <h4 className="text-xs font-black uppercase tracking-widest text-white/60">Audit Information</h4>
+           </div>
+           <div className="space-y-3">
+              <MetaItem label="Created At" value={company.createdAt} isDate />
+              <MetaItem label="Created By" value={company.createdBy} />
+              <MetaItem label="Updated At" value={company.updatedAt} isDate />
+           </div>
+        </div>
       </div>
     </div>
   );
 };
+
+const MetaItem: React.FC<{ label: string; value: any; isMono?: boolean; isDate?: boolean; isStatus?: boolean }> = ({ 
+  label, value, isMono, isDate, isStatus 
+}) => (
+  <div className="flex items-center justify-between text-[10px]">
+    <span className="text-text-muted font-bold uppercase tracking-tighter">{label}</span>
+    <span className={`
+      ${isMono ? 'font-mono text-cyan-400' : 'text-text-secondary'}
+      ${isStatus ? 'px-2 py-0.5 bg-cyan-400/10 text-cyan-400 rounded-full font-black' : ''}
+    `}>
+      {isDate ? (value ? new Date(value).toLocaleString() : 'N/A') : (value?.toString() || 'N/A')}
+    </span>
+  </div>
+);
 
 const TeamDetail: React.FC<{ id: number }> = ({ id }) => {
   const [isEditModalOpen, setIsEditModalOpen] = React.useState(false);
@@ -373,9 +406,34 @@ const TeamDetail: React.FC<{ id: number }> = ({ id }) => {
          ) : (
             <div className="flex flex-col items-center justify-center py-12 text-text-muted opacity-50 space-y-2">
                <Users size={32} strokeWidth={1} />
-               <p className="text-xs italic">소속된 멤버가 없습니다.</p>
+               <p className="text-xs italic">등록된 팀 멤버가 없습니다.</p>
             </div>
          )}
+      </div>
+
+      <div className="p-8 pt-0 grid grid-cols-2 gap-4">
+        <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-6">
+           <div className="flex items-center gap-2 mb-4">
+              <ShieldCheck size={16} className="text-cyan-400" />
+              <h4 className="text-xs font-black uppercase tracking-widest text-white/60">System Metadata</h4>
+           </div>
+           <div className="space-y-3">
+              <MetaItem label="Team ID" value={team.id} isMono />
+              <MetaItem label="Status" value={team.status} isStatus />
+              <MetaItem label="Cost Center" value={team.costCenter} />
+           </div>
+        </div>
+        <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-6">
+           <div className="flex items-center gap-2 mb-4">
+              <Edit3 size={16} className="text-amber-400" />
+              <h4 className="text-xs font-black uppercase tracking-widest text-white/60">Audit Information</h4>
+           </div>
+           <div className="space-y-3">
+              <MetaItem label="Created At" value={team.createdAt} isDate />
+              <MetaItem label="Created By" value={team.createdBy} />
+              <MetaItem label="Updated At" value={team.updatedAt} isDate />
+           </div>
+        </div>
       </div>
     </div>
   );

@@ -15,6 +15,10 @@ public class OperatorTeamDTO {
     private String operatorCompanyName;
     private String name;
     private String description;
+    private String status;
     private String tenantId;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    private String createdBy;
+    private String updatedBy;
 }

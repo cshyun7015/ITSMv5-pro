@@ -18,6 +18,10 @@ public class OperatorCompanyDTO {
     private String status;
     private Integer teamCount;
     private Integer operatorCount;
+    private String description;
     private String tenantId;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    private String createdBy;
+    private String updatedBy;
 }

@@ -116,15 +116,29 @@ const CustomerCompanyForm: React.FC<CustomerCompanyFormProps> = ({ initialData, 
         </div>
       </div>
 
-      <div className="space-y-1">
-        <label className="label-base pl-1">본사 주소</label>
-        <textarea
-          name="address"
-          value={formData.address}
-          onChange={handleChange}
-          rows={2}
-          className="input-base h-auto py-3 resize-none"
-        />
+      <div className="grid grid-cols-2 gap-6">
+        <div className="space-y-1">
+          <label className="label-base pl-1">본사 주소</label>
+          <textarea
+            name="address"
+            value={formData.address}
+            onChange={handleChange}
+            rows={2}
+            className="input-base h-auto py-3 resize-none"
+          />
+        </div>
+        <div className="space-y-1">
+          <label className="label-base pl-1">운영 상태</label>
+          <select
+            name="status"
+            value={formData.status}
+            onChange={handleChange}
+            className="select-base font-bold"
+          >
+            <option value="ACTIVE" className="bg-background-secondary text-green-400">ACTIVE (정상 운영)</option>
+            <option value="INACTIVE" className="bg-background-secondary text-red-400">INACTIVE (임시 중단)</option>
+          </select>
+        </div>
       </div>
 
       <div className="flex justify-end gap-3 pt-6">

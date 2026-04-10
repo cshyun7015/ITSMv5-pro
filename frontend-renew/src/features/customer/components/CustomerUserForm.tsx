@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { commonCodeApi } from '../../common-code/api/commonCodeApi';
 import { CustomerUser } from '../types/customerType';
 
 interface CustomerUserFormProps {
@@ -14,6 +16,12 @@ const CustomerUserForm: React.FC<CustomerUserFormProps> = ({
   onSubmit, 
   isLoading 
 }) => {
+  // CUS_ROLE 표준 코드 조회 (권한 선택용)
+  const { data: roles } = useQuery({
+    queryKey: ['commonCodes', 'CUS_ROLE'],
+    queryFn: () => commonCodeApi.fetchItemsByGroup('CUS_ROLE'),
+  });
+
   const [formData, setFormData] = useState({
     userId: '',
     password: '',
@@ -24,6 +32,7 @@ const CustomerUserForm: React.FC<CustomerUserFormProps> = ({
     isVip: false,
     isApprover: false,
     userCriticality: 'NORMAL',
+    role: initialData?.role || 'ROLE_USER',
     tenantId: defaultTenantId || 'MSP',
   });
 
@@ -35,10 +44,11 @@ const CustomerUserForm: React.FC<CustomerUserFormProps> = ({
         name: initialData.name || '',
         email: initialData.email || '',
         position: initialData.position || '',
-        isActive: initialData.isActive !== false, // 기본값 true
+        isActive: initialData.isActive !== false,
         isVip: initialData.isVip || false,
         isApprover: initialData.isApprover || false,
         userCriticality: initialData.userCriticality || 'NORMAL',
+        role: initialData.role || 'ROLE_USER',
         tenantId: initialData.tenantId || 'MSP',
       });
     }
@@ -196,6 +206,25 @@ const CustomerUserForm: React.FC<CustomerUserFormProps> = ({
             <option value="HIGH" className="bg-background-secondary text-primary">HIGH (중점 관리 대상)</option>
           </select>
         </div>
+        <div className="space-y-1">
+          <label className="label-base pl-1">User Role</label>
+          <select
+            name="role"
+            value={formData.role}
+            onChange={handleChange}
+            className="select-base font-bold"
+          >
+            {roles?.map(code => (
+              <option key={code.codeId} value={code.codeId} className="bg-background-secondary text-brand-primary">
+                {code.codeName} ({code.codeId})
+              </option>
+            ))}
+            {!roles && <option value="ROLE_USER">Loading Roles...</option>}
+          </select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-6">
         <div className="space-y-1">
           <label className="label-base pl-1">Account Active</label>
           <select
