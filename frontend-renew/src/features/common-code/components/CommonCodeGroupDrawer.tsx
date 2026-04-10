@@ -146,7 +146,7 @@ const CommonCodeGroupDrawer: React.FC<Props> = ({
               <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <ShieldCheck size={14} className="text-brand-primary" />
-                  <h4 className="text-[9px] font-black uppercase tracking-widest text-white/40">System Metadata</h4>
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-text-muted">System Metadata</h4>
                 </div>
                 <div className="space-y-2.5">
                   <MetaItem label="Group Key" value={initialData.groupId} isMono />
@@ -156,7 +156,7 @@ const CommonCodeGroupDrawer: React.FC<Props> = ({
               <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <Edit3 size={14} className="text-amber-400" />
-                  <h4 className="text-[9px] font-black uppercase tracking-widest text-white/40">Audit Information</h4>
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-text-muted">Audit Information</h4>
                 </div>
                 <div className="space-y-2.5">
                   <MetaItem label="Created At" value={initialData.createdAt} isDate />

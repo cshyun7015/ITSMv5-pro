@@ -145,10 +145,10 @@ const CommonCodePage: React.FC = () => {
           </p>
         </div>
         <div className="flex gap-3">
-          <button className="btn-md btn-secondary px-6 font-black tracking-widest text-[10px]">엑셀 내보내기</button>
+          <button className="btn-md btn-secondary px-6 font-black tracking-widest text-sm rounded-xl">엑셀 내보내기</button>
           <button 
             onClick={handleAddGroup}
-            className="btn-md btn-primary px-6 shadow-xl shadow-brand-primary/20 font-black tracking-widest text-[10px]"
+            className="btn-md btn-primary px-6 shadow-xl shadow-brand-primary/20 font-black tracking-widest text-sm rounded-xl"
           >
             새 코드 그룹 추가
           </button>

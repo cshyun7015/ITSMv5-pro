@@ -111,10 +111,10 @@ const CommonCodeItemList: React.FC<Props> = ({
                     </div>
 
                     {/* Hover Row Actions Overlay */}
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all flex items-center gap-1.5 bg-background-secondary shadow-2xl border border-white/10 p-1 rounded-lg">
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all flex items-center gap-1.5 bg-background-secondary/80 backdrop-blur-md shadow-2xl border border-white/10 p-1.5 rounded-xl z-10">
                       <button 
                         onClick={() => onEdit(item)}
-                        className="p-1.5 hover:bg-white/10 rounded-md text-text-muted hover:text-brand-primary transition-colors"
+                        className="p-1.5 bg-white/5 hover:bg-brand-primary/10 rounded-lg text-text-muted hover:text-brand-primary transition-colors"
                         title="아이템 상세 수정"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -123,7 +123,7 @@ const CommonCodeItemList: React.FC<Props> = ({
                       </button>
                       <button 
                         onClick={() => onDelete(item.id)}
-                        className="p-1.5 hover:bg-white/10 rounded-md text-text-muted hover:text-status-critical transition-colors"
+                        className="p-1.5 bg-white/5 hover:bg-status-critical/10 rounded-lg text-text-muted hover:text-status-critical transition-colors"
                         title="아이템 삭제"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -138,7 +138,12 @@ const CommonCodeItemList: React.FC<Props> = ({
                     </span>
                   </td>
                   <td className="table-body-cell !px-6 !py-4 text-center">
-                    <span className={`badge-status badge-sm px-2 ${item.isActive ? 'badge-low border-status-low/20' : 'bg-white/5 border-white/10 text-text-muted'}`}>
+                    <span className={`flex items-center gap-1.5 px-2 py-0.5 border rounded-full text-[10px] font-black tracking-tighter uppercase ${
+                      item.isActive 
+                      ? 'bg-status-low/10 border-status-low/20 text-status-low' 
+                      : 'bg-white/5 border-white/10 text-text-muted'
+                    }`}>
+                      {item.isActive && <span className="w-1 h-1 rounded-full bg-status-low animate-pulse" />}
                       {item.isActive ? '사용중' : '중지됨'}
                     </span>
                   </td>

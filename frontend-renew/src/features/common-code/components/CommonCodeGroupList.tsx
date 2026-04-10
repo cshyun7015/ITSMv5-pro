@@ -43,7 +43,7 @@ const CommonCodeGroupList: React.FC<Props> = ({
   return (
     <div className="card-base border-white/5 bg-white/[0.01] flex flex-col h-full overflow-hidden !hover:scale-100 !hover:bg-white/[0.01] !cursor-default">
       <div className="p-4 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
-        <h3 className="text-xs font-black text-white/60 tracking-widest uppercase">코드 그룹 목록</h3>
+        <h3 className="text-xs font-black text-text-muted tracking-widest uppercase">코드 그룹 목록</h3>
         <span className="text-[10px] px-2 py-0.5 bg-brand-primary/10 rounded-full font-mono text-brand-primary font-bold">
           {groups?.length || 0} 건
         </span>
@@ -70,12 +70,15 @@ const CommonCodeGroupList: React.FC<Props> = ({
                 <tr 
                   key={group.groupId} 
                   onClick={() => onSelectGroup(group.groupId)}
-                  className={`group table-row ${
+                  className={`group table-row relative ${
                     isSelected 
-                    ? 'bg-brand-primary/10 border-l-2 border-brand-primary' 
+                    ? 'bg-brand-primary/10' 
                     : ''
                   }`}
                 >
+                  {isSelected && (
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-brand-primary shadow-[0_0_12px_rgba(var(--brand-primary-rgb),0.6)] z-10" />
+                  )}
                   <td className="px-4 py-3 relative border-b border-white/5">
                     <div className="flex flex-col min-w-0">
                       <span className={`text-sm font-bold truncate whitespace-nowrap ${isSelected ? 'text-brand-primary' : 'text-text-primary'}`}>
