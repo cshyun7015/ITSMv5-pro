@@ -28,7 +28,7 @@ const MainLayout: React.FC = () => {
     { name: '인시던트 관리', path: '/incident', icon: AlertCircle },
     { name: '서비스 요청', path: '/request', icon: ClipboardList },
     { name: '고객 조직 관리', path: '/customer', icon: Users },
-    { name: '운용 조직 관리', path: '/ops-org', icon: Users },
+    { name: '운영 조직 관리', path: '/operator', icon: Users },
     { name: '표준 코드 관리', path: '/common-code', icon: Settings },
   ];
 

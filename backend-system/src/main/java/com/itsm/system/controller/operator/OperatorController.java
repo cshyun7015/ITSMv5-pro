@@ -101,8 +101,8 @@ public class OperatorController {
     }
 
     @DeleteMapping("/operators/{id}")
-    public ApiResponse<Void> deleteOperator(@PathVariable Long id) {
-        operatorService.deleteOperator(id);
+    public ApiResponse<Void> deleteOperator(@PathVariable Long id, @RequestParam(required = false, defaultValue = "false") boolean hardDelete) {
+        operatorService.deleteOperator(id, hardDelete);
         return ApiResponse.success(null);
     }
 

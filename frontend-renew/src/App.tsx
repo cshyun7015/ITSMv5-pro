@@ -5,6 +5,7 @@ import MainLayout from './core/layout/MainLayout';
 import { IncidentList } from './features/incident';
 import { CommonCodePage } from './features/common-code';
 import { CustomerPage } from './features/customer/customer';
+import { OperatorPage } from './features/operator/components/OperatorPage';
 
 // TanStack Query 설정
 const queryClient = new QueryClient({
@@ -39,6 +40,7 @@ const App: React.FC = () => {
               <Route path="incident" element={<IncidentList />} />
               <Route path="common-code" element={<CommonCodePage />} />
               <Route path="customer" element={<CustomerPage />} />
+              <Route path="operator" element={<OperatorPage />} />
               
               {/* 미구현 페이지 플레이스홀더 */}
               <Route path="*" element={

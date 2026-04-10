@@ -1,0 +1,141 @@
+import React, { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { useQuery } from '@tanstack/react-query';
+import { operatorApi } from '../api/operatorApi';
+
+interface OperatorUserFormProps {
+  id?: number;
+  onSubmit: (data: any) => void;
+  isLoading: boolean;
+}
+
+const OperatorUserForm: React.FC<OperatorUserFormProps> = ({ id, onSubmit, isLoading }) => {
+  const { register, handleSubmit, reset, formState: { errors } } = useForm();
+
+  const handleFormSubmit = (data: any) => {
+    // Convert isActive string from select to boolean
+    const processedData = {
+      ...data,
+      isActive: data.isActive === 'true' || data.isActive === true
+    };
+    onSubmit(processedData);
+  };
+
+  const { data: operator, isLoading: dataLoading } = useQuery({
+    queryKey: ['operator', id],
+    queryFn: () => operatorApi.fetchOperator(id!),
+    enabled: !!id,
+  });
+
+  useEffect(() => {
+    if (operator) {
+      reset({
+        userId: operator.userId,
+        name: operator.name,
+        email: operator.email,
+        role: operator.role,
+        isActive: operator.isActive,
+      });
+    }
+  }, [operator, reset]);
+
+  if (id && dataLoading) {
+    return <div className="text-sm text-text-muted animate-pulse">Loading operator user data...</div>;
+  }
+
+  return (
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6 max-w-2xl px-2">
+      <div className="grid grid-cols-2 gap-6">
+        <div className="space-y-2">
+          <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest pl-1">User ID</label>
+          <input 
+            {...register('userId', { required: '사용자 ID는 필수입니다.' })}
+            className={`w-full bg-white/5 border ${errors.userId ? 'border-red-500/50' : 'border-white/10'} rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500/50 transition-all font-mono`}
+            placeholder="e.g. admin_kim"
+            disabled={!!id}
+          />
+          {errors.userId && <p className="text-[10px] text-red-500 pl-1 font-bold">{errors.userId.message as string}</p>}
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest pl-1">Full Name</label>
+          <input 
+            {...register('name', { required: '성명은 필수입니다.' })}
+            className={`w-full bg-white/5 border ${errors.name ? 'border-red-500/50' : 'border-white/10'} rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500/50 transition-all`}
+            placeholder="성명을 입력하세요"
+          />
+          {errors.name && <p className="text-[10px] text-red-500 pl-1 font-bold">{errors.name.message as string}</p>}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-6">
+        <div className="space-y-2">
+          <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest pl-1">Email Address</label>
+          <input 
+            {...register('email', { 
+              required: '이메일은 필수입니다.',
+              pattern: {
+                value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                message: "유효한 이메일 형식이 아닙니다."
+              }
+            })}
+            className={`w-full bg-white/5 border ${errors.email ? 'border-red-500/50' : 'border-white/10'} rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500/50 transition-all`}
+            placeholder="example@company.com"
+          />
+          {errors.email && <p className="text-[10px] text-red-500 pl-1 font-bold">{errors.email.message as string}</p>}
+        </div>
+
+        {!id && (
+          <div className="space-y-2 text-indigo-400 p-0">
+            <label className="text-[10px] font-black uppercase tracking-widest pl-1">Initial Password</label>
+            <input 
+              type="password"
+              {...register('password', { required: '초기 비밀번호는 필수입니다.' })}
+              className={`w-full bg-white/5 border ${errors.password ? 'border-red-500/50' : 'border-white/10'} rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500/50 transition-all`}
+              placeholder="••••••••"
+            />
+            {errors.password && <p className="text-[10px] text-red-500 pl-1 font-bold">{errors.password.message as string}</p>}
+          </div>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-6">
+        <div className="space-y-2">
+          <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest pl-1">Role</label>
+          <select 
+            {...register('role')}
+            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500/50 transition-all appearance-none"
+          >
+            <option value="ROLE_OPER" className="bg-background-secondary text-primary">Operator (표준 운영자)</option>
+            <option value="ROLE_ADMIN" className="bg-background-secondary text-primary">Administrator (전체 관리자)</option>
+            <option value="ROLE_USER" className="bg-background-secondary text-primary">Auditor (단순 조회자)</option>
+          </select>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest pl-1">Account Active</label>
+          <select 
+            {...register('isActive')}
+            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500/50 transition-all appearance-none"
+          >
+            <option value="true" className="bg-background-secondary text-primary">ACTIVE (활성)</option>
+            <option value="false" className="bg-background-secondary text-primary">INACTIVE (비활성)</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="pt-4">
+        <button 
+          type="submit" 
+          disabled={isLoading}
+          className="w-full py-4 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl font-black text-xs uppercase tracking-[0.2em] hover:shadow-lg hover:shadow-indigo-500/20 active:scale-[0.98] transition-all disabled:opacity-50"
+        >
+          {isLoading ? 'Processing...' : id ? 'Update Operator' : 'Create Operator'}
+        </button>
+      </div>
+    </form>
+  );
+};
+
+export default OperatorUserForm;
+export { OperatorUserForm };

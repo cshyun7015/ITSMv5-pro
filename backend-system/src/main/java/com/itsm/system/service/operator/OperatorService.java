@@ -29,6 +29,7 @@ public class OperatorService {
     private final OperatorTeamMemberRepository teamMemberRepository;
     private final PasswordEncoder passwordEncoder;
     private final com.itsm.system.domain.code.CommonCodeRepository commonCodeRepository;
+    private final jakarta.persistence.EntityManager entityManager;
 
     public List<OperatorCompanyDTO> getAllCompanies() {
         return companyRepository.findAll().stream()
@@ -205,9 +206,32 @@ public class OperatorService {
     }
 
     @Transactional
-    public void deleteOperator(Long id) {
-        teamMemberRepository.deleteByOperatorId(id);
-        operatorRepository.deleteById(id);
+    public void deleteOperator(Long id, boolean hardDelete) {
+        Operator operator = operatorRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Operator not found"));
+
+        // Get company ID to check if it's MSP
+        String companyId = null;
+        List<com.itsm.system.domain.organization.mapping.OperatorTeamMember> memberships = teamMemberRepository.findByOperatorId(id);
+        if (!memberships.isEmpty()) {
+            companyId = memberships.get(0).getOperatorTeam().getOperatorCompany().getOperatorCompanyId();
+        }
+
+        boolean isTargetMsp = "MSP".equals(companyId);
+        boolean isCallerMsp = com.itsm.system.security.TenantContext.DEFAULT_TENANT.equals(com.itsm.system.security.TenantContext.getTenantId());
+
+        if (hardDelete && isTargetMsp && isCallerMsp) {
+            // Unlink from teams first (physical delete mapping)
+            teamMemberRepository.deleteByOperatorId(id);
+            // Physical delete operator
+            entityManager.createNativeQuery("DELETE FROM operators WHERE id = :id")
+                    .setParameter("id", id)
+                    .executeUpdate();
+        } else {
+            // Standard soft delete
+            teamMemberRepository.deleteByOperatorId(id);
+            operatorRepository.deleteById(id);
+        }
     }
 
     @Transactional
